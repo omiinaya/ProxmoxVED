@@ -1,0 +1,40 @@
+{
+  "name": "SparkyFitness",
+  "slug": "sparkyfitness",
+  "categories": [
+    9
+  ],
+  "date_created": "2026-02-16",
+  "type": "ct",
+  "updateable": true,
+  "privileged": false,
+  "interface_port": 80,
+  "documentation": "https://codewithcj.github.io/SparkyFitness/",
+  "website": "https://github.com/CodeWithCJ/SparkyFitness",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/workout-cool.webp",
+  "config_path": "/etc/sparkyfitness/.env",
+  "description": "SparkyFitness is a self-hosted, privacy-first fitness tracking platform for nutrition, workouts, body metrics, and health integrations.",
+  "install_methods": [
+    {
+      "type": "default",
+      "script": "ct/sparkyfitness.sh",
+      "resources": {
+        "cpu": 1,
+        "ram": 1028,
+        "hdd": 4,
+        "os": "Debian",
+        "version": "13"
+      }
+    }
+  ],
+  "default_credentials": {
+    "username": null,
+    "password": null
+  },
+  "notes": [
+    {
+      "text": "Optional Garmin connector can be enabled during installation.",
+      "type": "info"
+    }
+  ]
+}
