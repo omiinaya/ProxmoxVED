@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/tomfrenzel/ProxmoxVED/main/misc/build.func)
+source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/build.func)
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: Tom Frenzel
-# License: MIT | https://github.com/tomfrenzel/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://github.com/CodeWithCJ/SparkyFitness
 
 APP="SparkyFitness"
@@ -29,6 +29,10 @@ function update_script() {
     exit
   fi
 
+  APP_SLUG="sparkyfitness"
+  APP_DIR="/opt/${APP_SLUG}"
+  WEB_DIR="/var/www/${APP_SLUG}"
+
   NODE_VERSION="20" setup_nodejs
 
   if check_for_gh_release "sparkyfitness" "CodeWithCJ/SparkyFitness"; then
@@ -39,19 +43,19 @@ function update_script() {
     CLEAN_INSTALL=1 fetch_and_deploy_gh_release "sparkyfitness" "CodeWithCJ/SparkyFitness" "tarball"
 
     msg_info "Updating Sparky Fitness Backend"
-    cd /opt/sparkyfitness/SparkyFitnessServer
+	cd "${APP_DIR}/SparkyFitnessServer"
     $STD npm install
     msg_ok "Updated Sparky Fitness Backend"
 
     msg_info "Updating Sparky Fitness Frontend"
-    cd /opt/sparkyfitness/SparkyFitnessFrontend
+    cd "${APP_DIR}/SparkyFitnessFrontend"
     $STD npm install
     $STD npm run build
-    rm -rf /var/www/sparkyfitness/*
-    cp -a /opt/sparkyfitness/SparkyFitnessFrontend/dist/. /var/www/sparkyfitness/
+    rm -rf "${WEB_DIR:?}"/*
+    cp -a "${APP_DIR}/SparkyFitnessFrontend/dist/." "${WEB_DIR}/"
     msg_ok "Updated Sparky Fitness Frontend"
 
-    chown -R sparkyfitness:sparkyfitness /opt/sparkyfitness
+    chown -R sparkyfitness:sparkyfitness "${APP_DIR}"
 
     msg_info "Starting Services"
     $STD systemctl daemon-reload

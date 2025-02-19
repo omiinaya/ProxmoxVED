@@ -2,7 +2,7 @@
 
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: tomfrenzel
-# License: MIT | https://github.com/tomfrenzel/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://github.com/CodeWithCJ/SparkyFitness
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
@@ -72,7 +72,6 @@ msg_info "Building Frontend"
 cd "${APP_DIR}/SparkyFitnessFrontend"
 $STD npm install
 $STD npm run build
-rm -rf "${WEB_DIR:?}"/*
 cp -a "${APP_DIR}/SparkyFitnessFrontend/dist/." "${WEB_DIR}/"
 msg_ok "Built Frontend"
 
