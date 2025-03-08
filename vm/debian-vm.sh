@@ -4,7 +4,7 @@
 # Author: MickLesk (CanbiZ)
 # License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 
-source /dev/stdin <<< $(wget -qLO - https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/api.func)
+source /dev/stdin <<< $(wget -qLO - https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/heads/testing/misc/api.func)
 
 function header_info {
   clear
@@ -63,7 +63,7 @@ THIN="discard=on,ssd=1,"
 set -e
 trap 'error_handler $LINENO "$BASH_COMMAND"' ERR
 trap cleanup EXIT
-trap 'post_update_to_api "failed" "INTERRUPTED"' SIGINT 
+trap 'post_update_to_api "failed" "INTERRUPTED"' SIGINT
 trap 'post_update_to_api "failed" "TERMINATED"' SIGTERM
 function error_handler() {
   local exit_code="$?"
@@ -227,7 +227,7 @@ function advanced_settings() {
   else
     exit-script
   fi
-  
+
   if DISK_SIZE=$(whiptail --backtitle "Proxmox VE Helper Scripts" --inputbox "Set Disk Size in GiB (e.g., 10, 20)" 8 58 "$DISK_SIZE" --title "DISK SIZE" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
     DISK_SIZE=$(echo "$DISK_SIZE" | tr -d ' ')
     if [[ "$DISK_SIZE" =~ ^[0-9]+$ ]]; then
@@ -466,7 +466,7 @@ DESCRIPTION=$(
   cat <<EOF
 <div align='center'>
   <a href='https://Helper-Scripts.com' target='_blank' rel='noopener noreferrer'>
-    <img src='https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/images/logo-81x112.png' alt='Logo' style='width:81px;height:112px;'/>
+    <img src='https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/heads/testing/misc/images/logo-81x112.png' alt='Logo' style='width:81px;height:112px;'/>
   </a>
 
   <h2 style='font-size: 24px; margin: 20px 0;'>Debian VM</h2>
@@ -476,7 +476,7 @@ DESCRIPTION=$(
       <img src='https://img.shields.io/badge/&#x2615;-Buy us a coffee-blue' alt='spend Coffee' />
     </a>
   </p>
-  
+
   <span style='margin: 0 10px;'>
     <i class="fa fa-github fa-fw" style="color: #f5f5f5;"></i>
     <a href='https://github.com/community-scripts/ProxmoxVE' target='_blank' rel='noopener noreferrer' style='text-decoration: none; color: #00617f;'>GitHub</a>
@@ -499,7 +499,7 @@ if [ -n "$DISK_SIZE" ]; then
 else
     msg_info "Using default disk size of $DEFAULT_DISK_SIZE GB"
     qm resize $VMID scsi0 ${DEFAULT_DISK_SIZE} >/dev/null
-fi							
+fi
 
 msg_ok "Created a Debian 12 VM ${CL}${BL}(${HN})"
 if [ "$START_VM" == "yes" ]; then

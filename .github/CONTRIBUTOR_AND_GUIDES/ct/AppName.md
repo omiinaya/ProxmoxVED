@@ -40,7 +40,7 @@
 - Import the build.func file.
 - When developing your own script, change the URL to your own repository.
 
-> [!IMPORTANT] 
+> [!IMPORTANT]
 > You also need to change all apperances of this URL in `misc/build.func` and `misc/install.func`
 
 Example for development:
@@ -52,7 +52,7 @@ source <(curl -s https://raw.githubusercontent.com/[USER]/[REPO]/refs/heads/[BRA
 Final script:
 
 ```bash
-source <(curl -s https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/build.func)
+source <(curl -s https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/heads/testing/misc/build.func)
 ```
 
 > [!CAUTION]
@@ -95,7 +95,7 @@ Example:
 >| Variable | Description | Notes |
 >|----------|-------------|-------|
 >| `APP` | Application name | Must match ct\AppName.sh |
->| `var_tags` | Proxmox display tags without Spaces, only ; | Limit the number |  
+>| `var_tags` | Proxmox display tags without Spaces, only ; | Limit the number |
 >| `var_cpu` | CPU cores | Number of cores |
 >| `var_ram` | RAM | In MB |
 >| `var_disk` | Disk capacity | In GB |
@@ -198,8 +198,8 @@ unzip -q
 Example:
 
 ```bash
-$STD php artisan migrate --force 
-$STD php artisan config:clear 
+$STD php artisan migrate --force
+$STD php artisan config:clear
 ```
 
 ### 3.5 **Backups**
