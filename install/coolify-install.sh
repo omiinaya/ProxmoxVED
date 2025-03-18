@@ -19,10 +19,6 @@ $STD apt-get install -y \
     curl
 msg_ok "Installed Dependencies"
 
-get_latest_release() {
-    curl -sL https://api.github.com/repos/$1/releases/latest | grep '"tag_name":' | cut -d'"' -f4
-}
-
 msg_info "Installing Coolify"
 wget -q https://cdn.coollabs.io/coolify/install.sh
 chmod +x install.sh
