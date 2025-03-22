@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source <(curl -s https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/build.func)
+source <(curl -s https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/heads/testing/misc/build.func)
 # Copyright (c) 2021-2025 community-scripts ORG
 # Author: vhsdream
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
@@ -51,7 +51,7 @@ function update_script() {
         $STD git pull
         $STD pip install -r requirements.txt
         wget -q https://gist.githubusercontent.com/vhsdream/2e81afeff139c5746db1ede88c01cc7b/raw/51238206e87aec6c0abeccce85dec9f2b0c89000/proxmox-lxc.patch -O /opt/cwa.patch # not for production
-        $STD git apply --whitespace=fix /opt/cwa.patch # not for production
+        $STD git apply --whitespace=fix /opt/cwa.patch                                                                                                                        # not for production
         cp -r /opt/cwa/root/app/calibre-web/cps/* /usr/local/lib/python3*/dist-packages/calibreweb/cps
         cd scripts
         chmod +x check-cwa-services.sh ingest-service.sh change-detector.sh

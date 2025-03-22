@@ -1,7 +1,7 @@
 
 # Community Scripts Contribution Guide
 
-## **Welcome to the communty-scripts Repository!** 
+## **Welcome to the communty-scripts Repository!**
 
 📜 These documents outline the essential coding standards for all our scripts and JSON files. Adhering to these standards ensures that our codebase remains consistent, readable, and maintainable. By following these guidelines, we can improve collaboration, reduce errors, and enhance the overall quality of our project.
 
@@ -69,7 +69,7 @@ Start with the [template script](https://github.com/community-scripts/ProxmoxVED
 ### 1. Fork the repository
 Fork to your GitHub account
 
-### 2. Clone your fork on your local environment 
+### 2. Clone your fork on your local environment
 ```bash
 git clone https://github.com/yourUserName/ForkName
 ```
@@ -80,7 +80,7 @@ git switch -c your-feature-branch
 ```
 
 ### 4. Change paths in build.func install.func and AppName.sh
-To be able to develop from your own branch you need to change `https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main` to `https://raw.githubusercontent.com/[USER]/[REPOSITORY]/refs/heads/[BRANCH]`. You need to make this change atleast in misc/build.func misc/install.func and in your ct/AppName.sh. This change is only for testing. Before opening a Pull Request you should change this line change all this back to point to `https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main`.
+To be able to develop from your own branch you need to change `https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/heads/testing` to `https://raw.githubusercontent.com/[USER]/[REPOSITORY]/refs/heads/[BRANCH]`. You need to make this change atleast in misc/build.func misc/install.func and in your ct/AppName.sh. This change is only for testing. Before opening a Pull Request you should change this line change all this back to point to `https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/heads/testing`.
 
 ### 4. Commit changes (without build.func and install.func!)
 ```bash

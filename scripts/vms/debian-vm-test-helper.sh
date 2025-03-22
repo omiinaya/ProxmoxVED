@@ -4,8 +4,8 @@
 # Author: MickLesk (CanbiZ)
 # License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 
-source /dev/stdin <<< $(wget -qLO - https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/api.func)
-source /dev/stdin <<< $(wget -qLO - https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/helpers.func)
+source /dev/stdin <<< $(wget -qLO - https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/heads/testing/misc/api.func)
+source /dev/stdin <<< $(wget -qLO - https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/heads/testing/misc/helpers.func)
 
 function header_info {
   clear
@@ -364,7 +364,7 @@ DESCRIPTION=$(
   cat <<EOF
 <div align='center'>
   <a href='https://Helper-Scripts.com' target='_blank' rel='noopener noreferrer'>
-    <img src='https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/images/logo-81x112.png' alt='Logo' style='width:81px;height:112px;'/>
+    <img src='https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/heads/testing/misc/images/logo-81x112.png' alt='Logo' style='width:81px;height:112px;'/>
   </a>
 
   <h2 style='font-size: 24px; margin: 20px 0;'>Debian VM</h2>
