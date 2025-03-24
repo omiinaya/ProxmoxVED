@@ -1,0 +1,34 @@
+{
+    "name": "Kasm",
+    "slug": "kasm",
+    "categories": [
+        9
+    ],
+    "date_created": "2025-03-24",
+    "type": "ct",
+    "updateable": false,
+    "privileged": false,
+    "interface_port": 443,
+    "documentation": "https://www.kasmweb.com/docs/",
+    "website": "https://www.kasmweb.com/",
+    "logo": "https://raw.githubusercontent.com/selfhst/icons/refs/heads/main/svg/kasm.svg",
+    "description": "Kasm Workspaces is a container streaming platform that delivers browser-based access to desktops, applications, and web services with enhanced security and scalability.",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "ct/kasm.ct",
+            "resources": {
+                "cpu": 2,
+                "ram": 4096,
+                "hdd": 50,
+                "os": "Debian",
+                "version": "12"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": null,
+        "password": null
+    },
+    "notes": []
+}
