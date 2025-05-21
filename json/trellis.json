@@ -1,0 +1,39 @@
+{
+    "name": "Trellis",
+    "slug": "trellis",
+    "categories": [
+        3
+    ],
+    "date_created": "2025-04-30",
+    "type": "ct",
+    "updateable": false,
+    "privileged": false,
+    "interface_port": null,
+    "documentation": "https://github.com/microsoft/TRELLIS",
+    "website": "https://github.com/microsoft/TRELLIS",
+    "logo": "https://avatars.githubusercontent.com/u/6154722?s=200&v=4",
+    "description": "Trellis is an open-source framework for vision-language tasks, developed by Microsoft, supporting advanced machine learning models with PyTorch.",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "ct/trellis.sh",
+            "resources": {
+                "cpu": 4,
+                "ram": 8192,
+                "hdd": 64,
+                "os": "debian",
+                "version": "12"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": "root",
+        "password": null
+    },
+    "notes": [
+        {
+            "text": "WARNING: Installation requires a compatible NVIDIA GPU and CUDA toolkit installed on the Proxmox host. Ensure nvidia-smi and nvcc are available on the host. Installation may take time due to large dependencies.",
+            "type": "warning"
+        }
+    ]
+}

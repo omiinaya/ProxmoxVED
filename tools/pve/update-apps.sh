@@ -16,7 +16,7 @@ function header_info {
 EOF
 }
 
-source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/core.func)
+source <(curl -fsSL https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/heads/testing/misc/core.func)
 
 header_info
 echo "Loading..."
