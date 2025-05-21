@@ -14,11 +14,14 @@ network_check
 update_os
 
 msg_info "Installing Lyrion Music Server"
-DEB_URL="https://downloads.lms-community.org/LyrionMusicServer_v9.0.2/lyrionmusicserver_9.0.2_amd64.deb"
-DEB_FILE="/tmp/lyrionmusicserver_9.0.2_amd64.deb"
+
+DEB_URL=$(curl -s 'https://lyrion.org/getting-started/' | grep -oP '<a\s[^>]*href="\K[^"]*amd64\.deb(?="[^>]*>)' | head -n 1)
+LYRION_VERSION=$(echo "$DEB_URL" | grep -oP 'lyrionmusicserver_\K[0-9.]+(?=_amd64\.deb)')
+DEB_FILE="/tmp/lyrionmusicserver_${LYRION_VERSION}_amd64.deb"
+msg_info "Downloading Lyrion Music Server v${LYRION_VERSION} from ${DEB_URL}"
 curl -fsSL -o "$DEB_FILE" "$DEB_URL" 2>&1 | tee -a ~/lyrion-install.log
 $STD apt install "$DEB_FILE" -y 2>&1 | tee -a ~/lyrion-install.log
-msg_ok "Installed Lyrion Music Server"
+msg_ok "Installed Lyrion Music Server v${LYRION_VERSION}"
 
 motd_ssh
 customize
