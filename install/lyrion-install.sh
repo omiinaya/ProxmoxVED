@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 # Copyright (c) 2021-2025 community-scripts ORG
-# Author: Adapted for Lyrion Music Server
+# Author: Omar Minaya
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
-# Source: https://lyrion.org/
+# Source: https://lyrion.org/getting-started/
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 color
