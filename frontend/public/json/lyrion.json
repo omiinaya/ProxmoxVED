@@ -1,0 +1,44 @@
+{
+    "name": "Lyrion Music Server",
+    "slug": "lyrion",
+    "categories": [
+        9
+    ],
+    "date_created": "2025-05-21",
+    "type": "ct",
+    "updateable": false,
+    "privileged": false,
+    "config_path": "",
+    "interface_port": 9000,
+    "documentation": "https://lyrion.org/",
+    "website": "https://lyrion.org/",
+    "logo": "https://raw.githubusercontent.com/selfhst/icons/refs/heads/main/svg/lyrion.svg",
+    "description": "Lyrion Music Server is an open-source server software to stream local music collections, internet radio, and music services to Squeezebox and compatible audio players.",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "ct/lyrion.sh",
+            "resources": {
+                "cpu": 2,
+                "ram": 8192,
+                "hdd": 60,
+                "os": "Debian",
+                "version": "12"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": null,
+        "password": null
+    },
+    "notes": [
+        {
+            "text": "WARNING: Installation downloads a .deb package from downloads.lms-community.org. Please verify the source before installing.",
+            "type": "warning"
+        },
+        {
+            "text": "Check installation logs: `cat ~/lyrion-install.log`",
+            "type": "info"
+        }
+    ]
+}
