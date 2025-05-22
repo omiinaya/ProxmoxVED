@@ -26,7 +26,7 @@ msg_ok "Installed Dependencies"
 #msg_ok "Get Release $RELEASE"
 #NODE_VERSION="22" NODE_MODULE="yarn" install_node_and_modules
 
-PG_VERSION="16" install_postgresql
+#PG_VERSION="16" install_postgresql
 #MARIADB_VERSION="11.8"
 #MYSQL_VERSION="8.0"
 
