@@ -47,36 +47,36 @@ curl -fsSL -o "$ZIP_FILE" "$ZIP_URL"
 unzip -q "$ZIP_FILE" -d /var/www/html
 msg_ok "Downloaded LinkStack v${LINKSTACK_VERSION}"
 
-#msg_info "Configuring LinkStack"
-#chown -R www-data:www-data /var/www/html/linkstack
-#chmod -R 755 /var/www/html/linkstack
+msg_info "Configuring LinkStack"
+chown -R www-data:www-data /var/www/html/linkstack
+chmod -R 755 /var/www/html/linkstack
 
-#mkdir -p /var/www/html/linkstack/htdocs/database
-#chown www-data:www-data /var/www/html/linkstack/htdocs/database
-#chmod 775 /var/www/html/linkstack/htdocs/database
-#cat <<EOF > /etc/apache2/sites-available/linkstack.conf
-#<VirtualHost *:80>
-#    ServerAdmin webmaster@localhost
-#    DocumentRoot /var/www/html/linkstack/public
-#    ErrorLog /var/log/apache2/linkstack-error.log
-#    CustomLog /var/log/apache2/linkstack-access.log combined
-#    <Directory /var/www/html/linkstack/public>
-#        Options Indexes FollowSymLinks
-#        AllowOverride All
-#        Require all granted
-#    </Directory>
-#</VirtualHost>
-#EOF
-#$STD a2dissite 000-default.conf 2>&1 | tee -a ~/linkstack-install.log
-#$STD a2ensite linkstack.conf 2>&1 | tee -a ~/linkstack-install.log
-#$STD systemctl restart apache2 2>&1 | tee -a ~/linkstack-install.log
-#msg_ok "Configured LinkStack"
+mkdir -p /var/www/html/linkstack/htdocs/database
+chown www-data:www-data /var/www/html/linkstack/htdocs/database
+chmod 775 /var/www/html/linkstack/htdocs/database
+cat <<EOF > /etc/apache2/sites-available/linkstack.conf
+<VirtualHost *:80>
+    ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html/linkstack/public
+    ErrorLog /var/log/apache2/linkstack-error.log
+    CustomLog /var/log/apache2/linkstack-access.log combined
+    <Directory /var/www/html/linkstack/public>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+EOF
+$STD a2dissite 000-default.conf
+$STD a2ensite linkstack.conf
+$STD systemctl restart apache2
+msg_ok "Configured LinkStack"
 
 motd_ssh
 customize
 
 msg_info "Cleaning up"
-#$STD rm -f "$ZIP_FILE"
+$STD rm -f "$ZIP_FILE"
 $STD apt-get -y autoremove
 $STD apt-get -y autoclean
 msg_ok "Cleaned"
