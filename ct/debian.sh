@@ -15,7 +15,7 @@ var_version="${var_version:-12}"
 var_unprivileged="${var_unprivileged:-0}"
 var_fuse="${var_fuse:-1}"
 var_tun="${var_tun:-1}"
-var_nvpass="${var_nvpass:-1}"
+#var_nvpass="${var_nvpass:-1}"
 
 header_info "$APP"
 variables
@@ -39,7 +39,55 @@ function update_script() {
 
 start
 build_container
-description
+
+function nvidia_lxc_passthrough() {
+    local ctid="$1" minor="$2"
+    local conf="/etc/pve/lxc/${ctid}.conf"
+
+    # List of NVIDIA drivers to check for major numbers
+    local NVIDIA_DRIVERS="nvidia nvidia-uvm nvidia-modeset nvidia-drm nvidia-caps"
+
+    # Dynamically get major numbers for present drivers from /proc/devices
+    local devnums=()
+    for DRIVER in $NVIDIA_DRIVERS; do
+        local MAJOR
+        MAJOR=$(grep "^[0-9]\+ $DRIVER$" /proc/devices | awk '{print $1}')
+        if [ -n "$MAJOR" ]; then
+            devnums+=("$MAJOR")
+            echo "lxc.cgroup2.devices.allow: c $MAJOR:* rwm" >>"$conf"
+        fi
+    done
+
+    # List of NVIDIA device files to check for mounting
+    local NVIDIA_DEVICES=(
+        "/dev/nvidia${minor}:none:bind,optional,create=file"
+        "/dev/nvidiactl:none:bind,optional,create=file"
+        "/dev/nvidia-uvm:none:bind,optional,create=file"
+        "/dev/nvidia-uvm-tools:none:bind,optional,create=file"
+        "/dev/nvidia-modeset:none:bind,optional,create=file"
+        "/dev/nvidia-caps/nvidia-cap1:none:bind,optional,create=file"
+        "/dev/nvidia-caps/nvidia-cap2:none:bind,optional,create=file"
+        "/dev/fb0:none:bind,optional,create=file"
+        "/dev/dri:none:bind,optional,create=dir"
+        "/dev/dri/renderD128:none:bind,optional,create=file"
+    )
+
+    # Dynamically add mount entries for existing devices
+    for DEVICE_ENTRY in "${NVIDIA_DEVICES[@]}"; do
+        # Split the entry into device path and mount options
+        local DEVICE MOUNT_SRC MOUNT_OPTS
+        DEVICE=$(echo "$DEVICE_ENTRY" | cut -d':' -f1)
+        MOUNT_SRC=$(echo "$DEVICE_ENTRY" | cut -d':' -f2)
+        MOUNT_OPTS=$(echo "$DEVICE_ENTRY" | cut -d':' -f3)
+        if [ -e "$DEVICE" ]; then
+            echo "lxc.mount.entry: $DEVICE $MOUNT_SRC $MOUNT_OPTS" >>"$conf"
+        fi
+    done
+
+    msg ok "Installed NVIDIA GPU tools in $ctid"
+}
+
+nvidia_lxc_passthrough
 
 msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
