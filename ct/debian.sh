@@ -15,7 +15,7 @@ var_version="${var_version:-12}"
 var_unprivileged="${var_unprivileged:-0}"
 var_fuse="${var_fuse:-1}"
 var_tun="${var_tun:-1}"
-#var_nvpass="${var_nvpass:-1}"
+var_nvpass="${var_nvpass:-1}"
 
 header_info "$APP"
 variables
