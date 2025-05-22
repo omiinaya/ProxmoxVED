@@ -18,7 +18,7 @@ $STD apt-get install -y \
     software-properties-common \
     ca-certificates \
     lsb-release \
-    apt-transport-https
+    apt-transport-https \
     apache2 \
     php8.2 \
     php8.2-sqlite3 \
