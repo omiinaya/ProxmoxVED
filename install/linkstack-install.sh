@@ -32,20 +32,20 @@ $STD apt-get install -y \
 $STD a2enmod rewrite
 msg_ok "Installed dependencies"
 
-#msg_info "Adding PHP 8.2 Repository"
-#curl -sSL https://packages.sury.org/php/apt.gpg -o /etc/apt/trusted.gpg.d/php.gpg
-#echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | $STD tee /etc/apt/sources.list.d/php.list
-#$STD apt-get update 2>&1 | tee -a ~/linkstack-install.log
-#msg_ok "Added PHP 8.2 Repository"
+msg_info "Adding PHP 8.2 Repository"
+curl -sSL https://packages.sury.org/php/apt.gpg -o /etc/apt/trusted.gpg.d/php.gpg
+echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | $STD tee /etc/apt/sources.list.d/php.list
+$STD apt-get update
+msg_ok "Added PHP 8.2 Repository"
 
-#msg_info "Downloading LinkStack"
-#ZIP_URL="https://github.com/linkstackorg/linkstack/releases/latest/download/linkstack.zip"
-#ZIP_FILE="/tmp/linkstack.zip"
+msg_info "Downloading LinkStack"
+ZIP_URL="https://github.com/linkstackorg/linkstack/releases/latest/download/linkstack.zip"
+ZIP_FILE="/tmp/linkstack.zip"
 
-#LINKSTACK_VERSION=$(curl -sIL "https://github.com/linkstackorg/linkstack/releases/latest/download/linkstack.zip" | grep -i location: | grep -oP 'releases/tag/v\K[0-9.]+' | head -n 1 || echo "unknown")
-#curl -fsSL -o "$ZIP_FILE" "$ZIP_URL" 2>&1 | tee -a ~/linkstack-install.log
-#unzip -q "$ZIP_FILE" -d /var/www/html 2>&1 | tee -a ~/linkstack-install.log
-#msg_ok "Downloaded LinkStack v${LINKSTACK_VERSION}"
+LINKSTACK_VERSION=$(curl -s https://api.github.com/repos/linkstackorg/linkstack/releases/latest | grep -oP '"tag_name": "\Kv[0-9.]+(?=")' | sed 's/v//' || echo "unknown")
+curl -fsSL -o "$ZIP_FILE" "$ZIP_URL"
+unzip -q "$ZIP_FILE" -d /var/www/html
+msg_ok "Downloaded LinkStack v${LINKSTACK_VERSION}"
 
 #msg_info "Configuring LinkStack"
 #chown -R www-data:www-data /var/www/html/linkstack
