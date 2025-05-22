@@ -15,6 +15,7 @@ var_version="${var_version:-12}"
 var_unprivileged="${var_unprivileged:-1}"
 var_fuse="${var_fuse:-1}"
 var_tun="${var_tun:-1}"
+var_nvpass="${var_nvpass:-1}"
 
 header_info "$APP"
 variables
@@ -22,18 +23,18 @@ color
 catch_errors
 
 function update_script() {
-  header_info
-  check_container_storage
-  check_container_resources
-  if [[ ! -d /var ]]; then
-    msg_error "No ${APP} Installation Found!"
+    header_info
+    check_container_storage
+    check_container_resources
+    if [[ ! -d /var ]]; then
+        msg_error "No ${APP} Installation Found!"
+        exit
+    fi
+    msg_info "Updating $APP LXC"
+    $STD apt-get update
+    $STD apt-get -y upgrade
+    msg_ok "Updated $APP LXC"
     exit
-  fi
-  msg_info "Updating $APP LXC"
-  $STD apt-get update
-  $STD apt-get -y upgrade
-  msg_ok "Updated $APP LXC"
-  exit
 }
 
 start
@@ -45,9 +46,9 @@ echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 
 read -p "Remove this Container? <y/N> " prompt
 if [[ "${prompt,,}" =~ ^(y|yes)$ ]]; then
-  pct stop "$CTID"
-  pct destroy "$CTID"
-  msg_ok "Removed this script"
+    pct stop "$CTID"
+    pct destroy "$CTID"
+    msg_ok "Removed this script"
 else
-  msg_warn "Did not remove this script"
+    msg_warn "Did not remove this script"
 fi
