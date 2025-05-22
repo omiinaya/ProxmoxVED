@@ -1069,7 +1069,7 @@ lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
 EOF
   fi
 
-if [ "$ENABLE_NVPASS" == "1" ]; then
+  if [ "$ENABLE_NVPASS" == "1" ]; then
     # List of NVIDIA drivers to check
     NVIDIA_DRIVERS="nvidia nvidia-uvm nvidia-modeset nvidia-drm nvidia-caps"
 
@@ -1083,16 +1083,16 @@ if [ "$ENABLE_NVPASS" == "1" ]; then
 
     # List of NVIDIA device files to check for mounting
     NVIDIA_DEVICES=(
-        "/dev/nvidia0:none:bind,optional,create=file"
-        "/dev/nvidiactl:none:bind,optional,create=file"
-        "/dev/nvidia-uvm:none:bind,optional,create=file"
-        "/dev/nvidia-uvm-tools:none:bind,optional,create=file"
-        "/dev/nvidia-modeset:none:bind,optional,create=file"
-        "/dev/nvidia-caps/nvidia-cap1:none:bind,optional,create=file"
-        "/dev/nvidia-caps/nvidia-cap2:none:bind,optional,create=file"
-        "/dev/fb0:none:bind,optional,create=file"
-        "/dev/dri:none:bind,optional,create=dir"
-        "/dev/dri/renderD128:none:bind,optional,create=file"
+        "/dev/nvidia0:dev/nvidia0:none:bind,optional,create=file"
+        "/dev/nvidiactl:dev/nvidiactl:none:bind,optional,create=file"
+        "/dev/nvidia-uvm:dev/nvidia-uvm:none:bind,optional,create=file"
+        "/dev/nvidia-uvm-tools:dev/nvidia-uvm-tools:none:bind,optional,create=file"
+        "/dev/nvidia-modeset:dev/nvidia-modeset:none:bind,optional,create=file"
+        "/dev/nvidia-caps/nvidia-cap1:dev/nvidia-caps/nvidia-cap1:none:bind,optional,create=file"
+        "/dev/nvidia-caps/nvidia-cap2:dev/nvidia-caps/nvidia-cap2:none:bind,optional,create=file"
+        "/dev/fb0:dev/fb0:none:bind,optional,create=file"
+        "/dev/dri:dev/dri:none:bind,optional,create=dir"
+        "/dev/dri/renderD128:dev/dri/renderD128:none:bind,optional,create=file"
     )
 
     # Dynamically add mount entries for existing devices
@@ -1105,7 +1105,7 @@ if [ "$ENABLE_NVPASS" == "1" ]; then
             echo "lxc.mount.entry: $DEVICE $MOUNT_SRC $MOUNT_OPTS" >>"$LXC_CONFIG"
         fi
     done
-fi
+  fi
 
   # This starts the container and executes <app>-install.sh
   msg_info "Starting LXC Container"

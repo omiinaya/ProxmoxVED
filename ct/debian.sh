@@ -87,7 +87,7 @@ function nvidia_lxc_passthrough() {
     msg ok "Installed NVIDIA GPU tools in $ctid"
 }
 
-nvidia_lxc_passthrough
+#nvidia_lxc_passthrough
 
 msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
