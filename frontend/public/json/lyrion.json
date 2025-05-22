@@ -1,18 +1,18 @@
 {
-    "name": "Lyrion",
+    "name": "Lyrion Music Server",
     "slug": "lyrion",
     "categories": [
         9
     ],
     "date_created": "2025-05-21",
     "type": "ct",
-    "updateable": false,
+    "updateable": true,
     "privileged": false,
     "config_path": "",
     "interface_port": 9000,
     "documentation": "https://lyrion.org/",
     "website": "https://lyrion.org/",
-    "logo": "https://raw.githubusercontent.com/selfhst/icons/refs/heads/main/svg/lyrion.svg",
+    "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons/webp/lyrion-media-server.webp",
     "description": "Lyrion Music Server is an open-source server software to stream local music collections, internet radio, and music services to Squeezebox and compatible audio players.",
     "install_methods": [
         {

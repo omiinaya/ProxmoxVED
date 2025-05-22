@@ -18,8 +18,8 @@ msg_info "Installing Lyrion Music Server"
 DEB_URL=$(curl -s 'https://lyrion.org/getting-started/' | grep -oP '<a\s[^>]*href="\K[^"]*amd64\.deb(?="[^>]*>)' | head -n 1)
 LYRION_VERSION=$(echo "$DEB_URL" | grep -oP 'lyrionmusicserver_\K[0-9.]+(?=_amd64\.deb)')
 DEB_FILE="/tmp/lyrionmusicserver_${LYRION_VERSION}_amd64.deb"
-curl -fsSL -o "$DEB_FILE" "$DEB_URL" 2>&1 | tee -a ~/lyrion-install.log
-$STD apt install "$DEB_FILE" -y 2>&1 | tee -a ~/lyrion-install.log
+curl -fsSL -o "$DEB_FILE" "$DEB_URL"
+$STD apt install "$DEB_FILE" -y
 
 msg_ok "Installed Lyrion Music Server v${LYRION_VERSION}"
 
