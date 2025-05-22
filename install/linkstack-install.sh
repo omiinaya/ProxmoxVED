@@ -29,7 +29,7 @@ $STD apt-get install -y \
     php8.2-xml \
     php8.2-bcmath \
     unzip 2>&1 | tee -a ~/linkstack-install.log
-$STD a2enmod rewrite 2>&1 | tee -a ~/linkstack-install.log
+#$STD a2enmod rewrite 2>&1 | tee -a ~/linkstack-install.log
 msg_ok "Installed dependencies"
 
 #msg_info "Adding PHP 8.2 Repository"
@@ -76,7 +76,7 @@ motd_ssh
 customize
 
 msg_info "Cleaning up"
-$STD rm -f "$ZIP_FILE"
+#$STD rm -f "$ZIP_FILE"
 $STD apt-get -y autoremove
 $STD apt-get -y autoclean
 msg_ok "Cleaned"
