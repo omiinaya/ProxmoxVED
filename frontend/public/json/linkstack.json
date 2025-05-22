@@ -1,0 +1,44 @@
+{
+    "name": "LinkStack",
+    "slug": "linkstack",
+    "categories": [
+        9
+    ],
+    "date_created": "2025-05-21",
+    "type": "ct",
+    "updateable": false,
+    "privileged": false,
+    "config_path": "",
+    "interface_port": 80,
+    "documentation": "https://docs.linkstack.org/",
+    "website": "https://linkstack.org/",
+    "logo": "https://raw.githubusercontent.com/selfhst/icons/refs/heads/main/svg/linkstack.svg",
+    "description": "LinkStack is an open-source, self-hosted alternative to Linktree, allowing users to create a customizable profile page to share multiple links, hosted on their own server.",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "ct/linkstack.sh",
+            "resources": {
+                "cpu": 1,
+                "ram": 2048,
+                "hdd": 10,
+                "os": "Debian",
+                "version": "12"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": null,
+        "password": null
+    },
+    "notes": [
+        {
+            "text": "WARNING: Installation downloads a ZIP package from github.com/linkstackorg. Please verify the source before installing.",
+            "type": "warning"
+        },
+        {
+            "text": "Complete setup via the web interface at http://<container-ip>/. Check installation logs: `cat ~/linkstack-install.log`",
+            "type": "info"
+        }
+    ]
+}
