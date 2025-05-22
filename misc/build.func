@@ -246,6 +246,7 @@ base_settings() {
   UDHCPC_FIX=""
   ENABLE_FUSE=="0"
   ENABLE_TUN="0"
+  ENABLE_NVPASS="0"
 
   # Override default settings with variables from ct script
   CT_TYPE=${var_unprivileged:-$CT_TYPE}
@@ -256,6 +257,7 @@ base_settings() {
   TAGS="${TAGS}${var_tags:-}"
   ENABLE_FUSE="${var_fuse:-$ENABLE_FUSE}"
   ENABLE_TUN="${var_tun:-$ENABLE_TUN}"
+  ENABLE_NVPASS="${var_nvpass:-$ENABLE_NVPASS}"
 
   # Since these 2 are only defined outside of default_settings function, we add a temporary fallback. TODO: To align everything, we should add these as constant variables (e.g. OSTYPE and OSVERSION), but that would currently require updating the default_settings function for all existing scripts
   if [ -z "$var_os" ]; then
@@ -992,6 +994,7 @@ build_container() {
   export CTTYPE="$CT_TYPE"
   export ENABLE_FUSE="$ENABLE_FUSE"
   export ENABLE_TUN="$ENABLE_TUN"
+  export ENABLE_NVPASS="$ENABLE_NVPASS"
   export PCT_OSTYPE="$var_os"
   export PCT_OSVERSION="$var_version"
   export PCT_DISK_SIZE="$DISK_SIZE"
@@ -1063,6 +1066,27 @@ EOF
     cat <<EOF >>"$LXC_CONFIG"
 lxc.cgroup2.devices.allow: c 10:200 rwm
 lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
+EOF
+  fi
+
+  if [ "$ENABLE_NVPASS" == "1" ]; then
+    # Dynamically get NVIDIA major numbers from /proc/devices
+    NVIDIA_MAJORS=$(grep -E 'nvidia|nvidia-uvm|nvidia-modeset|nvidia-drm|nvidia-caps' /proc/devices | awk '{print $1}' | sort -u)
+    for MAJOR in $NVIDIA_MAJORS; do
+        echo "lxc.cgroup2.devices.allow: c $MAJOR:* rwm" >>"$LXC_CONFIG"
+    done
+
+    cat <<EOF >>"$LXC_CONFIG"
+lxc.mount.entry: /dev/nvidia0 dev/nvidia0 none bind,optional,create=file
+lxc.mount.entry: /dev/nvidiactl dev/nvidiactl none bind,optional,create=file
+lxc.mount.entry: /dev/nvidia-uvm dev/nvidia-uvm none bind,optional,create=file
+lxc.mount.entry: /dev/nvidia-uvm-tools dev/nvidia-uvm-tools none bind,optional,create=file
+lxc.mount.entry: /dev/nvidia-modeset dev/nvidia-modeset none bind,optional,create=file
+lxc.mount.entry: /dev/nvidia-caps/nvidia-cap1 dev/nvidia-caps/nvidia-cap1 none bind,optional,create=file
+lxc.mount.entry: /dev/nvidia-caps/nvidia-cap2 dev/nvidia-caps/nvidia-cap2 none bind,optional,create=file
+lxc.mount.entry: /dev/fb0 dev/fb0 none bind,optional,create=file
+lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
+lxc.mount.entry: /dev/dri/renderD128 dev/dri/renderD128 none bind,optional,create=file
 EOF
   fi
 
