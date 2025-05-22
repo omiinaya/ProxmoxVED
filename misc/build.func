@@ -1069,26 +1069,43 @@ lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
 EOF
   fi
 
-  if [ "$ENABLE_NVPASS" == "1" ]; then
-    # Dynamically get NVIDIA major numbers from /proc/devices
-    NVIDIA_MAJORS=$(grep -E 'nvidia|nvidia-uvm|nvidia-modeset|nvidia-drm|nvidia-caps' /proc/devices | awk '{print $1}' | sort -u)
-    for MAJOR in $NVIDIA_MAJORS; do
-        echo "lxc.cgroup2.devices.allow: c $MAJOR:* rwm" >>"$LXC_CONFIG"
+if [ "$ENABLE_NVPASS" == "1" ]; then
+    # List of NVIDIA drivers to check
+    NVIDIA_DRIVERS="nvidia nvidia-uvm nvidia-modeset nvidia-drm nvidia-caps"
+
+    # Dynamically get major numbers for present drivers from /proc/devices
+    for DRIVER in $NVIDIA_DRIVERS; do
+        MAJOR=$(grep "^[0-9]\+ $DRIVER$" /proc/devices | awk '{print $1}')
+        if [ -n "$MAJOR" ]; then
+            echo "lxc.cgroup2.devices.allow: c $MAJOR:* rwm" >>"$LXC_CONFIG"
+        fi
     done
 
-    cat <<EOF >>"$LXC_CONFIG"
-lxc.mount.entry: /dev/nvidia0 dev/nvidia0 none bind,optional,create=file
-lxc.mount.entry: /dev/nvidiactl dev/nvidiactl none bind,optional,create=file
-lxc.mount.entry: /dev/nvidia-uvm dev/nvidia-uvm none bind,optional,create=file
-lxc.mount.entry: /dev/nvidia-uvm-tools dev/nvidia-uvm-tools none bind,optional,create=file
-lxc.mount.entry: /dev/nvidia-modeset dev/nvidia-modeset none bind,optional,create=file
-lxc.mount.entry: /dev/nvidia-caps/nvidia-cap1 dev/nvidia-caps/nvidia-cap1 none bind,optional,create=file
-lxc.mount.entry: /dev/nvidia-caps/nvidia-cap2 dev/nvidia-caps/nvidia-cap2 none bind,optional,create=file
-lxc.mount.entry: /dev/fb0 dev/fb0 none bind,optional,create=file
-lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
-lxc.mount.entry: /dev/dri/renderD128 dev/dri/renderD128 none bind,optional,create=file
-EOF
-  fi
+    # List of NVIDIA device files to check for mounting
+    NVIDIA_DEVICES=(
+        "/dev/nvidia0:none:bind,optional,create=file"
+        "/dev/nvidiactl:none:bind,optional,create=file"
+        "/dev/nvidia-uvm:none:bind,optional,create=file"
+        "/dev/nvidia-uvm-tools:none:bind,optional,create=file"
+        "/dev/nvidia-modeset:none:bind,optional,create=file"
+        "/dev/nvidia-caps/nvidia-cap1:none:bind,optional,create=file"
+        "/dev/nvidia-caps/nvidia-cap2:none:bind,optional,create=file"
+        "/dev/fb0:none:bind,optional,create=file"
+        "/dev/dri:none:bind,optional,create=dir"
+        "/dev/dri/renderD128:none:bind,optional,create=file"
+    )
+
+    # Dynamically add mount entries for existing devices
+    for DEVICE_ENTRY in "${NVIDIA_DEVICES[@]}"; do
+        # Split the entry into device path and mount options
+        DEVICE=$(echo "$DEVICE_ENTRY" | cut -d':' -f1)
+        MOUNT_SRC=$(echo "$DEVICE_ENTRY" | cut -d':' -f2)
+        MOUNT_OPTS=$(echo "$DEVICE_ENTRY" | cut -d':' -f3)
+        if [ -e "$DEVICE" ]; then
+            echo "lxc.mount.entry: $DEVICE $MOUNT_SRC $MOUNT_OPTS" >>"$LXC_CONFIG"
+        fi
+    done
+fi
 
   # This starts the container and executes <app>-install.sh
   msg_info "Starting LXC Container"
