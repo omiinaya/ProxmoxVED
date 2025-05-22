@@ -1075,7 +1075,7 @@ if [ "$ENABLE_NVPASS" == "1" ]; then
 
     # Dynamically get major numbers for present drivers from /proc/devices
     for DRIVER in $NVIDIA_DRIVERS; do
-        MAJOR=$(grep "^[0-9]\+ $DRIVER$" /proc/devices | awk '{print $1}')
+        MAJOR=$(grep -E "^[0-9]+[[:space:]]+$DRIVER$" /proc/devices | awk '{print $1}' || true)
         if [ -n "$MAJOR" ]; then
             echo "lxc.cgroup2.devices.allow: c $MAJOR:* rwm" >>"$LXC_CONFIG"
         fi
