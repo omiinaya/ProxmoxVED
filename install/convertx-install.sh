@@ -24,12 +24,12 @@ msg_ok "Installed Dependencies"
 msg_info "Installing ConvertX"
 curl -fsSL "https://bun.sh/install" | bash
 ln -sf /root/.bun/bin/bun /usr/local/bin/bun
+mkdir -p /opt/convertx
 
 RELEASE=$(curl -fsSL https://api.github.com/repos/C4illin/ConvertX/releases/latest | jq -r .tag_name | sed 's/^v//')
-curl -fsSL -o "/opt/ConvertX-${RELEASE}.tar.gz" "https://github.com/C4illin/ConvertX/archive/refs/tags/v${RELEASE}.tar.gz"
-mkdir -p /opt/convertx
-tar --strip-components=1 -xf "ConvertX-${RELEASE}.tar.gz" -C /opt/convertx
+curl -fsSL -o "/opt/convertx/ConvertX-${RELEASE}.tar.gz" "https://github.com/C4illin/ConvertX/archive/refs/tags/v${RELEASE}.tar.gz"
 cd /opt/convertx
+tar --strip-components=1 -xf "ConvertX-${RELEASE}.tar.gz"
 mkdir -p data
 bun install
 
