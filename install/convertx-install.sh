@@ -14,14 +14,21 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y git curl ffmpeg
+$STD apt-get install -y \
+    git \
+    curl \
+    ffmpeg
 msg_ok "Installed Dependencies"
 
 msg_info "Installing ConvertX"
 $STD curl -fsSL "https://bun.sh/install" | bash
 $STD ln -sf /root/.bun/bin/bun /usr/local/bin/bun
-$STD git clone "https://github.com/C4illin/ConvertX.git" /opt/convertx
-$STD cd /opt/convertx && mkdir -p data && bun install
+
+RELEASE=$(curl -fsSL https://api.github.com/repos/C4illin/ConvertX/releases/latest | jq -r .tag_name | sed 's/^v//')
+curl -fsSL -o "/opt/ConvertX-${RELEASE}.tar.gz" "https://github.com/C4illin/ConvertX/archive/refs/tags/v${RELEASE}.tar.gz"
+cd /opt && mkdir -p convertx
+tar -xf "ConvertX-${RELEASE}.tar.gz" -C convertx
+$STD mkdir -p data && bun install
 
 JWT_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)
 cat <<EOF >/opt/convertx/.env
@@ -50,21 +57,13 @@ EOF
 systemctl enable -q --now convertx
 msg_ok "Service Created"
 
-msg_info "Waiting for SQLite database to be created"
-TIMEOUT=60
-COUNT=0
-while [[ ! -f "/opt/convertx/data/mydb.sqlite" && $COUNT -lt $TIMEOUT ]]; do
-    sleep 0.5
-    COUNT=$((COUNT + 1))
+msg_info "Waiting for SQLite database"
+for ((COUNT=0; COUNT<60; COUNT++)); do
+  [ -f "/opt/convertx/data/mydb.sqlite" ] && { systemctl restart convertx; msg_ok "Database created"; exit 0; }
+  sleep 0.5
 done
-if [[ -f "/opt/convertx/data/mydb.sqlite" ]]; then
-    echo "SQLite database created successfully"
-    systemctl restart convertx
-else
-    msg_error "Timed out waiting for /opt/convertx/data/mydb.sqlite to be created!"
-    exit 1
-fi
-msg_ok "Database Created"
+msg_error "Timed out waiting for database!"
+exit 1
 
 motd_ssh
 customize
