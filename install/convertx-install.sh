@@ -22,6 +22,9 @@ $STD curl -fsSL "https://bun.sh/install" | bash
 $STD git clone "https://github.com/C4illin/ConvertX.git" /opt/convertx
 cd /opt/convertx
 $STD bun install
+cat <<EOF >/opt/convertx/.env
+PORT=3000
+EOF
 msg_ok "Installed ConvertX"
 
 msg_info "Starting ConvertX"
