@@ -50,7 +50,7 @@ EOF
 msg_ok "Service Created"
 
 msg_info "Waiting for SQLite database to be created"
-TIMEOUT=10
+TIMEOUT=60
 COUNT=0
 while [[ ! -f "/opt/convertx/data/mydb.sqlite" && $COUNT -lt $TIMEOUT ]]; do
     sleep 0.5
