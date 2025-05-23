@@ -43,7 +43,7 @@ After=network.target
 User=nobody
 WorkingDirectory=/opt/convertx
 EnvironmentFile=/opt/convertx/.env
-ExecStart=/usr/local/bin/bun dev
+ExecStart=/opt/convertx/bun dev
 Restart=always
 
 [Install]
