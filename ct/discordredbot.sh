@@ -6,7 +6,7 @@ source <(curl -s https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/head
 # Source: https://github.com/Cog-Creators/Red-DiscordBot
 
 APP="Red Discord Bot"
-var_tags="${var_tags:-discord bot}"
+var_tags="${var_tags:-bot}"
 var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-10}"
@@ -30,7 +30,6 @@ function update_script() {
     msg_info "Updating $APP LXC"
     $STD apt-get update
     $STD apt-get -y upgrade
-    #update command
     $STD pip3 install -U pip wheel Red-DiscordBot
     $STD systemctl restart redbot
     msg_ok "Updated $APP LXC"
@@ -46,6 +45,3 @@ echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} The bot is running with instance name 'redbot'.${CL}"
 echo -e "${INFO}${YW} Update the placeholder DISCORD_TOKEN in /opt/red/.env:${CL}"
 echo -e "${INFO}${YW} Then restart the redbot service${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}sudo systemctl restart red@redbot${CL}"
-echo -e "${INFO}${YW} Check logs: journalctl -eu red@redbot${CL}"
-echo -e "${INFO}${YW} Check install logs: cat ~/red-install.log${CL}"
