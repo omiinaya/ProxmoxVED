@@ -62,11 +62,12 @@ msg_ok "Service Created"
 
 msg_info "Waiting for SQLite database"
 for ((COUNT=0; COUNT<60; COUNT++)); do
-  [ -f "/opt/convertx/data/mydb.sqlite" ] && { systemctl restart convertx; msg_ok "Database created"; exit 0; }
+  [ -f "/opt/convertx/data/mydb.sqlite" ] && { systemctl restart convertx; exit 0; }
   sleep 0.5
 done
 msg_error "Timed out waiting for database!"
 exit 1
+msg_ok "Database created"
 
 motd_ssh
 customize
