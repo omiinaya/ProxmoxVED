@@ -14,7 +14,10 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y git curl ffmpeg #openssl
+$STD apt-get install -y \
+    git \
+    curl \
+    ffmpeg
 msg_ok "Installed Dependencies"
 
 msg_info "Installing ConvertX"
@@ -23,17 +26,9 @@ $STD ln -sf /root/.bun/bin/bun /usr/local/bin/bun
 $STD git clone https://github.com/C4illin/ConvertX.git /opt/convertx
 cd /opt/convertx
 $STD bun install
-#JWT_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)
-#echo "Generated JWT_SECRET: $JWT_SECRET" >>~/convertx-install.log
-#cat <<EOF >/opt/convertx/.env
-#JWT_SECRET=$JWT_SECRET
-#PORT=3000
-#EOF
-#$STD chown -R nobody:nogroup /opt/convertx
 msg_ok "Installed ConvertX"
 
 msg_info "Starting ConvertX"
-# Create a systemd service for persistent running
 cat <<EOF >/etc/systemd/system/convertx.service
 [Unit]
 Description=ConvertX File Converter
