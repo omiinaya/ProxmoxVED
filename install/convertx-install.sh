@@ -28,8 +28,8 @@ mkdir -p /opt/convertx
 
 RELEASE=$(curl -fsSL https://api.github.com/repos/C4illin/ConvertX/releases/latest | jq -r .tag_name | sed 's/^v//')
 curl -fsSL -o "/opt/convertx/ConvertX-${RELEASE}.tar.gz" "https://github.com/C4illin/ConvertX/archive/refs/tags/v${RELEASE}.tar.gz"
+tar --strip-components=1 -xf "/opt/convertx/ConvertX-${RELEASE}.tar.gz" -C /opt/convertx
 cd /opt/convertx
-tar --strip-components=1 -xf "ConvertX-${RELEASE}.tar.gz"
 mkdir -p data
 bun install
 
