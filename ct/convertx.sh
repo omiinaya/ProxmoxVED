@@ -28,9 +28,11 @@ function update_script() {
         exit
     fi
     msg_info "Updating $APP LXC"
-    cd /opt/convertx
-    git pull origin main
-    $STD systemctl restart convertx.service
+    RELEASE=$(curl -fsSL https://api.github.com/repos/C4illin/ConvertX/releases/latest | jq -r .tag_name | sed 's/^v//')
+    curl -fsSL -o "/opt/ConvertX-${RELEASE}.tar.gz" "https://github.com/C4illin/ConvertX/archive/refs/tags/v${RELEASE}.tar.gz"
+    cd /opt && mkdir -p convertx
+    tar --strip-components=1 -xf "ConvertX-${RELEASE}.tar.gz" -C /opt/convertx
+    $STD systemctl restart convertx
     $STD apt-get update
     $STD apt-get -y upgrade
     msg_ok "Updated $APP LXC"
