@@ -32,6 +32,9 @@ function update_script() {
     curl -fsSL -o "/opt/ConvertX-${RELEASE}.tar.gz" "https://github.com/C4illin/ConvertX/archive/refs/tags/v${RELEASE}.tar.gz"
     cd /opt && mkdir -p convertx
     tar --strip-components=1 -xf "ConvertX-${RELEASE}.tar.gz" -C /opt/convertx
+    cd /opt/convertx
+    bun update
+
     $STD systemctl restart convertx
     $STD apt-get update
     $STD apt-get -y upgrade
