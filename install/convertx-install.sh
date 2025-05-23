@@ -14,16 +14,12 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y \
-    git \
-    curl \
-    ffmpeg
+$STD apt-get install -y git curl ffmpeg
 msg_ok "Installed Dependencies"
 
 msg_info "Installing ConvertX"
-$STD curl -fsSL https://bun.sh/install | bash
-$STD ln -sf /root/.bun/bin/bun /usr/local/bin/bun
-$STD git clone https://github.com/C4illin/ConvertX.git /opt/convertx
+$STD curl -fsSL "https://bun.sh/install" | bash
+$STD git clone "https://github.com/C4illin/ConvertX.git" /opt/convertx
 cd /opt/convertx
 $STD bun install
 msg_ok "Installed ConvertX"
