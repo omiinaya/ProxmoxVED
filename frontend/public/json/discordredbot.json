@@ -1,0 +1,40 @@
+{
+    "name": "Discord Red Bot",
+    "slug": "discordredbot",
+    "categories": [
+        9
+    ],
+    "date_created": "2025-05-23",
+    "type": "ct",
+    "updateable": true,
+    "privileged": false,
+    "config_path": "/home/reduser/.config/Red-DiscordBot",
+    "interface_port": null,
+    "documentation": "https://docs.discord.red/en/stable/",
+    "website": "https://github.com/Cog-Creators/Red-DiscordBot",
+    "logo": "https://raw.githubusercontent.com/selfhst/icons/refs/heads/main/svg/red-discordbot.svg",
+    "description": "Red Discord Bot is a highly customizable, self-hosted Discord bot with modular plugins for moderation, music, trivia, and more, running on Python.",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "ct/discordredbot.sh",
+            "resources": {
+                "cpu": 1,
+                "ram": 2048,
+                "hdd": 10,
+                "os": "Debian",
+                "version": "12"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": null,
+        "password": null
+    },
+    "notes": [
+        {
+            "text": "Ensure DISCORD_TOKEN is set in /opt/red/.env before running the script. Check installation logs: `cat ~/red-install.log`. View bot logs: `journalctl -eu red@redbot`.",
+            "type": "info"
+        }
+    ]
+}
