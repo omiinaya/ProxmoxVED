@@ -26,8 +26,8 @@ msg_ok "Installed Dependencies"
 
 msg_info "Setting Up Non-Root User"
 $STD useradd -m -s /bin/bash reduser
-$STD mkdir -p /opt/red
-$STD chown reduser:reduser /opt/red
+$STD mkdir -p /opt/redbot
+$STD chown reduser:reduser /opt/redbot
 msg_ok "Set Up Non-Root User"
 
 msg_info "Installing Red Discord Bot"
@@ -39,13 +39,13 @@ msg_info "Configuring Red Discord Bot"
 if [[ -z "$DISCORD_TOKEN" ]]; then
     DISCORD_TOKEN=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 59)
     echo "Warning: No DISCORD_TOKEN provided. Generated a placeholder: $DISCORD_TOKEN" >> ~/red-install.log
-    echo "Replace DISCORD_TOKEN in /opt/red/.env with a valid Discord bot token." >> ~/red-install.log
+    echo "Replace DISCORD_TOKEN in /opt/redbot/.env with a valid Discord bot token." >> ~/red-install.log
 fi
-cat <<EOF >/opt/red/.env
+cat <<EOF >/opt/redbot/.env
 DISCORD_TOKEN=$DISCORD_TOKEN
 EOF
-$STD chown reduser:reduser /opt/red/.env
-$STD chmod 600 /opt/red/.env
+$STD chown reduser:reduser /opt/redbot/.env
+$STD chmod 600 /opt/redbot/.env
 # Run redbot-setup non-interactively
 su - reduser -c "echo -e 'redbot\n\n\n\n$DISCORD_TOKEN\n' | /usr/bin/python3 -m redbot_setup" | tee -a ~/red-install.log
 msg_ok "Configured Red Discord Bot"

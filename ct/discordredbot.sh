@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 source <(curl -s https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/heads/testing/misc/build.func)
 # Copyright (c) 2021-2025 community-scripts ORG
-# Author: Adapted for Red Discord Bot
+# Author: Omar Minaya
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/Cog-Creators/Red-DiscordBot
 
@@ -30,8 +30,6 @@ function update_script() {
     msg_info "Updating $APP LXC"
     $STD apt-get update
     $STD apt-get -y upgrade
-    $STD pip3 install -U pip wheel Red-DiscordBot
-    $STD systemctl restart redbot
     msg_ok "Updated $APP LXC"
     exit
 }
