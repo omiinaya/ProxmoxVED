@@ -17,7 +17,8 @@ msg_info "Installing Dependencies"
 $STD apt-get install -y \
     git \
     curl \
-    ffmpeg
+    ffmpeg \
+    jq
 msg_ok "Installed Dependencies"
 
 msg_info "Installing ConvertX"
