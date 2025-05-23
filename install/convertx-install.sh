@@ -22,15 +22,16 @@ $STD apt-get install -y \
 msg_ok "Installed Dependencies"
 
 msg_info "Installing ConvertX"
-$STD curl -fsSL "https://bun.sh/install" | bash
-$STD ln -sf /root/.bun/bin/bun /usr/local/bin/bun
+curl -fsSL "https://bun.sh/install" | bash
+ln -sf /root/.bun/bin/bun /usr/local/bin/bun
 
 RELEASE=$(curl -fsSL https://api.github.com/repos/C4illin/ConvertX/releases/latest | jq -r .tag_name | sed 's/^v//')
 curl -fsSL -o "/opt/ConvertX-${RELEASE}.tar.gz" "https://github.com/C4illin/ConvertX/archive/refs/tags/v${RELEASE}.tar.gz"
 cd /opt && mkdir -p convertx
 tar --strip-components=1 -xf "ConvertX-${RELEASE}.tar.gz" -C /opt/convertx
-cd /convertx && mkdir -p data
-$STD bun install
+cd /opt/convertx
+mkdir -p data
+bun install
 
 JWT_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)
 cat <<EOF >/opt/convertx/.env
