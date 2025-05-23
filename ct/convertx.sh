@@ -29,9 +29,8 @@ function update_script() {
     fi
     msg_info "Updating $APP LXC"
     RELEASE=$(curl -fsSL https://api.github.com/repos/C4illin/ConvertX/releases/latest | jq -r .tag_name | sed 's/^v//')
-    curl -fsSL -o "/opt/ConvertX-${RELEASE}.tar.gz" "https://github.com/C4illin/ConvertX/archive/refs/tags/v${RELEASE}.tar.gz"
-    mkdir -p /opt/convertx
-    tar --strip-components=1 -xf "ConvertX-${RELEASE}.tar.gz" -C /opt/convertx
+    curl -fsSL -o "/opt/convertx/ConvertX-${RELEASE}.tar.gz" "https://github.com/C4illin/ConvertX/archive/refs/tags/v${RELEASE}.tar.gz"
+    tar --strip-components=1 -xf "/opt/convertx/ConvertX-${RELEASE}.tar.gz" -C /opt/convertx
     cd /opt/convertx
     bun update
 
