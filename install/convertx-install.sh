@@ -14,7 +14,7 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y git curl ffmpeg
+$STD apt-get install -y git curl ffmpeg openssl
 msg_ok "Installed Dependencies"
 
 msg_info "Installing Bun"
@@ -33,7 +33,12 @@ msg_ok "Installed ConvertX Dependencies"
 
 msg_info "Configuring ConvertX"
 # Generate a random JWT_SECRET
-JWT_SECRET=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+JWT_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)
+if [[ -z "$JWT_SECRET" || ${#JWT_SECRET} -ne 32 ]]; then
+    msg_error "Failed to generate JWT_SECRET!" | tee -a ~/convertx-install.log
+    exit 1
+fi
+echo "Generated JWT_SECRET: $JWT_SECRET" >>~/convertx-install.log
 cat <<EOF >/opt/convertx/.env
 JWT_SECRET=$JWT_SECRET
 PORT=3000
