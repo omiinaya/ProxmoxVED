@@ -40,10 +40,10 @@ Description=ConvertX File Converter
 After=network.target
 
 [Service]
-User=nobody
+Type=exec
 WorkingDirectory=/opt/convertx
 EnvironmentFile=/opt/convertx/.env
-ExecStart=/opt/convertx/bun dev
+ExecStart=/root/.bun/bin/bun dev
 Restart=always
 
 [Install]
