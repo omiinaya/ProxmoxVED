@@ -6,15 +6,13 @@ source <(curl -s https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/head
 # Source: https://github.com/C4illin/ConvertX
 
 APP="ConvertX"
-var_tags="${var_tags:-misc}"
+var_tags="${var_tags:-converter}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-4096}"
 var_disk="${var_disk:-20}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-12}"
 var_unprivileged="${var_unprivileged:-1}"
-var_fuse="${var_fuse:-0}"
-var_tun="${var_tun:-0}"
 
 header_info "$APP"
 variables
