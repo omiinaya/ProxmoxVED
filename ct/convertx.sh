@@ -44,7 +44,5 @@ description
 
 msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
-echo -e "${INFO}${YW} Complete setup at:${CL}"
+echo -e "${INFO}${YW} Access it using the following URL:${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}http://${IP}:3000${CL}"
-echo -e "${INFO}${YW} Create an admin account on first visit. Secure it immediately!${CL}"
-echo -e "${INFO}${YW} Check logs for setup details: ~/convertx-install.log${CL}"
