@@ -54,7 +54,7 @@ TIMEOUT=10
 COUNT=0
 while [[ ! -f "/opt/convertx/data/mydb.sqlite" && $COUNT -lt $TIMEOUT ]]; do
     sleep 0.5
-    ((COUNT++))
+    COUNT=$((COUNT + 1))
 done
 if [[ -f "/opt/convertx/data/mydb.sqlite" ]]; then
     echo "SQLite database created successfully"
