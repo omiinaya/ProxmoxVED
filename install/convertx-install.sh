@@ -21,8 +21,7 @@ msg_info "Installing ConvertX"
 $STD curl -fsSL "https://bun.sh/install" | bash
 $STD ln -sf /root/.bun/bin/bun /usr/local/bin/bun
 $STD git clone "https://github.com/C4illin/ConvertX.git" /opt/convertx
-cd /opt/convertx
-$STD bun install
+$STD cd /opt/convertx && bun install
 
 JWT_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)
 cat <<EOF >/opt/convertx/.env
@@ -32,7 +31,7 @@ PORT=3000
 EOF
 msg_ok "Installed ConvertX"
 
-msg_info "Starting ConvertX"
+msg_info "Creating Services"
 cat <<EOF >/etc/systemd/system/convertx.service
 [Unit]
 Description=ConvertX File Converter
@@ -48,9 +47,23 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 EOF
-$STD systemctl enable convertx.service
-$STD systemctl start convertx.service
-msg_ok "Started ConvertX"
+msg_ok "Service Created"
+
+msg_info "Waiting for SQLite database to be created"
+TIMEOUT=10
+COUNT=0
+while [[ ! -f "/opt/convertx/data/mydb.sqlite" && $COUNT -lt $TIMEOUT ]]; do
+    sleep 0.5
+    ((COUNT++))
+done
+if [[ -f "/opt/convertx/data/mydb.sqlite" ]]; then
+    echo "SQLite database created successfully"
+    systemctl enable -q --now convertx
+else
+    msg_error "Timed out waiting for /opt/convertx/data/mydb.sqlite to be created!"
+    exit 1
+fi
+msg_ok "Database Created"
 
 motd_ssh
 customize
