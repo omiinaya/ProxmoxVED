@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Copyright (c) 2021-2025 tteck
-# Author: tteck (tteckster)
+# Author: Omar Minaya
 # License: MIT
 # https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 
@@ -34,7 +34,7 @@ RELEASE=$(curl -fsSL https://api.github.com/repos/community-scripts/ProxmoxVE/re
 TARBALL_URL="https://github.com/community-scripts/ProxmoxVE/archive/refs/tags/${RELEASE}.tar.gz"
 curl -fsSL -o "/tmp/ProxmoxVE-${RELEASE}.tar.gz" "$TARBALL_URL"
 mkdir -p /opt/appstore
-tar -xzf "/tmp/ProxmoxVE-${RELEASE}.tar.gz" --strip-components=2 -C /opt/appstore "ProxmoxVE-${RELEASE}/frontend"/*
+tar -xzf "/tmp/ProxmoxVE-${RELEASE}.tar.gz" --wildcards --strip-components=2 -C /opt/appstore '*/frontend/*'
 
 msg_ok "Store setup complete"
 
@@ -42,7 +42,7 @@ motd_ssh
 customize
 
 msg_info "Cleaning up"
-#rm -f "$TARBALL"
+rm -f "/tmp/ProxmoxVE-${RELEASE}.tar.gz"
 $STD apt-get -y autoremove
 $STD apt-get -y autoclean
 msg_ok "Cleaned"
