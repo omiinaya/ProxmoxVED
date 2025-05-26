@@ -1,0 +1,44 @@
+{
+    "name": "AppStore",
+    "slug": "appstore",
+    "categories": [
+        9
+    ],
+    "date_created": "2025-05-25",
+    "type": "ct",
+    "updateable": true,
+    "privileged": true,
+    "config_path": "",
+    "documentation": "https://www.debian.org/doc/",
+    "website": "https://www.debian.org/",
+    "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons/webp/debian.webp",
+    "description": "Debian LXC container with SSH access to the Proxmox host, allowing script execution from the container.",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "ct/appstore.sh",
+            "install_script": "install/appstore-install.sh",
+            "resources": {
+                "cpu": 1,
+                "ram": 512,
+                "hdd": 2,
+                "os": "Debian",
+                "version": "12"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": null,
+        "password": null
+    },
+    "notes": [
+        {
+            "text": "WARNING: The container's SSH key grants unrestricted access to the host's root account. Ensure the container is secure to prevent unauthorized host access.",
+            "type": "warning"
+        },
+        {
+            "text": "SSH key is generated at /root/.ssh/id_rsa in the container. Use 'ssh root@$var_host_ip' to access the host.",
+            "type": "info"
+        }
+    ]
+}
