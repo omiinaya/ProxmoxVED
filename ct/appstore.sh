@@ -55,9 +55,9 @@ pct start $CTID
 msg_ok "Rebooted"
 
 msg_info "Installing Node"
-$STD nvm install 22
-$STD nvm use 22
-$STD node -v
+nvm install 22
+nvm use 22
+node -v
 msg_ok "Installed Node"
 
 msg_ok "Completed Successfully!\n"
