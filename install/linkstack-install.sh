@@ -29,7 +29,7 @@ $STD apt-get install -y \
     php8.2-xml \
     php8.2-bcmath \
     unzip \
-    npm \
+    npm
 $STD a2enmod rewrite
 msg_ok "Installed dependencies"
 
@@ -58,6 +58,7 @@ chmod -R 755 /var/www/html/linkstack
 mkdir -p /var/www/html/linkstack/htdocs/database
 chown www-data:www-data /var/www/html/linkstack/htdocs/database
 chmod 775 /var/www/html/linkstack/htdocs/database
+
 cat <<EOF > /etc/apache2/sites-available/linkstack.conf
 <VirtualHost *:80>
     ServerAdmin webmaster@localhost
