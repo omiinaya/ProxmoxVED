@@ -19,13 +19,8 @@ variables
 color
 catch_errors
 
-# Automatically get host IP from vmbr0
-var_host_ip=$(ip -4 addr show vmbr0 | grep inet | awk '{print $2}' | cut -d'/' -f1)
-if [ -z "$var_host_ip" ]; then
-    msg_error "Failed to detect host IP on vmbr0! Please ensure vmbr0 is configured."
-    exit 1
-fi
-msg_ok "Detected host IP: $var_host_ip"
+interface=$(ip route | grep default | awk '{print $5}')
+var_host_ip=$(ip -4 addr show "$interface" | grep inet | awk '{print $2}' | cut -d'/' -f1)
 
 function update_script() {
     header_info
@@ -43,34 +38,16 @@ function update_script() {
 }
 
 start
-# Pass host IP to container
-export var_host_ip
 build_container
 
-msg_ok $CTID
-
-# Set up SSH key on host
 msg_info "Configuring SSH access for container"
 AUTH_KEYS="/root/.ssh/authorized_keys"
-# Ensure .ssh directory exists on host
 mkdir -p /root/.ssh
 chmod 700 /root/.ssh
-# Retrieve public key from container using pct exec
 PUBLIC_KEY=$(pct exec $CTID -- cat /root/.ssh/id_rsa.pub 2>/dev/null)
-
-# Append public key to authorized_keys without restrictions
 echo "$PUBLIC_KEY" >>"$AUTH_KEYS"
 chmod 600 "$AUTH_KEYS"
 msg_ok "Added container's public key to host's authorized_keys"
-
-# Verify SSH connectivity from container
-msg_info "Testing SSH connectivity"
-if pct exec "$CTID" -- ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@"$var_host_ip" true >/dev/null 2>&1; then
-    msg_ok "SSH access to host configured successfully"
-else
-    msg_error "Failed to configure SSH access to host"
-    exit 1
-fi
 
 msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
