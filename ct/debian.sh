@@ -49,9 +49,6 @@ build_container
 
 msg_ok $CTID
 
-# Ensure container is running
-pct start $CTID
-
 # Set up SSH key on host
 msg_info "Configuring SSH access for container"
 AUTH_KEYS="/root/.ssh/authorized_keys"
