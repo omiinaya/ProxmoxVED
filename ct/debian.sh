@@ -47,8 +47,10 @@ start
 export var_host_ip
 build_container
 
+msg_ok $CTID
+
 # Ensure container is running
-pct start "$CTID" >/dev/null 2>&1
+pct start $CTID
 
 # Set up SSH key on host
 msg_info "Configuring SSH access for container"
@@ -57,7 +59,7 @@ AUTH_KEYS="/root/.ssh/authorized_keys"
 mkdir -p /root/.ssh
 chmod 700 /root/.ssh
 # Retrieve public key from container using pct exec
-PUBLIC_KEY=$(pct exec "$CTID" -- cat /root/.ssh/id_rsa.pub 2>/dev/null)
+PUBLIC_KEY=$(pct exec $CTID -- cat /root/.ssh/id_rsa.pub 2>/dev/null)
 
 # Append public key to authorized_keys without restrictions
 echo "$PUBLIC_KEY" >>"$AUTH_KEYS"
