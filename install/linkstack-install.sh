@@ -45,10 +45,12 @@ ZIP_FILE="/tmp/linkstack.zip"
 
 LINKSTACK_VERSION=$(curl -s https://api.github.com/repos/linkstackorg/linkstack/releases/latest | grep -oP '"tag_name": "\Kv[0-9.]+(?=")' | sed 's/v//' || echo "unknown")
 curl -fsSL -o "$ZIP_FILE" "$ZIP_URL"
-unzip -q "$ZIP_FILE" -d /var/www/html
+unzip -q "$ZIP_FILE" -d /var/www/html/linkstack
 msg_ok "Downloaded LinkStack v${LINKSTACK_VERSION}"
 
 msg_info "Configuring LinkStack"
+mv /var/www/html/linkstack/* /var/www/html/
+rm -rf /var/www/html/linkstack
 chown -R www-data:www-data /var/www/html
 chmod -R 755 /var/www/html
 
