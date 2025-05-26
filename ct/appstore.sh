@@ -49,5 +49,16 @@ echo "$PUBLIC_KEY" >>"$AUTH_KEYS"
 chmod 600 "$AUTH_KEYS"
 msg_ok "Added container's public key to host's authorized_keys"
 
+msg_info "Rebooting"
+pct stop $CTID
+pct start $CTID
+msg_ok "Rebooted"
+
+msg_info "Installing Node"
+$STD nvm install 22
+$STD nvm use 22
+$STD node -v
+msg_ok "Installed Node"
+
 msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
