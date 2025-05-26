@@ -28,8 +28,8 @@ $STD apt-get install -y \
     php8.2-zip \
     php8.2-xml \
     php8.2-bcmath \
-    unzip \
-    npm
+    php8.2-fileinfo \
+    unzip
 msg_ok "Installed dependencies"
 
 msg_info "Adding PHP 8.2 Repository"
@@ -45,27 +45,23 @@ ZIP_FILE="/tmp/linkstack.zip"
 
 LINKSTACK_VERSION=$(curl -s https://api.github.com/repos/linkstackorg/linkstack/releases/latest | grep -oP '"tag_name": "\Kv[0-9.]+(?=")' | sed 's/v//' || echo "unknown")
 curl -fsSL -o "$ZIP_FILE" "$ZIP_URL"
-unzip -q "$ZIP_FILE" -d /var/www/html
-cd /var/www/html/linkstack
-npm install
-npm run prod
+unzip -q "$ZIP_FILE" -d /var/www/html/linkstack
 msg_ok "Downloaded LinkStack v${LINKSTACK_VERSION}"
 
 msg_info "Configuring LinkStack"
 chown -R www-data:www-data /var/www/html/linkstack
 chmod -R 755 /var/www/html/linkstack
 
-mkdir -p /var/www/html/linkstack/htdocs/database
-chown www-data:www-data /var/www/html/linkstack/htdocs/database
-chmod 775 /var/www/html/linkstack/htdocs/database
-
+mkdir -p /var/www/html/linkstack/storage/database
+chown www-data:www-data /var/www/html/linkstack/storage/database
+chmod 775 /var/www/html/linkstack/storage/database
 cat <<EOF > /etc/apache2/sites-available/linkstack.conf
 <VirtualHost *:80>
     ServerAdmin webmaster@localhost
-    DocumentRoot /var/www/html/linkstack/public
+    DocumentRoot /var/www/html/linkstack
     ErrorLog /var/log/apache2/linkstack-error.log
     CustomLog /var/log/apache2/linkstack-access.log combined
-    <Directory /var/www/html/linkstack/public>
+    <Directory /var/www/html/linkstack>
         Options Indexes FollowSymLinks
         AllowOverride All
         Require all granted
