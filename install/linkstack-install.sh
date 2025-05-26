@@ -30,10 +30,10 @@ $STD apt-get install -y \
     php8.2-bcmath \
     unzip \
     npm
-$STD a2enmod rewrite
 msg_ok "Installed dependencies"
 
 msg_info "Adding PHP 8.2 Repository"
+$STD a2enmod rewrite
 curl -sSL https://packages.sury.org/php/apt.gpg -o /etc/apt/trusted.gpg.d/php.gpg
 echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | $STD tee /etc/apt/sources.list.d/php.list
 $STD apt-get update
