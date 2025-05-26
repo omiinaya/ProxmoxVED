@@ -22,6 +22,7 @@ $STD apt-get install -y \
     apache2 \
     php8.2 \
     php8.2-sqlite3 \
+    php8.2-mysql \
     php8.2-gd \
     php8.2-curl \
     php8.2-mbstring \
