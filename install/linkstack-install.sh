@@ -28,7 +28,8 @@ $STD apt-get install -y \
     php8.2-zip \
     php8.2-xml \
     php8.2-bcmath \
-    unzip
+    unzip \
+    npm \
 $STD a2enmod rewrite
 msg_ok "Installed dependencies"
 
@@ -45,6 +46,9 @@ ZIP_FILE="/tmp/linkstack.zip"
 LINKSTACK_VERSION=$(curl -s https://api.github.com/repos/linkstackorg/linkstack/releases/latest | grep -oP '"tag_name": "\Kv[0-9.]+(?=")' | sed 's/v//' || echo "unknown")
 curl -fsSL -o "$ZIP_FILE" "$ZIP_URL"
 unzip -q "$ZIP_FILE" -d /var/www/html
+cd /linkstack
+npm install
+npm run prod
 msg_ok "Downloaded LinkStack v${LINKSTACK_VERSION}"
 
 msg_info "Configuring LinkStack"
