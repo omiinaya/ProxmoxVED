@@ -19,7 +19,7 @@ $STD apt-get install -y \
     ca-certificates \
     lsb-release \
     apt-transport-https \
-    apache2 \
+    apache2
     php8.2 \
     php8.2-sqlite3 \
     php8.2-mysql \
