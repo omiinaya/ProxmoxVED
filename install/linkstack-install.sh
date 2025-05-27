@@ -27,7 +27,6 @@ PHP_APACHE="YES" PHP_VERSION="8.2" PHP_MODULE="sqlite3, mysql, fileinfo" install
 
 msg_info "Installing LinkStack"
 $STD a2enmod rewrite
-$STD apt-get update
 
 ZIP_URL="https://github.com/linkstackorg/linkstack/releases/latest/download/linkstack.zip"
 ZIP_FILE="/tmp/linkstack.zip"
