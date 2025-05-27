@@ -8,7 +8,7 @@
     "type": "ct",
     "updateable": false,
     "privileged": false,
-    "config_path": "",
+    "config_path": "/var/www/html/linkstack/linkstack/.env",
     "interface_port": 80,
     "documentation": "https://docs.linkstack.org/",
     "website": "https://linkstack.org/",
