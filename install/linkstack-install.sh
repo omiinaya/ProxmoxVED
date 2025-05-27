@@ -50,7 +50,6 @@ msg_ok "Downloaded LinkStack v${LINKSTACK_VERSION}"
 
 msg_info "Configuring LinkStack"
 mv /var/www/html/linkstack/linkstack/* /var/www/html/
-rm -rf /var/www/html/linkstack
 chown -R www-data:www-data /var/www/html
 chmod -R 755 /var/www/html
 
