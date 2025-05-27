@@ -34,11 +34,12 @@ $STD apt-get install -y \
 msg_ok "Installed dependencies"
 
 msg_info "Configuring LinkStack"
+$STD a2enmod rewrite
+
 curl -sSL https://packages.sury.org/php/apt.gpg -o /etc/apt/trusted.gpg.d/php.gpg
 echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | $STD tee /etc/apt/sources.list.d/php.list
 
 $STD apt-get update
-$STD a2enmod rewrite
 
 ZIP_URL="https://github.com/linkstackorg/linkstack/releases/latest/download/linkstack.zip"
 ZIP_FILE="/tmp/linkstack.zip"
