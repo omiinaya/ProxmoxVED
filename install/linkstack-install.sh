@@ -43,7 +43,6 @@ $STD apt-get update
 
 ZIP_URL="https://github.com/linkstackorg/linkstack/releases/latest/download/linkstack.zip"
 ZIP_FILE="/tmp/linkstack.zip"
-
 curl -fsSL -o "$ZIP_FILE" "$ZIP_URL"
 unzip -q "$ZIP_FILE" -d /var/www/html/linkstack
 
