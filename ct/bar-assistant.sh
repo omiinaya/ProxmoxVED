@@ -12,8 +12,8 @@ var_tags="${var_tags:-inventory;drinks}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-4}"
-var_os="${var_os:-debian}"
-var_version="${var_version:-12}"
+var_os="${var_os:-ubuntu}"
+var_version="${var_version:-24.10}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
@@ -34,9 +34,9 @@ function update_script() {
     RELEASE_SALTRIM=$(curl -s https://api.github.com/repos/karlomikus/vue-salt-rim/releases/latest | grep "tag_name" | awk '{print substr($2, 3, length($2)-4) }')
 
     if [[ ! -f /opt/${APP}_version.txt ]] || [[ "${RELEASE_BARASSISTANT}" != "$(cat /opt/${APP}_version.txt)" ]]; then
-        msg_info "Stopping Service"
+        msg_info "Stopping nginx"
         systemctl stop nginx
-        msg_ok "Stopped Service"
+        msg_ok "Stopped nginx"
 
         msg_info "Updating ${APP} to v${RELEASE_BARASSISTANT}"
         cd /opt
@@ -44,10 +44,10 @@ function update_script() {
         curl -fsSL "https://github.com/karlomikus/bar-assistant/archive/refs/tags/v${RELEASE_BARASSISTANT}.zip" -o barassistant.zip
         unzip -q barassistant.zip
         mv /opt/bar-assistant-${RELEASE_BARASSISTANT}/ /opt/bar-assistant
-        cp /opt/bar-assistant-backup/.env /opt/bar-assistant/.env
-        cp /opt/bar-assistant-backup/storage/bar-assistant /opt/bar-assistant/storage/bar-assistant
+        cp -r /opt/bar-assistant-backup/.env /opt/bar-assistant/.env
+        cp -r /opt/bar-assistant-backup/storage/bar-assistant /opt/bar-assistant/storage/bar-assistant
         cd /opt/bar-assistant
-        composer install
+        $STD composer install --no-interaction
         $STD php artisan migrate --force
         $STD php artisan storage:link
         $STD php artisan bar:setup-meilisearch
@@ -55,12 +55,13 @@ function update_script() {
         $STD php artisan config:cache
         $STD php artisan route:cache
         $STD php artisan event:cache
+        chown -R www-data:www-data /opt/bar-assistant
         echo "${RELEASE_BARASSISTANT}" >/opt/${APP}_version.txt
         msg_ok "Updated $APP to v${RELEASE_BARASSISTANT}"
 
-        msg_info "Starting Service"
-        systemctl start service nginx
-        msg_ok "Started Service"
+        msg_info "Starting nginx"
+        systemctl start nginx
+        msg_ok "Started nginx"
 
         msg_info "Cleaning up"
         rm -rf /opt/barassistant.zip
@@ -71,9 +72,9 @@ function update_script() {
     fi
 
     if [[ ! -f /opt/vue-salt-rim_version.txt ]] || [[ "${RELEASE_SALTRIM}" != "$(cat /opt/vue-salt-rim_version.txt)" ]]; then
-        msg_info "Stopping Service"
+        msg_info "Stopping nginx"
         systemctl stop nginx
-        msg_ok "Stopped Service"
+        msg_ok "Stopped nginx"
 
         msg_info "Updating Salt Rim to v${RELEASE_SALTRIM}"
         cd /opt
@@ -83,26 +84,28 @@ function update_script() {
         mv /opt/vue-salt-rim-${RELEASE_SALTRIM}/ /opt/vue-salt-rim
         cp /opt/vue-salt-rim-backup/public/config.js /opt/vue-salt-rim/public/config.js
         cd /opt/vue-salt-rim
-        npm run build
+        $STD npm install
+        $STD npm run build
         echo "${RELEASE_SALTRIM}" >/opt/vue-salt-rim_version.txt
         msg_ok "Updated $APP to v${RELEASE_SALTRIM}"
 
-        msg_info "Starting Service"
-        systemctl start service nginx
-        msg_ok "Started Service"
+        msg_info "Starting nginx"
+        systemctl start nginx
+        msg_ok "Started nginx"
 
         msg_info "Cleaning up"
         rm -rf /opt/saltrim.zip
         rm -rf /opt/vue-salt-rim-backup
         msg_ok "Cleaned"
+        msg_ok "Updated"
     else
         msg_ok "No update required. Salt Rim is already at v${RELEASE_SALTRIM}"
     fi
 
     if [[ ! -f /opt/meilisearch_version.txt ]] || [[ "${RELEASE_MEILISEARCH}" != "$(cat /opt/meilisearch_version.txt)" ]]; then
-        msg_info "Stopping Service"
+        msg_info "Stopping Meilisearch"
         systemctl stop meilisearch
-        msg_ok "Stopped Service"
+        msg_ok "Stopped Meilisearch"
 
         msg_info "Updating Meilisearch to ${RELEASE_MEILISEARCH}"
         cd /opt
@@ -110,11 +113,11 @@ function update_script() {
         curl -fsSL https://github.com/meilisearch/meilisearch/releases/latest/download/meilisearch.deb -o meilisearch.deb
         $STD dpkg -i meilisearch.deb
         echo "${RELEASE_MEILISEARCH}" >/opt/meilisearch_version.txt
-        msg_ok "Updated Meilisearch to v${RELEASE_MEILISEARCH}"
+        msg_ok "Updated Meilisearch to ${RELEASE_MEILISEARCH}"
 
-        msg_info "Starting Service"
+        msg_info "Starting Meilisearch"
         systemctl start meilisearch
-        msg_ok "Started Service"
+        msg_ok "Started Meilisearch"
 
         msg_info "Cleaning up"
         rm -rf "/opt/meilisearch.deb"
