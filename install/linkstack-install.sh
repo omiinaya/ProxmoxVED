@@ -53,16 +53,13 @@ msg_info "Configuring LinkStack"
 chown -R www-data:www-data /var/www/html/linkstack
 chmod -R 755 /var/www/html/linkstack
 
-mkdir -p /var/www/html/linkstack/storage/database
-chown www-data:www-data /var/www/html/linkstack/storage/database
-chmod 775 /var/www/html/linkstack/storage/database
 cat <<EOF > /etc/apache2/sites-available/linkstack.conf
 <VirtualHost *:80>
     ServerAdmin webmaster@localhost
-    DocumentRoot /var/www/html/linkstack
+    DocumentRoot /var/www/html/linkstack/linkstack
     ErrorLog /var/log/apache2/linkstack-error.log
     CustomLog /var/log/apache2/linkstack-access.log combined
-    <Directory /var/www/html/linkstack>
+    <Directory /var/www/html/linkstack/linkstack>
         Options Indexes FollowSymLinks
         AllowOverride All
         Require all granted
