@@ -47,6 +47,9 @@ ZIP_FILE="/tmp/linkstack.zip"
 curl -fsSL -o "$ZIP_FILE" "$ZIP_URL"
 unzip -q "$ZIP_FILE" -d /var/www/html/linkstack
 
+chown -R www-data:www-data /var/www/html/linkstack
+chmod -R 755 /var/www/html/linkstack
+
 cat <<EOF > /etc/apache2/sites-available/linkstack.conf
 <VirtualHost *:80>
     ServerAdmin webmaster@localhost
