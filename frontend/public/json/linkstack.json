@@ -33,10 +33,6 @@
     },
     "notes": [
         {
-            "text": "WARNING: Installation downloads a ZIP package from github.com/linkstackorg. Please verify the source before installing.",
-            "type": "warning"
-        },
-        {
             "text": "Complete setup via the web interface at http://<container-ip>/. Check installation logs: `cat ~/linkstack-install.log`",
             "type": "info"
         }
