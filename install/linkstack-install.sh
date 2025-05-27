@@ -31,7 +31,6 @@ install_php
 
 msg_info "Installing LinkStack"
 $STD a2enmod rewrite
-
 ZIP_URL="https://github.com/linkstackorg/linkstack/releases/latest/download/linkstack.zip"
 ZIP_FILE="/tmp/linkstack.zip"
 curl -fsSL -o "$ZIP_FILE" "$ZIP_URL"
