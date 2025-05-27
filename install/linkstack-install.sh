@@ -33,7 +33,7 @@ $STD apt-get install -y \
     unzip
 msg_ok "Installed dependencies"
 
-msg_info "Configuring LinkStack"
+msg_info "Installing LinkStack"
 $STD a2enmod rewrite
 
 curl -sSL https://packages.sury.org/php/apt.gpg -o /etc/apt/trusted.gpg.d/php.gpg
