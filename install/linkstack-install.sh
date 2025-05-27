@@ -20,32 +20,19 @@ $STD apt-get install -y \
     lsb-release \
     apt-transport-https \
     apache2
-    php8.2 \
-    php8.2-sqlite3 \
-    php8.2-mysql \
-    php8.2-gd \
-    php8.2-curl \
-    php8.2-mbstring \
-    php8.2-zip \
-    php8.2-xml \
-    php8.2-bcmath \
-    php8.2-fileinfo \
     unzip
 msg_ok "Installed dependencies"
 
+PHP_APACHE="YES" PHP_VERSION="8.2" PHP_MODULE="sqlite3, mysql, fileinfo" install_php
+
 msg_info "Installing LinkStack"
 $STD a2enmod rewrite
-
-curl -sSL https://packages.sury.org/php/apt.gpg -o /etc/apt/trusted.gpg.d/php.gpg
-echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | $STD tee /etc/apt/sources.list.d/php.list
-
 $STD apt-get update
 
 ZIP_URL="https://github.com/linkstackorg/linkstack/releases/latest/download/linkstack.zip"
 ZIP_FILE="/tmp/linkstack.zip"
 curl -fsSL -o "$ZIP_FILE" "$ZIP_URL"
 unzip -q "$ZIP_FILE" -d /var/www/html/linkstack
-
 chown -R www-data:www-data /var/www/html/linkstack
 chmod -R 755 /var/www/html/linkstack
 

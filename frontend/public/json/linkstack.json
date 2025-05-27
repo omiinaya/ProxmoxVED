@@ -33,6 +33,10 @@
     },
     "notes": [
         {
+            "text": "LinkStack can be updated via the user interface.",
+            "type": "info"
+        },
+        {
             "text": "Complete setup via the web interface at http://<container-ip>/. Check installation logs: `cat ~/linkstack-install.log`",
             "type": "info"
         }
