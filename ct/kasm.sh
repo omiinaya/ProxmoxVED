@@ -34,7 +34,7 @@ function update_script() {
   KASM_VERSION=$(curl -fsSL 'https://www.kasmweb.com/downloads' | grep -o 'https://kasm-static-content.s3.amazonaws.com/kasm_release_[^"]*\.tar\.gz' | head -n 1 | sed -E 's/.*release_(.*)\.tar\.gz/\1/')
   curl -O "https://kasm-static-content.s3.amazonaws.com/kasm_release_${KASM_VERSION}.tar.gz"
   tar -xf "kasm_release_${KASM_VERSION}.tar.gz"
-  mkdir -p /opt/kasm/backups/ (if it not exist)
+  mkdir -p /opt/kasm/backups/
   chown 1000:1000 /opt/kasm/backups/
   chmod 777 /opt/kasm/backups/
   $STD sudo bash kasm_release/upgrade.sh
