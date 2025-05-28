@@ -30,23 +30,6 @@ function update_script() {
     msg_info "Updating $APP LXC"
     $STD apt-get update
     $STD apt-get -y upgrade
-    # Rename existing directory
-    if [[ -d /opt/shlink-old ]]; then
-        $STD rm -rf /opt/shlink-old
-    fi
-    $STD mv /opt/shlink /opt/shlink-old
-    # Download and extract new version
-    RELEASE=$(curl -fsSL https://api.github.com/repos/shlinkio/shlink/releases/latest | jq -r .tag_name | sed 's/^v//')
-    curl -fsSL -o "/tmp/shlink-${RELEASE}-php8.4-dist.zip" "https://github.com/shlinkio/shlink/releases/download/v${RELEASE}/shlink-${RELEASE}-php8.4-dist.zip" | tee -a ~/shlink-install.log
-    $STD unzip -q "/tmp/shlink-${RELEASE}-php8.4-dist.zip" -d /opt/shlink
-    $STD chown -R shlink:shlink /opt/shlink
-    $STD chmod -R u+w /opt/shlink/data
-    # Run update installer
-    su - shlink -c "cd /opt/shlink && php vendor/bin/shlink-installer update --import-from /opt/shlink-old" | tee -a ~/shlink-install.log
-    # Clean up
-    $STD rm -rf /opt/shlink-old
-    $STD rm -f "/tmp/shlink-${RELEASE}-php8.4-dist.zip"
-    $STD systemctl restart shlink
     msg_ok "Updated $APP LXC"
     exit
 }
