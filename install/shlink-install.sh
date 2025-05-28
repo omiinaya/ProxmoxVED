@@ -17,7 +17,8 @@ msg_info "Installing Dependencies"
 $STD apt-get install -y \
     curl \
     unzip \
-    apache2
+    apache2 \
+    jq
 msg_ok "Installed Dependencies"
 
 PHP_VERSION=8.5
