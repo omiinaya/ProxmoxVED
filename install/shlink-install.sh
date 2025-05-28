@@ -13,19 +13,35 @@ setting_up_container
 network_check
 update_os
 
+msg_info "Adding PHP 8.4 Repository"
+$STD apt-get install -y apt-transport-https lsb-release ca-certificates curl
+$STD curl -fsSL https://packages.sury.org/php/apt.gpg -o /etc/apt/trusted.gpg.d/php.gpg
+echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | $STD tee /etc/apt/sources.list.d/php.list
+$STD apt-get update
+msg_ok "Added PHP 8.4 Repository"
+
 msg_info "Installing Dependencies"
 $STD apt-get install -y \
     curl \
     unzip \
     apache2 \
-    jq
+    php8.4 \
+    php8.4-curl \
+    php8.4-pdo \
+    php8.4-intl \
+    php8.4-gd \
+    php8.4-gmp \
+    php8.4-apcu \
+    php8.4-xml \
+    php8.4-sqlite3
+
 msg_ok "Installed Dependencies"
 
-PHP_VERSION=8.4
-PHP_MODULE=curl,pdo,intl,gd,gmp,apcu,xml,sqlite3
-PHP_APACHE=YES
-
-install_php
+# No version above 8.2
+#PHP_VERSION=8.4
+#PHP_MODULE=curl,pdo,intl,gd,gmp,apcu,xml,sqlite3
+#PHP_APACHE=YES
+#install_php
 
 msg_info "Setting Up Non-Root User"
 $STD useradd -m -s /bin/bash shlink
@@ -34,6 +50,9 @@ $STD chown shlink:shlink /opt/shlink
 msg_ok "Set Up Non-Root User"
 
 msg_info "Installing Shlink"
+
+$STD a2enmod rewrite
+
 RELEASE=$(curl -fsSL https://api.github.com/repos/shlinkio/shlink/releases/latest | jq -r .tag_name | sed 's/^v//')
 curl -fsSL -o "/tmp/shlink${RELEASE}_php8.4_dist.zip" "https://github.com/shlinkio/shlink/releases/download/v${RELEASE}/shlink${RELEASE}_php8.4_dist.zip"
 TEMP_DIR="/tmp/shlink_temp"
