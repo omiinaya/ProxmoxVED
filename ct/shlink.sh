@@ -6,7 +6,7 @@ source <(curl -s https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/head
 # Source: https://github.com/shlinkio/shlink
 
 APP="Shlink"
-var_tags="${var_tags:-url-shortener}"
+var_tags="${var_tags:-shortener}"
 var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-10}"
@@ -31,7 +31,7 @@ function update_script() {
     $STD apt-get update
     $STD apt-get -y upgrade
     # Rename existing directory
-    if [[ -d /opt/shlink-old ]]; then
+      if [[ ! -d /var ]]; then
         $STD rm -rf /opt/shlink-old
     fi
     $STD mv /opt/shlink /opt/shlink-old
