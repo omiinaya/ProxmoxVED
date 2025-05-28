@@ -25,6 +25,8 @@ PHP_VERSION=8.5
 PHP_MODULE=curl,pdo,intl,gd,gmp,apcu,xml,sqlite3
 PHP_APACHE=YES
 
+install_php
+
 msg_info "Setting Up Non-Root User"
 $STD useradd -m -s /bin/bash shlink
 $STD mkdir -p /opt/shlink
