@@ -60,7 +60,7 @@ EOF
 $STD chown shlink:shlink /opt/shlink/.env
 $STD chmod 600 /opt/shlink/.env
 # Run installer
-su - shlink -c "cd /opt/shlink && php vendor/bin/shlink-installer install" | tee -a ~/shlink-install.log
+su - shlink -c "cd /opt/shlink && php vendor/bin/shlink-installer install"
 msg_ok "Configured Shlink"
 
 msg_info "Configuring Apache2"
