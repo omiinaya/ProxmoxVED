@@ -21,7 +21,7 @@ $STD apt-get install -y \
     jq
 msg_ok "Installed Dependencies"
 
-PHP_VERSION=8.5
+PHP_VERSION=8.4
 PHP_MODULE=curl,pdo,intl,gd,gmp,apcu,xml,sqlite3
 PHP_APACHE=YES
 
