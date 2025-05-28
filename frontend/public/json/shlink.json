@@ -1,0 +1,40 @@
+{
+    "name": "Shlink",
+    "slug": "shlink",
+    "categories": [
+        9
+    ],
+    "date_created": "2025-05-23",
+    "type": "ct",
+    "updateable": true,
+    "privileged": false,
+    "config_path": "/opt/shlink/.env",
+    "interface_port": 80,
+    "documentation": "https://shlink.io/documentation/",
+    "website": "https://shlink.io/",
+    "logo": "https://raw.githubusercontent.com/selfhst/icons/refs/heads/main/svg/shlink.svg",
+    "description": "Shlink is a self-hosted URL shortener with a REST API, CLI, and web interface, supporting custom short codes, QR codes, and visit tracking.",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "ct/shlink.sh",
+            "resources": {
+                "cpu": 1,
+                "ram": 2048,
+                "hdd": 10,
+                "os": "Debian",
+                "version": "12"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": null,
+        "password": null
+    },
+    "notes": [
+        {
+            "text": "Copy the API key from ~/shlink-install.log for API access. Configure your domain in the web interface (http://<container-ip>) or edit /opt/shlink/.env. Check logs: `cat ~/shlink-install.log` or `journalctl -eu shlink`.",
+            "type": "info"
+        }
+    ]
+}
