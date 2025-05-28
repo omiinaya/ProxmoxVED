@@ -32,10 +32,18 @@ $STD chown shlink:shlink /opt/shlink
 msg_ok "Set Up Non-Root User"
 
 msg_info "Installing Shlink"
-$STD a2enmod rewrite
 RELEASE=$(curl -fsSL https://api.github.com/repos/shlinkio/shlink/releases/latest | jq -r .tag_name | sed 's/^v//')
-curl -fsSL -o "/tmp/shlink${RELEASE}_php8.4_dist.zip" "https://github.com/shlinkio/shlink/releases/download/v${RELEASE}/shlink${RELEASE}_php8.4_dist.zip"
-$STD unzip -q "/tmp/shlink${RELEASE}_php8.4_dist.zip" -d /opt/shlink
+curl -fsSL -o "/tmp/shlink-${RELEASE}-php8.4-dist.zip" "https://github.com/shlinkio/shlink/releases/download/v${RELEASE}/shlink-${RELEASE}-php8.4-dist.zip" | tee -a ~/shlink-install.log
+TEMP_DIR="/tmp/shlink_temp"
+$STD mkdir -p "$TEMP_DIR"
+$STD unzip -q "/tmp/shlink-${RELEASE}-php8.4-dist.zip" -d "$TEMP_DIR"
+# Move contents of nested directory to /opt/shlink
+EXTRACTED_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "shlink*_php8.4_dist" | head -n 1)
+if [[ -z "$EXTRACTED_DIR" ]]; then
+    msg_error "Failed to find extracted Shlink directory!" | tee -a ~/shlink-install.log
+    exit 1
+fi
+$STD mv "$EXTRACTED_DIR"/* /opt/shlink
 $STD chown -R shlink:shlink /opt/shlink
 $STD chmod -R u+w /opt/shlink/data
 msg_ok "Installed Shlink"
@@ -97,7 +105,8 @@ motd_ssh
 customize
 
 msg_info "Cleaning up"
-$STD rm -f "/tmp/shlink${RELEASE}_php8.4_dist.zip"
+$STD rm -rf "$TEMP_DIR"
+$STD rm -f "/tmp/shlink-${RELEASE}-php8.4-dist.zip"
 $STD apt-get -y autoremove
 $STD apt-get -y autoclean
 msg_ok "Cleaned"
