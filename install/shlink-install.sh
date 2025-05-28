@@ -33,10 +33,10 @@ msg_ok "Set Up Non-Root User"
 
 msg_info "Installing Shlink"
 RELEASE=$(curl -fsSL https://api.github.com/repos/shlinkio/shlink/releases/latest | jq -r .tag_name | sed 's/^v//')
-curl -fsSL -o "/tmp/shlink-${RELEASE}-php8.4-dist.zip" "https://github.com/shlinkio/shlink/releases/download/v${RELEASE}/shlink-${RELEASE}-php8.4-dist.zip"
+curl -fsSL -o "/tmp/shlink${RELEASE}_php8.4_dist.zip" "https://github.com/shlinkio/shlink/releases/download/v${RELEASE}/shlink${RELEASE}_php8.4_dist.zip"
 TEMP_DIR="/tmp/shlink_temp"
 $STD mkdir -p "$TEMP_DIR"
-$STD unzip -q "/tmp/shlink-${RELEASE}-php8.4-dist.zip" -d "$TEMP_DIR"
+$STD unzip -q "/tmp/shlink${RELEASE}_php8.4_dist.zip" -d "$TEMP_DIR"
 # Move contents of nested directory to /opt/shlink
 EXTRACTED_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "shlink*_php8.4_dist" | head -n 1)
 if [[ -z "$EXTRACTED_DIR" ]]; then
