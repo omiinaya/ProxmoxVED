@@ -1,6 +1,6 @@
 <div align="center">
   <a href="#">
-    <img src="https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/images/logo.png" height="100px" />
+    <img src="https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/heads/testing/misc/images/logo.png" height="100px" />
  </a>
 </div>
 <h1 align="center"></h1>
@@ -125,7 +125,7 @@
 
 - #### ✨ New Features
 
-  
+
   - [core] install core deps (debian / ubuntu) [@MickLesk](https://github.com/MickLesk) ([#3366](https://github.com/community-scripts/ProxmoxVE/pull/3366))
 
 - #### 💾 Core
