@@ -18,7 +18,7 @@ echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt
 apt-get update || { msg_error "apt-get update failed"; exit 1; }
 
 msg_info "Installing dependencies (Apache, PHP 8.4, MySQL client, unzip, curl)"
-apt-get install -y apache2 php8.4 php8.4-cli php8.4-fpm php8.4-json php8.4-curl php8.4-pdo php8.4-intl php8.4-gd php8.4-gmp php8.4-apcu php8.4-xml php8.4-mysql unzip curl mariadb-client || { msg_error "Failed to install dependencies"; exit 1; }
+apt-get install -y apache2 php8.4 php8.4-cli php8.4-fpm php8.4-curl php8.4-pdo php8.4-intl php8.4-gd php8.4-gmp php8.4-apcu php8.4-xml php8.4-mysql unzip curl mariadb-client || { msg_error "Failed to install dependencies"; exit 1; }
 
 msg_info "Downloading Shlink distributable"
 cd /opt
