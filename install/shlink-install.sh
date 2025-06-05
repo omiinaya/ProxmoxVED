@@ -55,8 +55,8 @@ cat <<EOF >/etc/apache2/sites-available/shlink.conf
         AllowOverride all
         Require all granted
     </Directory>
-    ErrorLog \\${APACHE_LOG_DIR}/shlink_error.log
-    CustomLog \\${APACHE_LOG_DIR}/shlink_access.log combined
+    ErrorLog ${APACHE_LOG_DIR:-/var/log/apache2}/shlink_error.log
+    CustomLog ${APACHE_LOG_DIR:-/var/log/apache2}/shlink_access.log combined
 </VirtualHost>
 EOF
 
