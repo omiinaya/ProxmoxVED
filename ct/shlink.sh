@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Shlink LXC creation script for Proxmox community-scripts
+source <(curl -s https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/heads/testing/misc/build.func)
+# Copyright (c) 2025 community-scripts ORG
 # Author: Omar Minaya
 # License: MIT
 
