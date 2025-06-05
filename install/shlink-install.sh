@@ -68,11 +68,8 @@ systemctl reload apache2
 msg_info "Configuring MySQL database credentials (using defaults)"
 SHLINK_DB_NAME="shlinkdb"
 SHLINK_DB_USER="shlinkuser"
-SHLINK_DB_PASSWORD="$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)"
-# Fallback: if password generation fails, use a default
-if [[ -z "$SHLINK_DB_PASSWORD" ]]; then
-    SHLINK_DB_PASSWORD="shlinkdefaultpass"
-fi
+# Try urandom, fallback to date/md5sum if it fails
+SHLINK_DB_PASSWORD="$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32)"
 SHLINK_DB_HOST="localhost"
 
 # Store credentials in ~/shlink.creds
