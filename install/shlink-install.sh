@@ -98,6 +98,10 @@ EOF
 chown www-data:www-data /opt/shlink/.env
 chmod 600 /opt/shlink/.env
 
+# Ensure all permissions are correct before running installer
+chown -R www-data:www-data /opt/shlink
+chmod -R 775 /opt/shlink/data
+
 msg_info "Running Shlink installer (interactive)"
 sudo -u www-data php /opt/shlink/vendor/bin/shlink-installer install
 msg_ok "Shlink installation complete. Access via http://<container-ip>"
