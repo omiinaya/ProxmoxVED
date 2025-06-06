@@ -11,7 +11,7 @@
     ],
     "date_created": "2025-06-06",
     "updateable": true,
-    "privileged": false,
+    "privileged": true,
     "interface_port": 80,
     "config_path": "/opt/fogproject-stable/.fogsettings",
     "install_methods": [
