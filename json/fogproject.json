@@ -1,0 +1,38 @@
+{
+    "name": "FOGProject",
+    "slug": "fogproject",
+    "type": "ct",
+    "logo": "https://raw.githubusercontent.com/FOGProject/fogproject/dev-branch/packages/web/public/fog-logo.png",
+    "description": "Open-source computer cloning, imaging, and management solution.",
+    "website": "https://fogproject.org/",
+    "documentation": "https://docs.fogproject.org/",
+    "categories": [
+        9
+    ],
+    "date_created": "2025-06-06",
+    "updateable": true,
+    "privileged": false,
+    "interface_port": 80,
+    "config_path": "/opt/fogproject-stable/.fogsettings",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "install/fogproject-install.sh",
+            "resources": {
+                "cpu": 2,
+                "ram": 2048,
+                "hdd": 16,
+                "os": "debian",
+                "version": "12"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": null,
+        "password": null
+    },
+    "notes": [
+        "FOG installer will prompt for configuration options.",
+        "For advanced options, see https://docs.fogproject.org/ and https://github.com/FOGProject/fogproject#readme"
+    ]
+}
