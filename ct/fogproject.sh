@@ -6,7 +6,7 @@ source <(curl -s https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/head
 # Source: https://fogproject.org/
 
 APP="FOGProject"
-var_tags="${var_tags:-imaging;deployment}"
+var_tags="${var_tags:-imaging}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-16}"
