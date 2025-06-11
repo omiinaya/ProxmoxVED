@@ -30,7 +30,7 @@ function update_script() {
   msg_info "Updating $APP LXC"
 
   RELEASE=$(curl -fsSL https://api.github.com/repos/ShaneIsrael/fireshare/releases/latest | jq -r .tag_name)
-  if [[ ! -f /opt/${APP}_version.txt ]] || [[ "${RELEASE}" != "$(cat /opt/${APP}_version.txt)" ]]; then
+  if [[ ! -f "/opt/${APP}_version.txt" ]] || [[ "${RELEASE}" != "$(cat /opt/${APP}_version.txt)" ]]; then
     msg_info "Updating ${APP} to ${RELEASE}"
 
     # Stop services
@@ -46,7 +46,7 @@ function update_script() {
     tar -xf "fireshare-${RELEASE}.tar.gz"
 
     # Update application
-    cp -r "fireshare-${RELEASE#v}"/* /opt/fireshare/
+    cp -r "fireshare-${RELEASE}"/* /opt/fireshare/
     cd /opt/fireshare
 
     # Install dependencies and build
@@ -61,10 +61,10 @@ function update_script() {
     systemctl start fireshare-frontend
 
     # Cleanup
-    rm -rf /tmp/fireshare-${RELEASE}.tar.gz /tmp/fireshare-${RELEASE#v}
+    rm -rf "/tmp/fireshare-${RELEASE}.tar.gz /tmp/fireshare-${RELEASE}"
     rm -rf /opt/fireshare-backup
 
-    echo "${RELEASE}" >/opt/${APP}_version.txt
+    echo "${RELEASE}" >"/opt/${APP}_version.txt"
     msg_ok "Updated ${APP} to ${RELEASE}"
   else
     msg_ok "No update required. ${APP} is already at ${RELEASE}"
