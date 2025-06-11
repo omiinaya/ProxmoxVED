@@ -1,0 +1,48 @@
+{
+    "name": "Fireshare",
+    "slug": "fireshare",
+    "categories": [
+        9
+    ],
+    "date_created": "2025-01-11",
+    "type": "ct",
+    "updateable": true,
+    "privileged": true,
+    "config_path": "",
+    "interface_port": 3000,
+    "documentation": "https://github.com/ShaneIsrael/fireshare",
+    "website": "https://github.com/ShaneIsrael/fireshare",
+    "logo": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/fireshare.png",
+    "description": "Fireshare is a self-hosted media sharing platform that allows you to share your videos, game clips, or other media via unique links with enhanced security and scalability.",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "ct/fireshare.sh",
+            "resources": {
+                "cpu": 2,
+                "ram": 2048,
+                "hdd": 20,
+                "os": "Debian",
+                "version": "12"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": "admin",
+        "password": "admin"
+    },
+    "notes": [
+        {
+            "text": "Default login credentials are admin/admin. Please change these after first login.",
+            "type": "warning"
+        },
+        {
+            "text": "Place your video files in /opt/fireshare/videos directory and they will be automatically scanned.",
+            "type": "info"
+        },
+        {
+            "text": "The application serves videos directly, so ensure your upload speed can handle the file sizes you plan to share.",
+            "type": "info"
+        }
+    ]
+}
