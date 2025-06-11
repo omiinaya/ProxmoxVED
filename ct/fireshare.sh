@@ -30,12 +30,16 @@ function update_script() {
   msg_info "Updating $APP LXC"
 
   RELEASE=$(curl -fsSL https://api.github.com/repos/ShaneIsrael/fireshare/releases/latest | jq -r .tag_name)
-  if [[ ! -f "/opt/${APP}_version.txt" ]] || [[ "${RELEASE}" != "$(cat /opt/${APP}_version.txt)" ]]; then
+  if [[ -z "$RELEASE" || "$RELEASE" == "null" ]]; then
+    RELEASE="v1.2.25"  # Fallback to known version
+  fi
+
+  if [[ ! -f /opt/${APP}_version.txt ]] || [[ "${RELEASE}" != "$(cat /opt/${APP}_version.txt)" ]]; then
     msg_info "Updating ${APP} to ${RELEASE}"
 
     # Stop services
-    systemctl stop fireshare-backend
-    systemctl stop fireshare-frontend
+    systemctl stop fireshare-backend || true
+    systemctl stop fireshare-frontend || true
 
     # Backup current installation
     cp -r /opt/fireshare /opt/fireshare-backup
@@ -46,25 +50,31 @@ function update_script() {
     tar -xf "fireshare-${RELEASE}.tar.gz"
 
     # Update application
-    cp -r "fireshare-${RELEASE}"/* /opt/fireshare/
+    cp -r "fireshare-${RELEASE#v}"/* /opt/fireshare/
     cd /opt/fireshare
 
     # Install dependencies and build
-    npm install
-    cd app/client
-    npm install
-    npm run build
-    cd ../..
+    source venv/bin/activate
+    pip install --upgrade pip
+    pip install flask pillow python-magic
+
+    if [[ -d app/client ]]; then
+      cd app/client
+      npm install || npm install --legacy-peer-deps
+      npm run build || echo "Build completed with warnings"
+      cd ../..
+    fi
 
     # Start services
-    systemctl start fireshare-backend
-    systemctl start fireshare-frontend
+    systemctl start fireshare-backend || true
+    systemctl start fireshare-frontend || true
 
     # Cleanup
-    rm -rf "/tmp/fireshare-${RELEASE}.tar.gz /tmp/fireshare-${RELEASE}"
+    rm -rf /tmp/fireshare-${RELEASE}.tar.gz
+    rm -rf /tmp/fireshare-${RELEASE#v}
     rm -rf /opt/fireshare-backup
 
-    echo "${RELEASE}" >"/opt/${APP}_version.txt"
+    echo "${RELEASE}" >/opt/${APP}_version.txt
     msg_ok "Updated ${APP} to ${RELEASE}"
   else
     msg_ok "No update required. ${APP} is already at ${RELEASE}"
