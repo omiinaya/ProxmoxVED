@@ -47,7 +47,7 @@ function update_script() {
     tar -xf "fireshare-${RELEASE}.tar.gz"
 
     # Update application
-    cp -r "fireshare-${RELEASE#v}"/* /opt/fireshare/
+    cp -r "fireshare-${RELEASE}"/* /opt/fireshare/
     cd /opt/fireshare
 
     # Install dependencies and build
@@ -67,7 +67,7 @@ function update_script() {
 
     # Cleanup
     rm -rf /tmp/fireshare-${RELEASE}.tar.gz
-    rm -rf /tmp/fireshare-${RELEASE#v}
+    rm -rf /tmp/fireshare-${RELEASE}
     rm -rf /opt/fireshare-backup
 
     echo "${RELEASE}" >/opt/${APP}_version.txt

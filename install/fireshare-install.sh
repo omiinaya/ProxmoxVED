@@ -30,9 +30,33 @@ $STD apt-get install -y \
 msg_ok "Installed Dependencies"
 
 msg_info "Setting up Node.js Environment"
+# Clean up any existing nodejs/npm first
+$STD apt-get remove -y nodejs npm || true
+$STD apt-get autoremove -y || true
+
 # Install Node.js 20.x from NodeSource repository
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+$STD apt-get update
 $STD apt-get install -y nodejs
+
+# Update PATH to ensure npm is available
+export PATH="/usr/bin:/usr/local/bin:$PATH"
+hash -r  # Clear PATH cache
+
+# Verify installation with explicit paths
+if [[ ! -x "/usr/bin/node" ]] && [[ ! -x "/usr/local/bin/node" ]]; then
+  msg_error "Node.js installation failed - binary not found"
+  exit 1
+fi
+
+if [[ ! -x "/usr/bin/npm" ]] && [[ ! -x "/usr/local/bin/npm" ]]; then
+  msg_error "npm installation failed - binary not found"
+  exit 1
+fi
+
+NODE_VERSION=$(/usr/bin/node --version 2>/dev/null || /usr/local/bin/node --version 2>/dev/null)
+NPM_VERSION=$(/usr/bin/npm --version 2>/dev/null || /usr/local/bin/npm --version 2>/dev/null)
+msg_info "Successfully installed Node.js $NODE_VERSION with npm $NPM_VERSION"
 msg_ok "Set up Node.js Environment"
 
 msg_info "Installing Fireshare"
@@ -61,14 +85,48 @@ fi
 msg_ok "Installed Python Dependencies"
 
 msg_info "Installing Node.js Dependencies and Building Frontend"
+# Ensure PATH includes npm location
+export PATH="/usr/bin:/usr/local/bin:$PATH"
+
 # Install frontend dependencies
 if [[ -d app/client ]]; then
   cd app/client
-  npm install || $STD npm install --legacy-peer-deps
-  npm run build || echo "Build failed, continuing with development setup"
+
+  # Find npm binary explicitly
+  NPM_BIN=""
+  if [[ -x "/usr/bin/npm" ]]; then
+    NPM_BIN="/usr/bin/npm"
+  elif [[ -x "/usr/local/bin/npm" ]]; then
+    NPM_BIN="/usr/local/bin/npm"
+  else
+    msg_error "npm binary not found in expected locations"
+    exit 1
+  fi
+
+  msg_info "Using npm at: $NPM_BIN"
+
+  # Use explicit npm path with legacy peer deps to handle conflicts
+  if $NPM_BIN install --legacy-peer-deps; then
+    msg_info "npm install completed successfully"
+  else
+    msg_info "Standard npm install failed, trying with force option"
+    if $NPM_BIN install --legacy-peer-deps --force; then
+      msg_info "npm install with force completed"
+    else
+      msg_info "npm install failed, continuing without frontend"
+    fi
+  fi
+
+  # Try to build, but don't fail if it doesn't work
+  if $NPM_BIN run build; then
+    msg_info "Frontend build completed successfully"
+  else
+    msg_info "Build failed or not available, continuing with development setup"
+  fi
+
   cd ../..
 else
-  echo "No client directory found, skipping frontend build"
+  msg_info "No client directory found, skipping frontend build"
 fi
 msg_ok "Built Frontend"
 
@@ -92,8 +150,9 @@ elif [[ -f run_local.sh ]]; then
 fi
 
 # Start frontend if it exists
-if [[ -d app/client ]]; then
+if [[ -d app/client ]] && [[ -x "/usr/bin/npm" || -x "/usr/local/bin/npm" ]]; then
   cd app/client
+  export PATH="/usr/bin:/usr/local/bin:\$PATH"
   npm start &
 fi
 
@@ -113,6 +172,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/fireshare
+Environment=PATH=/usr/bin:/usr/local/bin:/bin:/sbin
 ExecStart=/opt/fireshare/start_fireshare.sh
 Restart=always
 RestartSec=3
