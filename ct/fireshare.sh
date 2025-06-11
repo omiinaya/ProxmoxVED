@@ -35,11 +35,8 @@ function update_script() {
   fi
 
   if [[ ! -f /opt/${APP}_version.txt ]] || [[ "${RELEASE}" != "$(cat /opt/${APP}_version.txt)" ]]; then
-    msg_info "Updating ${APP} to ${RELEASE}"
-
-    # Stop services
-    systemctl stop fireshare-backend || true
-    systemctl stop fireshare-frontend || true
+    msg_info "Updating ${APP} to ${RELEASE}"    # Stop services
+    systemctl stop fireshare || true
 
     # Backup current installation
     cp -r /opt/fireshare /opt/fireshare-backup
@@ -66,8 +63,7 @@ function update_script() {
     fi
 
     # Start services
-    systemctl start fireshare-backend || true
-    systemctl start fireshare-frontend || true
+    systemctl start fireshare || true
 
     # Cleanup
     rm -rf /tmp/fireshare-${RELEASE}.tar.gz

@@ -21,8 +21,6 @@ $STD apt-get install -y \
   python3 \
   python3-pip \
   python3-venv \
-  nodejs \
-  npm \
   git \
   gnupg2 \
   ca-certificates \
@@ -32,8 +30,9 @@ $STD apt-get install -y \
 msg_ok "Installed Dependencies"
 
 msg_info "Setting up Node.js Environment"
-# Node.js is already installed from dependencies
-$STD npm install -g npm@latest
+# Install Node.js 20.x from NodeSource repository
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+$STD apt-get install -y nodejs
 msg_ok "Set up Node.js Environment"
 
 msg_info "Installing Fireshare"
@@ -49,17 +48,16 @@ cd fireshare
 msg_ok "Downloaded Fireshare"
 
 msg_info "Installing Python Dependencies"
-# Check if requirements.txt exists, if not create a minimal one
-if [[ ! -f requirements.txt ]]; then
-  cat <<EOF >requirements.txt
-Flask>=2.0.0
-Pillow
-python-magic
-EOF
-fi
 python3 -m venv venv
 source venv/bin/activate
+# Install basic requirements first
+pip install --upgrade pip
 pip install flask pillow python-magic
+
+# If there's a requirements.txt, install from it
+if [[ -f requirements.txt ]]; then
+  pip install -r requirements.txt || echo "Some requirements failed to install, continuing..."
+fi
 msg_ok "Installed Python Dependencies"
 
 msg_info "Installing Node.js Dependencies and Building Frontend"
@@ -75,52 +73,47 @@ fi
 msg_ok "Built Frontend"
 
 msg_info "Setting up Application"
-# Create basic startup script since this is a simpler app
-cat <<EOF >/opt/fireshare/run_local.sh
+# Make sure the run_local.sh script is executable
+if [[ -f run_local.sh ]]; then
+  chmod +x run_local.sh
+fi
+
+# Create a simplified startup script
+cat <<EOF >/opt/fireshare/start_fireshare.sh
 #!/bin/bash
 cd /opt/fireshare
-python3 -m venv venv
 source venv/bin/activate
-python3 app/server/main.py &
-cd app/client
-npm start &
+
+# Start backend
+if [[ -f app/server/main.py ]]; then
+  python3 app/server/main.py &
+elif [[ -f run_local.sh ]]; then
+  ./run_local.sh &
+fi
+
+# Start frontend if it exists
+if [[ -d app/client ]]; then
+  cd app/client
+  npm start &
+fi
+
 wait
 EOF
-chmod +x /opt/fireshare/run_local.sh
+chmod +x /opt/fireshare/start_fireshare.sh
 msg_ok "Set up Application"
 
 msg_info "Creating Service Files"
-# Backend service
-cat <<EOF >/etc/systemd/system/fireshare-backend.service
+# Single service to run both backend and frontend
+cat <<EOF >/etc/systemd/system/fireshare.service
 [Unit]
-Description=Fireshare Backend
+Description=Fireshare Application
 After=network.target
 
 [Service]
 Type=simple
 User=root
 WorkingDirectory=/opt/fireshare
-Environment=PYTHONPATH=/opt/fireshare
-ExecStart=/opt/fireshare/venv/bin/python app/server/main.py
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Frontend service
-cat <<EOF >/etc/systemd/system/fireshare-frontend.service
-[Unit]
-Description=Fireshare Frontend
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/fireshare/app/client
-ExecStart=/usr/bin/npm start
-Environment=PORT=3000
+ExecStart=/opt/fireshare/start_fireshare.sh
 Restart=always
 RestartSec=3
 
@@ -129,8 +122,7 @@ WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
-systemctl enable --now fireshare-backend
-systemctl enable --now fireshare-frontend
+systemctl enable --now fireshare
 msg_ok "Created and Started Services"
 
 msg_info "Creating Data Directories"
