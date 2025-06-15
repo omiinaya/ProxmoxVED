@@ -32,6 +32,9 @@ mkdir -p data
 mkdir -p data/output
 mkdir -p data/temp
 mkdir -p data/uploads
+chown -R root:root /opt/convertx
+chmod -R 755 /opt/convertx
+chmod -R 777 /opt/convertx/data
 bun install
 
 JWT_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)
@@ -50,10 +53,12 @@ After=network.target
 
 [Service]
 Type=exec
+User=root
 WorkingDirectory=/opt/convertx
 EnvironmentFile=/opt/convertx/.env
-ExecStart=/root/.bun/bin/bun dev
+ExecStart=/root/.bun/bin/bun start
 Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
