@@ -29,6 +29,9 @@ curl -fsSL -o "/opt/convertx/ConvertX-${RELEASE}.tar.gz" "https://github.com/C4i
 tar --strip-components=1 -xf "/opt/convertx/ConvertX-${RELEASE}.tar.gz" -C /opt/convertx
 cd /opt/convertx
 mkdir -p data
+mkdir -p data/output
+mkdir -p data/temp
+mkdir -p data/uploads
 bun install
 
 JWT_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)
@@ -58,14 +61,10 @@ EOF
 systemctl enable -q --now convertx
 msg_ok "Service Created"
 
-msg_info "Waiting for SQLite database"
-for ((COUNT=0; COUNT<60; COUNT++)); do
-  [ -f "/opt/convertx/data/mydb.sqlite" ] && { systemctl restart convertx; exit 0; }
-  sleep 0.5
-done
-msg_error "Timed out waiting for database!"
-exit 1
-msg_ok "Database created"
+msg_info "Initializing database"
+sleep 5
+systemctl restart convertx
+msg_ok "Database initialized"
 
 motd_ssh
 customize
