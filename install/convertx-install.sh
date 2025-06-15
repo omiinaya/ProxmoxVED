@@ -33,9 +33,26 @@ mkdir -p data/output
 mkdir -p data/temp
 mkdir -p data/uploads
 chown -R root:root /opt/convertx
-chmod -R 755 /opt/convertx
-chmod -R 777 /opt/convertx/data
+chmod -R 777 /opt/convertx
+#chmod -R 777 /opt/convertx/data
 bun install
+
+# Create startup script that ensures directories exist
+cat <<EOF >/opt/convertx/start-convertx.sh
+#!/bin/bash
+cd /opt/convertx
+
+# Ensure base directories exist
+mkdir -p data/output data/temp data/uploads
+
+# Create some common subdirectory structures that ConvertX might need
+mkdir -p data/output/{1..10}/{1..10}
+chmod -R 777 data/
+
+# Start the application
+exec /root/.bun/bin/bun run dev
+EOF
+chmod +x /opt/convertx/start-convertx.sh
 
 JWT_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)
 cat <<EOF >/opt/convertx/.env
@@ -56,7 +73,7 @@ Type=exec
 User=root
 WorkingDirectory=/opt/convertx
 EnvironmentFile=/opt/convertx/.env
-ExecStart=/root/.bun/bin/bun run dev
+ExecStart=/opt/convertx/start-convertx.sh
 Restart=always
 RestartSec=3
 
