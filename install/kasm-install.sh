@@ -19,13 +19,7 @@ curl -fsSL -o "/opt/kasm_release_${KASM_VERSION}.tar.gz" "https://kasm-static-co
 cd /opt
 tar -xf "kasm_release_${KASM_VERSION}.tar.gz"
 chmod +x /opt/kasm_release/install.sh
-
-if [ "$STD" = "silent" ]; then
-  printf 'y\ny\ny\n4\n' | bash /opt/kasm_release/install.sh >>~/kasm-install.output
-else
-  printf 'y\ny\ny\n4\n' | bash /opt/kasm_release/install.sh | tee -a ~/kasm-install.output
-fi
-
+printf 'y\ny\ny\n4\n' | bash /opt/kasm_release/install.sh > ~/kasm-install.output 2>&1
 cat ~/kasm-install.output | grep -A 20 -i "credentials\|login\|password\|admin" | sed '1i Kasm-Workspaces-Credentials' >~/kasm.creds
 msg_ok "Installed Kasm Workspaces"
 
