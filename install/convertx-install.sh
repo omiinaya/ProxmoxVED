@@ -56,7 +56,7 @@ Type=exec
 User=root
 WorkingDirectory=/opt/convertx
 EnvironmentFile=/opt/convertx/.env
-ExecStart=/root/.bun/bin/bun start
+ExecStart=/root/.bun/bin/bun run dev
 Restart=always
 RestartSec=3
 
