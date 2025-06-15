@@ -7,7 +7,7 @@
     "date_created": "2025-05-22",
     "type": "ct",
     "updateable": true,
-    "privileged": false,
+    "privileged": true,
     "config_path": "/opt/convertx/.env",
     "interface_port": 3000,
     "documentation": "https://github.com/C4illin/ConvertX",
