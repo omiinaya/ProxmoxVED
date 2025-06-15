@@ -20,18 +20,16 @@ cd /opt
 tar -xf "kasm_release_${KASM_VERSION}.tar.gz"
 chmod +x /opt/kasm_release/install.sh
 printf 'y\ny\ny\n4\n' | bash /opt/kasm_release/install.sh > ~/kasm-install.output 2>&1
-grep -A 20 -i "credentials\|login\|password\|admin" ~/kasm-install.output | sed '1i Kasm-Workspaces-Credentials' >~/kasm.creds
+if [[ -f ~/kasm-install.output ]]; then
+  grep -A 20 -i "credentials\|login\|password\|admin" ~/kasm-install.output | sed '1i Kasm-Workspaces-Credentials' >~/kasm.creds
+fi
 msg_ok "Installed Kasm Workspaces"
 
 motd_ssh
 customize
 
 msg_info "Displaying Kasm Credentials"
-if [ -f ~/kasm.creds ]; then
-  cat ~/kasm.creds
-else
-  echo "Credentials file not found. Check ~/kasm-install.output for login information."
-fi
+cat ~/kasm.creds
 
 msg_info "Cleaning up"
 $STD rm -f /opt/kasm_release_${KASM_VERSION}.tar.gz
