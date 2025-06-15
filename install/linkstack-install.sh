@@ -23,11 +23,7 @@ $STD apt-get install -y \
     unzip
 msg_ok "Installed dependencies"
 
-PHP_VERSION=8.2
-PHP_MODULE=sqlite3,mysql,gd,curl,mbstring,zip,xml,bcmath,fileinfo
-PHP_APACHE=YES
-
-install_php
+PHP_VERSION="8.2" PHP_MODULE="sqlite3, mysql, fileinfo" PHP_APACHE="YES" install_php
 
 msg_info "Installing LinkStack"
 $STD a2enmod rewrite
