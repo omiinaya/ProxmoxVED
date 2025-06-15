@@ -19,10 +19,14 @@ curl -fsSL -o "/opt/kasm_release_${KASM_VERSION}.tar.gz" "https://kasm-static-co
 cd /opt
 tar -xf "kasm_release_${KASM_VERSION}.tar.gz"
 chmod +x /opt/kasm_release/install.sh
-printf 'y\ny\ny\n4\n' | bash /opt/kasm_release/install.sh > ~/kasm-install.output 2>&1
-if [[ -f ~/kasm-install.output ]]; then
-  grep -A 20 -i "credentials\|login\|password\|admin" ~/kasm-install.output | sed '1i Kasm-Workspaces-Credentials' >~/kasm.creds
+
+if [ "$STD" = "silent" ]; then
+  printf 'y\ny\ny\n4\n' | bash /opt/kasm_release/install.sh >>~/kasm-install.output
+else
+  printf 'y\ny\ny\n4\n' | bash /opt/kasm_release/install.sh | tee -a ~/kasm-install.output
 fi
+
+cat ~/kasm-install.output | grep -A 20 -i "credentials\|login\|password\|admin" | sed '1i Kasm-Workspaces-Credentials' >~/kasm.creds
 msg_ok "Installed Kasm Workspaces"
 
 motd_ssh
@@ -32,7 +36,8 @@ msg_info "Displaying Kasm Credentials"
 cat ~/kasm.creds
 
 msg_info "Cleaning up"
-$STD rm -f /opt/kasm_release_${KASM_VERSION}.tar.gz
+rm -f /opt/kasm_release_${KASM_VERSION}.tar.gz
+rm -f ~/kasm-install.output
 $STD apt-get -y autoremove
 $STD apt-get -y autoclean
 msg_ok "Cleaned"
