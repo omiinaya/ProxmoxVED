@@ -33,9 +33,10 @@ mkdir -p data/output
 mkdir -p data/temp
 mkdir -p data/uploads
 chown -R root:root /opt/convertx
-chmod -R 777 /opt/convertx
-#chmod -R 777 /opt/convertx/data
+chmod -R 755 /opt/convertx
+chmod -R 777 /opt/convertx/data
 bun install
+bun run build
 
 # Create startup script that ensures directories exist
 cat <<EOF >/opt/convertx/start-convertx.sh
@@ -46,10 +47,14 @@ cd /opt/convertx
 mkdir -p data/output data/temp data/uploads
 
 # Create some common subdirectory structures that ConvertX might need
-mkdir -p data/output/{1..10}/{1..10}
+for i in {1..20}; do
+  for j in {1..20}; do
+    mkdir -p "data/output/\$i/\$j"
+  done
+done
 chmod -R 777 data/
 
-# Start the application
+# Start the application in production mode
 exec /root/.bun/bin/bun run dev
 EOF
 chmod +x /opt/convertx/start-convertx.sh
