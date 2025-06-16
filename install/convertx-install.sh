@@ -32,32 +32,8 @@ mkdir -p data
 mkdir -p data/output
 mkdir -p data/temp
 mkdir -p data/uploads
-chown -R root:root /opt/convertx
-chmod -R 755 /opt/convertx
-chmod -R 777 /opt/convertx/data
 bun install
 bun run build
-
-# Create startup script that ensures directories exist
-cat <<EOF >/opt/convertx/start-convertx.sh
-#!/bin/bash
-cd /opt/convertx
-
-# Ensure base directories exist
-mkdir -p data/output data/temp data/uploads
-
-# Create some common subdirectory structures that ConvertX might need
-for i in {1..20}; do
-  for j in {1..20}; do
-    mkdir -p "data/output/\$i/\$j"
-  done
-done
-chmod -R 777 data/
-
-# Start the application in production mode
-exec /root/.bun/bin/bun run dev
-EOF
-chmod +x /opt/convertx/start-convertx.sh
 
 JWT_SECRET=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)
 cat <<EOF >/opt/convertx/.env
@@ -75,12 +51,10 @@ After=network.target
 
 [Service]
 Type=exec
-User=root
 WorkingDirectory=/opt/convertx
 EnvironmentFile=/opt/convertx/.env
-ExecStart=/opt/convertx/start-convertx.sh
+ExecStart=/root/.bun/bin/bun dev
 Restart=always
-RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
