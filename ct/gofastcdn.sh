@@ -27,7 +27,7 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  msg_info "Updating $APP LXC"
+  msg_info "Updating ${APP} LXC"
 
   RELEASE=$(curl -fsSL https://api.github.com/repos/kevinanielsen/go-fast-cdn/releases/latest | jq -r .tag_name)
 
@@ -64,7 +64,7 @@ function update_script() {
 
   $STD apt-get update
   $STD apt-get -y upgrade
-  msg_ok "Updated $APP LXC"
+  msg_ok "Updated ${APP} LXC"
   exit
 }
 
