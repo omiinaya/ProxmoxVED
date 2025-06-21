@@ -31,7 +31,7 @@ function update_script() {
 
   RELEASE=$(curl -fsSL https://api.github.com/repos/kevinanielsen/go-fast-cdn/releases/latest | jq -r .tag_name)
 
-  if [[ ! -f /opt/${APP}_version.txt ]] || [[ "${RELEASE}" != "$(cat /opt/${APP}_version.txt)" ]]; then
+  if [[ ! -f "/opt/${APP}_version.txt" ]] || [[ "${RELEASE}" != "$(cat /opt/${APP}_version.txt)" ]]; then
     msg_info "Updating ${APP} to ${RELEASE}"
 
     # Stop service
