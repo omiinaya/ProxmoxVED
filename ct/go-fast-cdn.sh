@@ -30,9 +30,6 @@ function update_script() {
   msg_info "Updating $APP LXC"
 
   RELEASE=$(curl -fsSL https://api.github.com/repos/kevinanielsen/go-fast-cdn/releases/latest | jq -r .tag_name)
-  if [[ -z "$RELEASE" || "$RELEASE" == "null" ]]; then
-    RELEASE="v0.1.6"  # Fallback to known version
-  fi
 
   if [[ ! -f /opt/${APP}_version.txt ]] || [[ "${RELEASE}" != "$(cat /opt/${APP}_version.txt)" ]]; then
     msg_info "Updating ${APP} to ${RELEASE}"
@@ -45,8 +42,8 @@ function update_script() {
 
     # Download and extract new version
     cd /tmp
-    curl -fsSL -o "go-fast-cdn_${RELEASE#v}_linux_amd64.zip" "https://github.com/kevinanielsen/go-fast-cdn/releases/download/${RELEASE}/go-fast-cdn_${RELEASE#v}_linux_amd64.zip"
-    unzip -o "go-fast-cdn_${RELEASE#v}_linux_amd64.zip"
+    curl -fsSL -o "go-fast-cdn_${RELEASE}_linux_amd64.zip" "https://github.com/kevinanielsen/go-fast-cdn/releases/download/${RELEASE}/go-fast-cdn_${RELEASE#v}_linux_amd64.zip"
+    unzip -o "go-fast-cdn_${RELEASE}_linux_amd64.zip"
 
     # Update binary
     mv go-fast-cdn /opt/go-fast-cdn/
@@ -56,10 +53,10 @@ function update_script() {
     systemctl start go-fast-cdn || true
 
     # Cleanup
-    rm -f /tmp/go-fast-cdn_${RELEASE#v}_linux_amd64.zip
-    rm -f /opt/go-fast-cdn/go-fast-cdn.backup
+    rm -f "/tmp/go-fast-cdn_${RELEASE}_linux_amd64.zip"
+    rm -f "/opt/go-fast-cdn/go-fast-cdn.backup"
 
-    echo "${RELEASE}" >/opt/${APP}_version.txt
+    echo "${RELEASE}" >"/opt/${APP}_version.txt"
     msg_ok "Updated ${APP} to ${RELEASE}"
   else
     msg_ok "No update required. ${APP} is already at ${RELEASE}"

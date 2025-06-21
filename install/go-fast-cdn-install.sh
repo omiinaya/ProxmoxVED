@@ -22,14 +22,11 @@ msg_ok "Installed Dependencies"
 
 msg_info "Installing Go Fast CDN"
 RELEASE=$(curl -fsSL https://api.github.com/repos/kevinanielsen/go-fast-cdn/releases/latest | jq -r .tag_name)
-if [[ -z "$RELEASE" || "$RELEASE" == "null" ]]; then
-  RELEASE="v0.1.6"  # Fallback to known version
-fi
 
 mkdir -p /opt/go-fast-cdn
 cd /tmp
-curl -fsSL -o "go-fast-cdn_${RELEASE#v}_linux_amd64.zip" "https://github.com/kevinanielsen/go-fast-cdn/releases/download/${RELEASE}/go-fast-cdn_${RELEASE#v}_linux_amd64.zip"
-unzip "go-fast-cdn_${RELEASE#v}_linux_amd64.zip"
+curl -fsSL -o "go-fast-cdn_${RELEASE}_linux_amd64.zip" "https://github.com/kevinanielsen/go-fast-cdn/releases/download/${RELEASE}/go-fast-cdn_${RELEASE}_linux_amd64.zip"
+unzip "go-fast-cdn_${RELEASE}_linux_amd64.zip"
 mv go-fast-cdn /opt/go-fast-cdn/
 chmod +x /opt/go-fast-cdn/go-fast-cdn
 
@@ -62,13 +59,13 @@ systemctl daemon-reload
 systemctl enable --now go-fast-cdn
 msg_ok "Created and Started Service"
 
-echo "${RELEASE}" >/opt/${APP}_version.txt
+echo "${RELEASE}" >"/opt/${APP}_version.txt"
 
 motd_ssh
 customize
 
 msg_info "Cleaning up"
-rm -f /tmp/go-fast-cdn_${RELEASE#v}_linux_amd64.zip
+rm -f "/tmp/go-fast-cdn_${RELEASE}_linux_amd64.zip"
 $STD apt-get -y autoremove
 $STD apt-get -y autoclean
 msg_ok "Cleaned"
