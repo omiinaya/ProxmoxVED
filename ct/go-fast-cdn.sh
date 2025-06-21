@@ -42,7 +42,7 @@ function update_script() {
 
     # Download and extract new version
     cd /tmp
-    curl -fsSL -o "go-fast-cdn_${RELEASE}_linux_amd64.zip" "https://github.com/kevinanielsen/go-fast-cdn/releases/download/${RELEASE}/go-fast-cdn_${RELEASE#v}_linux_amd64.zip"
+    curl -fsSL -o "go-fast-cdn_${RELEASE}_linux_amd64.zip" "https://github.com/kevinanielsen/go-fast-cdn/releases/download/${RELEASE}/go-fast-cdn_${RELEASE}_linux_amd64.zip"
     unzip -o "go-fast-cdn_${RELEASE}_linux_amd64.zip"
 
     # Update binary
