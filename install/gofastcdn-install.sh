@@ -58,8 +58,6 @@ systemctl daemon-reload
 systemctl enable --now go-fast-cdn
 msg_ok "Created and Started Service"
 
-echo "${RELEASE}" >"/opt/${APP}_version.txt"
-
 motd_ssh
 customize
 
