@@ -5,7 +5,7 @@ source <(curl -s https://raw.githubusercontent.com/omiinaya/ProxmoxVED/refs/head
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/kevinanielsen/go-fast-cdn
 
-APP="Go Fast CDN"
+APP="GoFastCDN"
 var_tags="${var_tags:-cdn,storage,networking}"
 var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-1024}"
@@ -23,7 +23,7 @@ function update_script() {
   header_info
   check_container_storage
   check_container_resources
-  if [[ ! -f /opt/go-fast-cdn/go-fast-cdn ]]; then
+  if [[ ! -d /var ]]; then
     msg_error "No ${APP} Installation Found!"
     exit
   fi
