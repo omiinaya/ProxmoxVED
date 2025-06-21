@@ -1,0 +1,48 @@
+{
+    "name": "Go Fast CDN",
+    "slug": "go-fast-cdn",
+    "categories": [
+        9
+    ],
+    "date_created": "2025-06-20",
+    "type": "ct",
+    "updateable": true,
+    "privileged": false,
+    "config_path": "",
+    "interface_port": 8080,
+    "documentation": "https://kevinanielsen.github.io/go-fast-cdn/",
+    "website": "https://github.com/kevinanielsen/go-fast-cdn",
+    "logo": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/cdn.png",
+    "description": "Go Fast CDN is a lightweight, high-performance content delivery network written in Go. It provides fast file serving and caching capabilities for web applications.",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "ct/go-fast-cdn.sh",
+            "resources": {
+                "cpu": 1,
+                "ram": 1024,
+                "hdd": 10,
+                "os": "Debian",
+                "version": "12"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": null,
+        "password": null
+    },
+    "notes": [
+        {
+            "text": "The CDN runs on port 8080 by default. Upload files via the web interface or API.",
+            "type": "info"
+        },
+        {
+            "text": "Files are stored in /opt/go-fast-cdn/uploads directory.",
+            "type": "info"
+        },
+        {
+            "text": "Check service status with: systemctl status go-fast-cdn",
+            "type": "info"
+        }
+    ]
+}
