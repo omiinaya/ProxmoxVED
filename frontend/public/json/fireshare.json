@@ -1,0 +1,38 @@
+{
+    "name": "Fireshare",
+    "slug": "fireshare",
+    "categories": [
+        11,
+        13
+    ],
+    "date_created": "2024-07-22",
+    "type": "ct",
+    "updateable": true,
+    "privileged": false,
+    "interface_port": 8080,
+    "documentation": "https://github.com/ShaneIsrael/fireshare",
+    "website": "https://github.com/ShaneIsrael/fireshare",
+    "logo": "https://cdn.jsdelivr.net/gh/ShaneIsrael/fireshare@main/app/client/src/assets/logo.png",
+    "config_path": "/opt/fireshare/.env",
+    "description": "Fireshare is a self-hosted platform that allows you to easily share your game clips, videos, and other media through unique, shareable links.",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "ct/fireshare.sh",
+            "resources": {
+                "cpu": 2,
+                "ram": 2048,
+                "hdd": 8,
+                "os": "debian",
+                "version": "12"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": "admin",
+        "password": "admin"
+    },
+    "notes": [
+        "The default login is admin/admin. You will be prompted to change this on first login. You can also set a secure password during setup."
+    ]
+}
