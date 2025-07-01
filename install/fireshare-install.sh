@@ -23,7 +23,9 @@ $STD apt-get install -y \
   python3-pip \
   python3-venv \
   ffmpeg \
-  jq
+  jq \
+  libldap2-dev \
+  libsasl2-dev
 msg_ok "Installed Dependencies"
 
 NODE_VERSION="20" install_node_and_modules
