@@ -62,7 +62,7 @@ EOF
 cat <<EOF >/opt/fireshare/start.sh
 #!/usr/bin/env bash
 source /opt/fireshare/.venv/bin/activate
-gunicorn --workers 4 -b 0.0.0.0:8080 "app.server:create_app()"
+gunicorn --workers 4 -b 0.0.0.0:8080 "app.server:app"
 EOF
 chmod +x /opt/fireshare/start.sh
 

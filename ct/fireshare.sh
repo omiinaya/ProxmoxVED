@@ -58,6 +58,14 @@ function update_script() {
     npm --prefix app/client install
     npm --prefix app/client run build
 
+    # Correct the start script
+    cat <<EOF >/opt/fireshare/start.sh
+#!/usr/bin/env bash
+source /opt/fireshare/.venv/bin/activate
+gunicorn --workers 4 -b 0.0.0.0:8080 "app.server:app"
+EOF
+    chmod +x /opt/fireshare/start.sh
+
     systemctl start fireshare
     echo "${RELEASE_TAG}" >"/opt/${APP}_version.txt"
     msg_ok "Updated ${APP} to ${RELEASE_TAG}"
