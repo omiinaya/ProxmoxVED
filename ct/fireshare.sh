@@ -54,7 +54,7 @@ function update_script() {
     pip install -r app/server/requirements.txt
     pip install gunicorn
     cd app/server && python3 setup.py install && cd ../..
-    flask db upgrade
+    FLASK_APP=app.server flask db upgrade
     deactivate
 
     npm --prefix app/client install

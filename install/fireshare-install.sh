@@ -44,7 +44,7 @@ source .venv/bin/activate
 pip install -r app/server/requirements.txt
 pip install gunicorn
 cd app/server && python3 setup.py install && cd ../..
-flask db upgrade
+FLASK_APP=app.server flask db upgrade
 deactivate
 msg_ok "Installed Python dependencies"
 
