@@ -22,16 +22,19 @@ $STD apt-get install -y \
   python3-dev \
   python3-pip \
   python3-venv \
-  ffmpeg
+  ffmpeg \
+  jq
 msg_ok "Installed Dependencies"
 
 NODE_VERSION="20" install_node_and_modules
 
 msg_info "Installing ${APPLICATION}"
-TAG=$(curl -s https://api.github.com/repos/ShaneIsrael/fireshare/releases/latest | grep "tag_name" | awk -F'"' '{print $4}')
-RELEASE=${TAG}
-curl -fsSL "https://github.com/ShaneIsrael/fireshare/archive/refs/tags/${TAG}.tar.gz" | tar -xzf - -C /opt
-mv /opt/fireshare-${RELEASE} /opt/fireshare
+RELEASE_TAG=$(curl -s https://api.github.com/repos/ShaneIsrael/fireshare/releases/latest | jq -r .tag_name)
+RELEASE_VERSION=$(echo "$RELEASE_TAG" | sed 's/^v//')
+
+curl -fsSL "https://github.com/ShaneIsrael/fireshare/archive/refs/tags/${RELEASE_TAG}.tar.gz" | tar -xzf - -C /opt
+mv "/opt/fireshare-${RELEASE_VERSION}" /opt/fireshare
+
 cd /opt/fireshare
 python3 -m venv .venv
 source .venv/bin/activate
@@ -41,7 +44,7 @@ npm --prefix app/client install
 npm --prefix app/client run build
 flask db upgrade
 deactivate
-echo "${RELEASE}" >/opt/fireshare_version.txt
+echo "${RELEASE_TAG}" >/opt/fireshare_version.txt
 msg_ok "Installed ${APPLICATION}"
 
 msg_info "Creating env, start script and service"

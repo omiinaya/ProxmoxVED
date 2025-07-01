@@ -29,18 +29,25 @@ function update_script() {
     exit
   fi
 
-  TAG=$(curl -s https://api.github.com/repos/ShaneIsrael/fireshare/releases/latest | grep "tag_name" | awk -F'"' '{print $4}')
-  RELEASE=${TAG#v}
-  if [[ "${RELEASE}" != "$(cat /opt/fireshare_version.txt)" ]] || [[ ! -f /opt/fireshare_version.txt ]]; then
-    msg_info "Stopping $APP"
-    systemctl stop fireshare
-    msg_ok "Stopped $APP"
+  msg_info "Updating ${APP} LXC"
 
-    msg_info "Updating $APP to v${RELEASE}"
+  RELEASE_TAG=$(curl -s https://api.github.com/repos/ShaneIsrael/fireshare/releases/latest | jq -r .tag_name)
+  CURRENT_VERSION=""
+  if [ -f "/opt/${APP}_version.txt" ]; then
+    CURRENT_VERSION=$(cat "/opt/${APP}_version.txt")
+  fi
+
+  if [[ "${RELEASE_TAG}" != "${CURRENT_VERSION}" ]]; then
+    msg_info "Updating ${APP} to ${RELEASE_TAG}"
+    systemctl stop fireshare
+
     cd /opt
-    rm -rf /opt/fireshare
-    curl -fsSL "https://github.com/ShaneIsrael/fireshare/archive/refs/tags/${TAG}.tar.gz" | tar -xzf -
-    mv fireshare-${RELEASE} fireshare
+    rm -rf fireshare
+
+    curl -fsSL "https://github.com/ShaneIsrael/fireshare/archive/refs/tags/${RELEASE_TAG}.tar.gz" | tar -xzf -
+    RELEASE_VERSION=$(echo "$RELEASE_TAG" | sed 's/^v//')
+    mv "fireshare-${RELEASE_VERSION}" fireshare
+
     cd /opt/fireshare
     python3 -m venv .venv
     source .venv/bin/activate
@@ -50,17 +57,17 @@ function update_script() {
     npm --prefix app/client run build
     flask db upgrade
     deactivate
-    msg_ok "Updated $APP to v${RELEASE}"
 
-    msg_info "Starting $APP"
     systemctl start fireshare
-    msg_ok "Started $APP"
-
-    echo "${RELEASE}" >/opt/fireshare_version.txt
-    msg_ok "Update Successful"
+    echo "${RELEASE_TAG}" >"/opt/${APP}_version.txt"
+    msg_ok "Updated ${APP} to ${RELEASE_TAG}"
   else
-    msg_ok "No update required. ${APP} is already at v${RELEASE}"
+    msg_ok "No update required. ${APP} is already at ${CURRENT_VERSION}"
   fi
+
+  $STD apt-get update
+  $STD apt-get -y upgrade
+  msg_ok "Updated ${APP} LXC"
   exit
 }
 
