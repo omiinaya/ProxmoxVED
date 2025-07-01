@@ -36,9 +36,18 @@ curl -fsSL "https://github.com/ShaneIsrael/fireshare/archive/refs/tags/${RELEASE
 mv "/opt/fireshare-${RELEASE_VERSION}" /opt/fireshare
 
 cd /opt/fireshare
-chmod +x run_local.sh
+msg_info "Installing Python dependencies"
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r app/server/requirements.txt
+pip install gunicorn
+deactivate
+msg_ok "Installed Python dependencies"
+
+msg_info "Building frontend"
 npm --prefix app/client install
 npm --prefix app/client run build
+msg_ok "Built frontend"
 
 echo "${RELEASE_TAG}" >/opt/fireshare_version.txt
 msg_ok "Installed ${APPLICATION}"
@@ -50,7 +59,8 @@ EOF
 
 cat <<EOF >/opt/fireshare/start.sh
 #!/usr/bin/env bash
-./run_local.sh
+source /opt/fireshare/.venv/bin/activate
+gunicorn --workers 4 -b 0.0.0.0:8080 "app.server:create_app()"
 EOF
 chmod +x /opt/fireshare/start.sh
 

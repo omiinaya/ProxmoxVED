@@ -49,7 +49,12 @@ function update_script() {
     mv "fireshare-${RELEASE_VERSION}" fireshare
 
     cd /opt/fireshare
-    chmod +x run_local.sh
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install -r app/server/requirements.txt
+    pip install gunicorn
+    deactivate
+
     npm --prefix app/client install
     npm --prefix app/client run build
 
