@@ -49,14 +49,9 @@ function update_script() {
     mv "fireshare-${RELEASE_VERSION}" fireshare
 
     cd /opt/fireshare
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt
-    pip install gunicorn
+    chmod +x run_local.sh
     npm --prefix app/client install
     npm --prefix app/client run build
-    flask db upgrade
-    deactivate
 
     systemctl start fireshare
     echo "${RELEASE_TAG}" >"/opt/${APP}_version.txt"

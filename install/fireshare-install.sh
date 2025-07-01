@@ -36,14 +36,10 @@ curl -fsSL "https://github.com/ShaneIsrael/fireshare/archive/refs/tags/${RELEASE
 mv "/opt/fireshare-${RELEASE_VERSION}" /opt/fireshare
 
 cd /opt/fireshare
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-pip install gunicorn
+chmod +x run_local.sh
 npm --prefix app/client install
 npm --prefix app/client run build
-flask db upgrade
-deactivate
+
 echo "${RELEASE_TAG}" >/opt/fireshare_version.txt
 msg_ok "Installed ${APPLICATION}"
 
@@ -54,8 +50,7 @@ EOF
 
 cat <<EOF >/opt/fireshare/start.sh
 #!/usr/bin/env bash
-source /opt/fireshare/.venv/bin/activate
-gunicorn --workers 4 -b 0.0.0.0:8080 "app.server:create_app()"
+./run_local.sh
 EOF
 chmod +x /opt/fireshare/start.sh
 
