@@ -43,6 +43,8 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r app/server/requirements.txt
 pip install gunicorn
+cd app/server && python3 setup.py install && cd ../..
+flask db upgrade
 deactivate
 msg_ok "Installed Python dependencies"
 
@@ -62,7 +64,7 @@ EOF
 cat <<EOF >/opt/fireshare/start.sh
 #!/usr/bin/env bash
 source /opt/fireshare/.venv/bin/activate
-gunicorn --workers 4 -b 0.0.0.0:8080 "app.server:app"
+gunicorn --workers 4 -b 0.0.0.0:8080 "app.server:create_app()"
 EOF
 chmod +x /opt/fireshare/start.sh
 
