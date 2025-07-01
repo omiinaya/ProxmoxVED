@@ -29,7 +29,7 @@ NODE_VERSION="20" install_node_and_modules
 
 msg_info "Installing ${APPLICATION}"
 TAG=$(curl -s https://api.github.com/repos/ShaneIsrael/fireshare/releases/latest | grep "tag_name" | awk -F'"' '{print $4}')
-RELEASE=${TAG#v}
+RELEASE=${TAG}
 curl -fsSL "https://github.com/ShaneIsrael/fireshare/archive/refs/tags/${TAG}.tar.gz" | tar -xzf - -C /opt
 mv /opt/fireshare-${RELEASE} /opt/fireshare
 cd /opt/fireshare
