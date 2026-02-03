@@ -41,7 +41,7 @@ msg_info "Authorize step-ca binary with low port-binding capabilities"
 $STD setcap CAP_NET_BIND_SERVICE=+eip $(which step-ca)
 msg_ok "Authorized low port-binding capabilities"
 
-msg_info "Add a smallstepp CA service user - Will only be used by systemd to manage the CA"
+msg_info "Add a smallstep CA service user - Will only be used by systemd to manage the CA"
 $STD useradd --user-group --system --home $(step path) --shell /bin/false step
 msg_ok "Created smallstepp CA service user"
 
