@@ -43,9 +43,7 @@ msg_info "Add a smallstep CA service user - Will only be used by systemd to mana
 $STD useradd --user-group --system --home $(step path) --shell /bin/false step
 msg_ok "Created smallstep CA service user"
 
-#
-# Quick & Dirty step-ca init options - to be improved via whiptail
-#
+DeploymentType="standalone"
 DeploymentType="standalone"
 FQDN=$(hostname -f)
 DomainName=$(hostname -d)
