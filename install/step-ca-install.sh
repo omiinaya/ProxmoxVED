@@ -100,8 +100,62 @@ $STD step ca provisioner update "$AcmeProvisioner" \
 msg_ok "Updated provisioner configurations"
 
 msg_info "Start step-ca as a Daemon"
-ServiceFileGitHUB="https://raw.githubusercontent.com/smallstep/certificates/refs/heads/master/systemd/step-ca.service"
-$STD curl -fsSL $ServiceFileGitHUB >/etc/systemd/system/step-ca.service
+msg_info "Start step-ca as a Daemon"
+cat <<'EOF' >/etc/systemd/system/step-ca.service
+[Unit]
+Description=step-ca service
+Documentation=https://smallstep.com/docs/step-ca
+Documentation=https://smallstep.com/docs/step-ca/certificate-authority-server-production
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=30
+StartLimitBurst=3
+ConditionFileNotEmpty=/etc/step-ca/config/ca.json
+ConditionFileNotEmpty=/etc/step-ca/password.txt
+
+[Service]
+Type=simple
+User=step
+Group=step
+Environment=STEPPATH=/etc/step-ca
+WorkingDirectory=/etc/step-ca
+ExecStart=/usr/bin/step-ca config/ca.json --password-file password.txt
+ExecReload=/bin/kill -USR1 $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+StartLimitAction=reboot
+
+; Process capabilities & privileges
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+SecureBits=keep-caps
+NoNewPrivileges=yes
+
+; Sandboxing
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@resources @privileged
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+PrivateMounts=yes
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/etc/step-ca/db
+
+; Read only paths
+ReadOnlyPaths=/etc/step-ca
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl enable -q --now step-ca
 $STD systemctl enable -q --now step-ca
 msg_ok "Started step-ca as a Daemon"
 
