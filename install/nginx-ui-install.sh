@@ -14,7 +14,7 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y \
+$STD apt install -y \
   nginx \
   logrotate
 msg_ok "Installed Dependencies"
@@ -59,23 +59,39 @@ msg_ok "Configured Nginx UI"
 msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/nginx-ui.service
 [Unit]
-Description=Nginx UI - Web-based Nginx Management
+Description=Yet another WebUI for Nginx
 Documentation=https://nginxui.com
 After=network.target nginx.service
 
 [Service]
 Type=simple
-User=root
-WorkingDirectory=/usr/local/etc/nginx-ui
 ExecStart=/usr/local/bin/nginx-ui --config /usr/local/etc/nginx-ui/app.ini
+RuntimeDirectory=nginx-ui
+WorkingDirectory=/var/run/nginx-ui
 Restart=on-failure
-RestartSec=5
+TimeoutStopSec=5
+KillMode=mixed
 
 [Install]
 WantedBy=multi-user.target
 EOF
-systemctl enable -q --now nginx-ui
+systemctl daemon-reload
 msg_ok "Created Service"
+
+msg_info "Creating Initial Admin User"
+systemctl start nginx-ui
+sleep 3
+systemctl stop nginx-ui
+sleep 1
+/usr/local/bin/nginx-ui reset-password --config /usr/local/etc/nginx-ui/app.ini &>/tmp/nginx-ui-reset.log || true
+ADMIN_PASS=$(grep -oP 'Password: \K\S+' /tmp/nginx-ui-reset.log || echo "admin")
+echo -e "Nginx-UI Credentials\nUsername: admin\nPassword: $ADMIN_PASS" >~/nginx-ui.creds
+rm -f /tmp/nginx-ui-reset.log
+msg_ok "Created Initial Admin User"
+
+msg_info "Starting Service"
+systemctl enable -q --now nginx-ui
+msg_ok "Started Service"
 
 motd_ssh
 customize
