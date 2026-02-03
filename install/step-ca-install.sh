@@ -13,7 +13,7 @@ setting_up_container
 network_check
 update_os
 
-msg_info "Install smallstepp repositories"
+msg_info "Install smallstep repositories"
 setup_deb822_repo \
   "smallstep" \
   "https://packages.smallstep.com/keys/apt/repo-signing-key.gpg" \
