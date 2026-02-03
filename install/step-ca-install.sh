@@ -61,8 +61,7 @@ EncryptionPwdDir="$(step path)/encryption"
 PwdFile="$EncryptionPwdDir/ca.pwd"
 ProvisionerPwdFile="$EncryptionPwdDir/provisioner.pwd"
 
-$STD mkdir -p "$EncryptionPwdDir"
-
+mkdir -p "$EncryptionPwdDir"
 $STD gpg --gen-random --armor 2 32 >"$PwdFile"
 $STD gpg --gen-random --armor 2 32 >"$ProvisionerPwdFile"
 
@@ -77,16 +76,9 @@ $STD step ca init \
   --password-file="$PwdFile" \
   --provisioner-password-file="$ProvisionerPwdFile"
 
-echo
-echo "Make a note of the root fingerprint!"
-echo "You'll need it in future steps to establish trust with your CA from other environments or hosts."
-echo
-
-$STD ln -s "$PwdFile" "$(step path)/password.txt"
-
+ln -s "$PwdFile" "$(step path)/password.txt"
 chown -R step:step $(step path)
 chmod -R 700 $(step path)
-
 msg_ok "Initialized step-ca"
 
 msg_info "Add ACME provisioner"
