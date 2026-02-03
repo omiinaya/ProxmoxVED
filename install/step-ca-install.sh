@@ -86,8 +86,8 @@ echo
 
 $STD ln -s "$PwdFile" "$(step path)/password.txt"
 
-$STD chown -R step:step $(step path)
-$STD chmod -R 700 $(step path)
+chown -R step:step $(step path)
+chmod -R 700 $(step path)
 
 msg_ok "Initialized step-ca"
 
@@ -128,20 +128,20 @@ StepBadgerExe="$StepBadgerDir/step-badger"
 StepBadgerX509Certs="$STEPHOME/step-badger-x509Certs.sh"
 StepBadgerSshCerts="$STEPHOME/step-badger-sshCerts.sh"
 
-$STD mkdir -p $StepBadgerDir
+mkdir -p $StepBadgerDir
 $STD curl -fsSL "$StepBadgerGitHUB/$StepBadgerArchive" >$StepBadgerDir/$StepBadgerArchive
 $STD tar -xf $StepBadgerDir/$StepBadgerArchive -C $StepBadgerDir
 
-$STD chmod 700 $StepBadgerDir
-$STD chmod 400 $StepBadgerDir/*
-$STD chmod 755 $StepBadgerExe
+chmod 700 $StepBadgerDir
+chmod 400 $StepBadgerDir/*
+chmod 755 $StepBadgerExe
 
-$STD cp $StepBadgerExe /usr/local/bin/
+cp $StepBadgerExe /usr/local/bin/
 
-$STD mkdir --parents "$STEPHOME/db-copy/"
-$STD mkdir --parents "$STEPHOME/certs/ca/"
-$STD mkdir --parents "$STEPHOME/certs/ssh/"
-$STD mkdir --parents "$STEPHOME/certs/x509/"
+mkdir --parents "$STEPHOME/db-copy/"
+mkdir --parents "$STEPHOME/certs/ca/"
+mkdir --parents "$STEPHOME/certs/ssh/"
+mkdir --parents "$STEPHOME/certs/x509/"
 
 $STD cat <<'EOF' >$StepBadgerX509Certs
 #!/usr/bin/env bash
@@ -174,8 +174,8 @@ cp --recursive --force "$(step path)/certs/"* "$STEPHOME/certs/ca/"
 step-badger sshCerts "$STEPHOME/db-copy" \
         --algorithm
 EOF
-$STD chmod 700 $StepBadgerX509Certs
-$STD chmod 700 $StepBadgerSshCerts
+chmod 700 $StepBadgerX509Certs
+chmod 700 $StepBadgerSshCerts
 msg_ok "Installed step-batcher to export step-ca badger database"
 
 msg_info "Install step-ca helper scripts"
@@ -209,8 +209,8 @@ $STD cat <<'EOF' >$StepRevoke
 #
 step ca revoke
 EOF
-$STD chmod 700 $StepRequest
-$STD chmod 700 $StepRevoke
+chmod 700 $StepRequest
+chmod 700 $StepRevoke
 msg_ok "Installed step-ca helper scripts"
 
 motd_ssh
