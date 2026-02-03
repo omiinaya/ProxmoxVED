@@ -59,7 +59,7 @@ msg_ok "Configured Nginx UI"
 msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/nginx-ui.service
 [Unit]
-Description=Yet another WebUI for Nginx
+Description=Another WebUI for Nginx
 Documentation=https://nginxui.com
 After=network.target nginx.service
 
@@ -91,6 +91,7 @@ msg_ok "Created Initial Admin User"
 
 msg_info "Starting Service"
 systemctl enable -q --now nginx-ui
+rm -rf /etc/nginx/sites-enabled/default
 msg_ok "Started Service"
 
 motd_ssh
