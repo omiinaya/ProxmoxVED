@@ -156,7 +156,7 @@ $STD cat <<'EOF' >$StepBadgerX509Certs
 cp --recursive --force "$(step path)/db/"* "$STEPHOME/db-copy/"
 cp --recursive --force "$(step path)/certs/"* "$STEPHOME/certs/ca/"
 
-step-badger" x509Certs "$STEPHOME/db-copy" \
+step-badger x509Certs "$STEPHOME/db-copy" \
         --dnsnames \
         --emailaddresses \
         --ipaddresses \
