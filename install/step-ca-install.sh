@@ -114,8 +114,6 @@ msg_ok "Updated provisioner configurations"
 msg_info "Start step-ca as a Daemon"
 ServiceFileGitHUB="https://raw.githubusercontent.com/smallstep/certificates/refs/heads/master/systemd/step-ca.service"
 $STD curl -fsSL $ServiceFileGitHUB >/etc/systemd/system/step-ca.service
-
-$STD systemctl daemon-reload -q
 $STD systemctl enable -q --now step-ca
 msg_ok "Started step-ca as a Daemon"
 
