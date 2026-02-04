@@ -163,24 +163,11 @@ $STD update-ca-certificates
 msg_ok "Installed root CA certificate into system's default trust store"
 
 msg_info "Install step-batcher to export step-ca badger database"
-StepBadgerGitHUB="https://github.com/lukasz-lobocki/step-badger/releases/latest/download"
-StepBadgerArchive="step-badger_Linux_x86_64.tar.gz"
-StepBadgerDir="/opt/step-badger"
-StepBadgerExe="$StepBadgerDir/step-badger"
 StepBadgerX509Certs="$STEPHOME/step-badger-x509Certs.sh"
 StepBadgerSshCerts="$STEPHOME/step-badger-sshCerts.sh"
 
-#mkdir -p $StepBadgerDir
-#$STD curl -fsSL "$StepBadgerGitHUB/$StepBadgerArchive" >$StepBadgerDir/$StepBadgerArchive
-#$STD tar -xf $StepBadgerDir/$StepBadgerArchive -C $StepBadgerDir
-
-#chmod 700 $StepBadgerDir
-#chmod 400 $StepBadgerDir/*
-#chmod 755 $StepBadgerExe
-
 fetch_and_deploy_gh_release "step-badger" "lukasz-lobocki/step-badger" "prebuild" "latest" "/opt/step-badger" "step-badger_Linux_x86_64.tar.gz"
-
-cp $StepBadgerExe /usr/local/bin/
+ln -s /opt/step-badger/step-badger /usr/local/bin/step-badger
 
 mkdir --parents "$STEPHOME/db-copy/"
 mkdir --parents "$STEPHOME/certs/ca/"
