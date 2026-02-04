@@ -233,7 +233,6 @@ msg_ok "Installed step-batcher to export step-ca badger database"
 
 msg_info "Install step-ca helper scripts"
 StepRequest="$STEPHOME/step-ca-request.sh"
-StepRevoke="$STEPHOME/step-ca-revoke.sh"
 $STD cat <<'EOF' >$StepRequest
 #!/usr/bin/env bash
 #
@@ -273,15 +272,7 @@ step ca certificate $FQDN $StepCertDir/$FQDN.crt $StepCertDir/$FQDN.key \
   && step certificate inspect $StepCertDir/$FQDN.crt \
   || echo "Failed to request certificate"; exit
 EOF
-$STD cat <<'EOF' >$StepRevoke
-#!/usr/bin/env bash
-#
-# step ca revoke <serialnumber>
-#
-step ca revoke
-EOF
 chmod 700 $StepRequest
-chmod 700 $StepRevoke
 msg_ok "Installed step-ca helper scripts"
 
 motd_ssh
