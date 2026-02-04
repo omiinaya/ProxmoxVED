@@ -56,6 +56,28 @@ X509MinDur="48h"
 X509MaxDur="87600h"
 X509DefaultDur="168h"
 
+while true;
+do
+
+if whiptail_yesno=$(whiptail --title "step ca init options" --yesno "Continue with below?\n
+PKIName: $PKIName
+PKIProvisioner: $PKIProvisioner
+AcmeProvisioner: $AcmeProvisioner
+X509MinDur: $X509MinDur
+X509MaxDur: $X509MaxDur
+X509DefaultDur: $X509DefaultDur" --no-button "Change" --yes-button "Continue" 15 70 3>&1 1>&2 2>&3); then
+break
+fi
+
+PKIName=$(whiptail --title "step ca init options" --inputbox 'PKIName (e.g. MyHomePKI)' 10 50 "$PKIName" 3>&1 1>&2 2>&3)
+PKIProvisioner=$(whiptail --title "step ca init options" --inputbox 'PKIProvisioner (e.g. pki@$YourDomainName)' 10 50 "$PKIProvisioner" 3>&1 1>&2 2>&3)
+AcmeProvisioner=$(whiptail --title "step ca init options" --inputbox 'AcmeProvisioner (e.g. acme@YourDomainName)' 10 50 "$AcmeProvisioner" 3>&1 1>&2 2>&3)
+X509MinDur=$(whiptail --title "step ca init options" --inputbox 'X509MinDur (e.g. 48h)' 10 50 "$X509MinDur" 3>&1 1>&2 2>&3)
+X509MaxDur=$(whiptail --title "step ca init options" --inputbox 'X509MaxDur (e.g. 87600h)' 10 50 "$X509MaxDur" 3>&1 1>&2 2>&3)
+X509DefaultDur=$(whiptail --title "step ca init options" --inputbox 'X509DefaultDur (e.g. 168h)' 10 50 "$X509DefaultDur" 3>&1 1>&2 2>&3)
+
+done
+
 msg_info "Initializing step-ca"
 EncryptionPwdDir="$(step path)/encryption"
 PwdFile="$EncryptionPwdDir/ca.pwd"
