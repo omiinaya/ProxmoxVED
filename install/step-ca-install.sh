@@ -238,22 +238,40 @@ $STD cat <<'EOF' >$StepRequest
 #!/usr/bin/env bash
 #
 StepCertDir="$STEPHOME/certs/x509"
+PROVISIONER_PASSWORD=$(step path)/encryption//provisioner.pwd
 
-HOST="brw4cd5770e36b4"
-IP="192.168.178.136"
-DOMAIN="fritz.box"
-FQDN=$HOST.$DOMAIN
-VALID_TO="2034-01-31T00:00:00Z"
-PROVISIONER="pki@fritz.box"
+while true;
+do
+
+FQDN=$(whiptail --title "step ca certificate options" --inputbox 'FQDN (e.g. MyLXC.example.com)' 10 50 "$FQDN" 3>&1 1>&2 2>&3)
+IP=$(dig +short $FQDN)
+if [[ -z "$IP" ]]; then
+    echo "Resolution failed for $FQDN"
+    exit
+fi
+HOST=$(echo $FQDN | awk -F'.' '{print $1}')
+IP=$(whiptail --title "step ca certificate options" --inputbox 'IP (e.g. x.x.x.x)' 10 50 "$IP" 3>&1 1>&2 2>&3)
+HOST=$(whiptail --title "step ca init options" --inputbox 'HOST (e.g. MyHostName)' 10 50 "$HOST" 3>&1 1>&2 2>&3)
+VALID_TO=$(whiptail --title "step ca init options" --inputbox 'VALID_TO (e.g. 2034-01-31T00:00:00Z)' 10 50 "2034-01-31T00:00:00Z" 3>&1 1>&2 2>&3)
+
+if whiptail_yesno=$(whiptail --title "step ca init options" --yesno "Continue with below?\n
+HOST: $HOST
+IP: $IP
+FQDN: $FQDN
+VALID_TO: $VALID_TO" --no-button "Change" --yes-button "Continue" 15 70 3>&1 1>&2 2>&3); then
+break
+fi
+
+done
 
 step ca certificate $FQDN $StepCertDir/$FQDN.crt $StepCertDir/$FQDN.key \
-  --provisioner=$PROVISIONER \
+  --provisioner-password-file=$PROVISIONER_PASSWORD \
   --not-after=$VALID_TO \
   --san $FQDN \
   --san $HOST \
-  --san $IP
-
-step certificate inspect $StepCertDir/$FQDN.crt
+  --san $IP \
+  && step certificate inspect $StepCertDir/$FQDN.crt \
+  || echo "Failed to request certificate"; exit
 EOF
 $STD cat <<'EOF' >$StepRevoke
 #!/usr/bin/env bash
