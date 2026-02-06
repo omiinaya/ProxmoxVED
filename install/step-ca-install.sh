@@ -250,10 +250,10 @@ if [[ -z "$IP" ]]; then
 fi
 HOST=$(echo $FQDN | awk -F'.' '{print $1}')
 IP=$(whiptail --title "step ca certificate options" --inputbox 'IP (e.g. x.x.x.x)' 10 50 "$IP" 3>&1 1>&2 2>&3)
-HOST=$(whiptail --title "step ca init options" --inputbox 'HOST (e.g. MyHostName)' 10 50 "$HOST" 3>&1 1>&2 2>&3)
-VALID_TO=$(whiptail --title "step ca init options" --inputbox 'VALID_TO (e.g. 2034-01-31T00:00:00Z)' 10 50 "2034-01-31T00:00:00Z" 3>&1 1>&2 2>&3)
+HOST=$(whiptail --title "step ca certificate options" --inputbox 'HOST (e.g. MyHostName)' 10 50 "$HOST" 3>&1 1>&2 2>&3)
+VALID_TO=$(whiptail --title "step ca certificate options" --inputbox 'VALID_TO (e.g. 2034-01-31T00:00:00Z)' 10 50 "2034-01-31T00:00:00Z" 3>&1 1>&2 2>&3)
 
-if whiptail_yesno=$(whiptail --title "step ca init options" --yesno "Continue with below?\n
+if whiptail_yesno=$(whiptail --title "step ca certificate options" --yesno "Continue with below?\n
 HOST: $HOST
 IP: $IP
 FQDN: $FQDN
