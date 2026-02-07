@@ -21,8 +21,8 @@ if [[ -z "$bichon_url" ]]; then
   BICHON_PUBLIC_URL="http://$LOCAL_IP:15630"
   msg_ok "using local IP: http://$LOCAL_IP:15630\n"
 else
-  BICHON_PUBLIC_URL="$bichon_url"
   msg_info "URL provided"
+  BICHON_PUBLIC_URL="$bichon_url"
   msg_ok "Using provided URL: $BICHON_PUBLIC_URL\n"
 fi
 
