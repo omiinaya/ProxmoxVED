@@ -15,11 +15,11 @@ update_os
 
 fetch_and_deploy_gh_release "bichon" "rustmailer/bichon" "prebuild" "latest" "/opt/bichon" "bichon-*-x86_64-unknown-linux-gnu.tar.gz"
 
-read -r -p "Enter the public URL for Bichon (e.g., https://bichon.yourdomain.com) or leave empty to use container IP: " bichon_url
+read -r -p "${TAB3}Enter the public URL for Bichon (e.g., https://bichon.yourdomain.com) or leave empty to use container IP: " bichon_url
 if [[ -z "$bichon_url" ]]; then
   msg_info "No URL provided"
   BICHON_PUBLIC_URL="http://$LOCAL_IP:15630"
-  msg_ok "using local IP: http://$LOCAL_IP:15630\n"
+  msg_ok "Using local IP: http://$LOCAL_IP:15630\n"
 else
   msg_info "URL provided"
   BICHON_PUBLIC_URL="$bichon_url"
