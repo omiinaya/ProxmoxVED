@@ -55,7 +55,7 @@ function update_script() {
     msg_info "Running Database Migrations"
     cd /opt/skylite-ux
     $STD npx prisma migrate deploy
-    msg_ok "Database Migrations Complete"
+    msg_ok "Ran Database Migrations"
 
     msg_info "Starting Service"
     systemctl start skylite-ux
