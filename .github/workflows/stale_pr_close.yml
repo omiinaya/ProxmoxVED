@@ -27,11 +27,12 @@ jobs:
             if (context.eventName === "pull_request_target" && context.payload.action === "labeled") {
               const label = context.payload.label?.name;
               if (label === "stale") {
+                const author = context.payload.pull_request.user.login;
                 await github.rest.issues.createComment({
                   owner,
                   repo,
                   issue_number: context.payload.pull_request.number,
-                  body: "This PR has been marked as stale. It will be closed if no new commits are added in 7 days."
+                  body: `@${author} This PR has been marked as stale. It will be closed if no new commits are added in 7 days.`
                 });
               }
               return;
@@ -75,6 +76,7 @@ jobs:
               });
               
               const lastCommitDate = new Date(commits[commits.length - 1].commit.author.date);
+              const author = pr.user.login;
               
               // If there are new commits after the stale label, remove it
               if (lastCommitDate > staleLabelDate) {
@@ -88,7 +90,7 @@ jobs:
                   owner,
                   repo,
                   issue_number: pr.number,
-                  body: "Recent activity detected. Removing stale label."
+                  body: `@${author} Recent activity detected. Removing stale label.`
                 });
               }
               // If 7 days have passed since stale label, close the PR
@@ -103,7 +105,7 @@ jobs:
                   owner,
                   repo,
                   issue_number: pr.number,
-                  body: "Closing stale PR due to inactivity (no commits for 7 days after stale label)."
+                  body: `@${author} Closing stale PR due to inactivity (no commits for 7 days after stale label).`
                 });
               }
             }
