@@ -22,7 +22,7 @@ jobs:
             if (context.eventName === "pull_request" && context.payload.action === "labeled") {
               const label = context.payload.label?.name;
               if (label === "stale") {
-                await github.issues.createComment({
+                await github.rest.issues.createComment({
                   owner,
                   repo,
                   issue_number: context.payload.pull_request.number,
@@ -32,7 +32,7 @@ jobs:
               return; // exit, nothing else to do
             }
             // --- Scheduled run ---
-            const { data: prs } = await github.pulls.list({
+            const { data: prs } = await github.rest.pulls.list({
               owner,
               repo,
               state: "open",
@@ -41,7 +41,7 @@ jobs:
             for (const pr of prs) {
               const hasStale = pr.labels.some(l => l.name === "stale");
               if (!hasStale) continue;
-              const { data: commits } = await github.pulls.listCommits({
+              const { data: commits } = await github.rest.pulls.listCommits({
                 owner,
                 repo,
                 pull_number: pr.number
@@ -49,26 +49,26 @@ jobs:
               const lastCommitDate = new Date(commits[commits.length - 1].commit.author.date);
               const diffDays = (now - lastCommitDate) / (1000 * 60 * 60 * 24);
               if (diffDays > 7) {
-                await github.pulls.update({
+                await github.rest.pulls.update({
                   owner,
                   repo,
                   pull_number: pr.number,
                   state: "closed"
                 });
-                await github.issues.createComment({
+                await github.rest.issues.createComment({
                   owner,
                   repo,
                   issue_number: pr.number,
                   body: "Closing stale PR due to inactivity."
                 });
               } else if (diffDays <= 7) {
-                await github.issues.removeLabel({
+                await github.rest.issues.removeLabel({
                   owner,
                   repo,
                   issue_number: pr.number,
                   name: "stale"
                 });
-                await github.issues.createComment({
+                await github.rest.issues.createComment({
                   owner,
                   repo,
                   issue_number: pr.number,
