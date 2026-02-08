@@ -44,7 +44,6 @@ $STD useradd --user-group --system --home $(step path) --shell /bin/false step
 msg_ok "Created smallstep CA service user"
 
 DeploymentType="standalone"
-DeploymentType="standalone"
 FQDN=$(hostname -f)
 DomainName=$(hostname -d)
 IP=${LOCAL_IP}
@@ -242,7 +241,7 @@ PROVISIONER_PASSWORD=$(step path)/encryption//provisioner.pwd
 while true;
 do
 
-FQDN=$(whiptail --title "step ca certificate options" --inputbox 'FQDN (e.g. MyLXC.example.com)' 10 50 "$FQDN" 3>&1 1>&2 2>&3)
+FQDN=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca certificate options" --inputbox 'FQDN (e.g. MyLXC.example.com)' 10 50 "$FQDN" 3>&1 1>&2 2>&3)
 IP=$(dig +short $FQDN)
 if [[ -z "$IP" ]]; then
     echo "Resolution failed for $FQDN"
