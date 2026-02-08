@@ -18,7 +18,7 @@ $STD apt install -y openssl
 msg_ok "Installed Dependencies"
 
 PG_VERSION="16" setup_postgresql
-NODE_VERSION="20" setup_nodejs
+NODE_VERSION="24" setup_nodejs
 PG_DB_NAME="skylite" PG_DB_USER="skylite" PG_DB_SCHEMA_PERMS="true" setup_postgresql_db
 fetch_and_deploy_gh_release "skylite-ux" "Wetzel402/Skylite-UX" "tarball" "2026.2.2"
 
