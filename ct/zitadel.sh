@@ -30,7 +30,8 @@ function update_script() {
 
   if check_for_gh_release "zitadel" "zitadel/zitadel"; then
     msg_info "Stopping Service"
-    systemctl stop zitadel-api zitadel-login
+    systemctl stop zitadel-api
+    systemctl stop zitadel-login
     msg_ok "Stopped Service"
 
     msg_info "Updating Zitadel"
@@ -45,7 +46,9 @@ function update_script() {
 	msg_ok "Updated Zitadel"
 
     msg_info "Starting Service"
-    systemctl start zitadel
+    systemctl start zitadel-api
+    sleep 5
+    systemctl start zitadel-login
     msg_ok "Started Service"
     msg_ok "Updated successfully!"
   fi

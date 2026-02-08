@@ -30,10 +30,6 @@ LOGIN_PORT="3000"
 # Detect server IP address
 SERVER_IP=$(hostname -I | awk '{print $1}')
 
-msg_info "Installing Dependencies (Patience)"
-$STD apt install -y ca-certificates
-msg_ok "Installed Dependecies"
-
 # Create zitadel user
 msg_info "Creating zitadel system user"
 groupadd --system "${ZITADEL_GROUP}"
@@ -59,7 +55,9 @@ msg_ok "Configured PostgreSQL"
 msg_info "Installing Zitadel"
 cd "${ZITADEL_DIR}"
 mkdir -p ${CONFIG_DIR}
-echo "${MASTERKEY}" > ${CONFIG_DIR}/.masterkey
+echo -n "${MASTERKEY}" > ${CONFIG_DIR}/.masterkey
+chmod 600 "${CONFIG_DIR}/.masterkey"
+chown "${ZITADEL_USER}:${ZITADEL_GROUP}" "${CONFIG_DIR}/.masterkey"
 
 # Update config.yaml for network access
 cat > "${CONFIG_DIR}/config.yaml" <<EOF
@@ -127,10 +125,10 @@ EOF
 chown "${ZITADEL_USER}:${ZITADEL_GROUP}" "${CONFIG_DIR}/config.yaml"
 
 # Initialize database as zitadel user (no masterkey needed for init)
-$STD ./zitadel init --config ${CONFIG_DIR}/config.yaml
+$STD sudo -u ${ZITADEL_USER} ./zitadel init --config ${CONFIG_DIR}/config.yaml
 
 # Run setup phase as zitadel user (with masterkey and steps)
-$STD ./zitadel setup --config ${CONFIG_DIR}/config.yaml --steps ${CONFIG_DIR}/config.yaml --masterkey "${MASTERKEY}"
+$STD sudo -u ${ZITADEL_USER} ./zitadel setup --config ${CONFIG_DIR}/config.yaml --steps ${CONFIG_DIR}/config.yaml --masterkey "${MASTERKEY}"
 
 #Read client token
 CLIENT_PAT=$(cat ${ZITADEL_DIR}/login-client.pat)
@@ -144,9 +142,6 @@ ZITADEL_SERVICE_USER_TOKEN_FILE=../../login-client.pat
 ZITADEL_SERVICE_USER_TOKEN=${CLIENT_PAT}
 EOF
 chown "${ZITADEL_USER}:${ZITADEL_GROUP}" "${CONFIG_DIR}/login.env"
-
-# Update package.json to bind to 0.0.0.0 instead of 127.0.0.1
-#sed -i 's/"prod": "cd \.\/\.next\/standalone && HOSTNAME=127\.0\.0\.1/"prod": "cd .\/\.next\/standalone \&\& HOSTNAME=0.0.0.0/g' "${LOGIN_DIR}/apps/login/package.json"
 
 # Create api.env file
 cat > "${CONFIG_DIR}/api.env" <<EOF
@@ -183,7 +178,7 @@ Group=${ZITADEL_GROUP}
 WorkingDirectory=${ZITADEL_DIR}
 EnvironmentFile=${CONFIG_DIR}/api.env
 Environment="PATH=/usr/local/bin:/usr/local/go/bin:/usr/bin:/bin"
-ExecStart=${ZITADEL_DIR}/zitadel start --config ${CONFIG_DIR}/config.yaml --masterkey \${ZITADEL_MASTERKEY}
+ExecStart=${ZITADEL_DIR}/zitadel start --config ${CONFIG_DIR}/config.yaml --masterkeyFile ${CONFIG_DIR}/.masterkey
 Restart=always
 RestartSec=10
 
@@ -214,17 +209,14 @@ RestartSec=10
 WantedBy=multi-user.target
 EOF
 
-# Reload systemd
-systemctl daemon-reload
-
 # Enable and start API service
 systemctl enable -q --now zitadel-api.service
 
 # Wait for API to start
-sleep 10
+sleep 5
 
 # Enable and start Login service
-systemctl enable -q --now zitadel-login.service
+systemctl enable -q --now zitadel-login
 msg_ok "Created Services"
 
 msg_info "Saving Credentials"
@@ -313,9 +305,9 @@ msg_ok "Saved Credentials"
 
 msg_info "Create zitadel-rerun.sh"
 cat <<EOF >~/zitadel-rerun.sh
-systemctl stop zitadel
-timeout --kill-after=5s 15s zitadel setup --masterkeyFile ${CONFIG_DIR}/.masterkey --config ${CONFIG_DIR}/config.yaml"
-systemctl restart zitadel
+systemctl stop zitadel-api zitadel-login
+timeout --kill-after=5s 15s /opt/zitadel/zitadel setup --masterkeyFile ${CONFIG_DIR}/.masterkey --config ${CONFIG_DIR}/config.yaml
+systemctl restart zitadel-api zitadel-login
 EOF
 msg_ok "Bash script for rerunning Zitadel after changing Zitadel config.yaml"
 
