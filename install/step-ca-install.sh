@@ -59,7 +59,7 @@ X509DefaultDur="168h"
 while true;
 do
 
-if whiptail_yesno=$(whiptail --title "step ca init options" --yesno "Continue with below?\n
+if whiptail_yesno=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca init options" --yesno "Continue with below?\n
 PKIName: $PKIName
 PKIProvisioner: $PKIProvisioner
 AcmeProvisioner: $AcmeProvisioner
@@ -69,12 +69,12 @@ X509DefaultDur: $X509DefaultDur" --no-button "Change" --yes-button "Continue" 15
 break
 fi
 
-PKIName=$(whiptail --title "step ca init options" --inputbox 'PKIName (e.g. MyHomePKI)' 10 50 "$PKIName" 3>&1 1>&2 2>&3)
-PKIProvisioner=$(whiptail --title "step ca init options" --inputbox 'PKIProvisioner (e.g. pki@$YourDomainName)' 10 50 "$PKIProvisioner" 3>&1 1>&2 2>&3)
-AcmeProvisioner=$(whiptail --title "step ca init options" --inputbox 'AcmeProvisioner (e.g. acme@YourDomainName)' 10 50 "$AcmeProvisioner" 3>&1 1>&2 2>&3)
-X509MinDur=$(whiptail --title "step ca init options" --inputbox 'X509MinDur (e.g. 48h)' 10 50 "$X509MinDur" 3>&1 1>&2 2>&3)
-X509MaxDur=$(whiptail --title "step ca init options" --inputbox 'X509MaxDur (e.g. 87600h)' 10 50 "$X509MaxDur" 3>&1 1>&2 2>&3)
-X509DefaultDur=$(whiptail --title "step ca init options" --inputbox 'X509DefaultDur (e.g. 168h)' 10 50 "$X509DefaultDur" 3>&1 1>&2 2>&3)
+PKIName=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca init options" --inputbox 'PKIName (e.g. MyHomePKI)' 10 50 "$PKIName" 3>&1 1>&2 2>&3)
+PKIProvisioner=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca init options" --inputbox 'PKIProvisioner (e.g. pki@$YourDomainName)' 10 50 "$PKIProvisioner" 3>&1 1>&2 2>&3)
+AcmeProvisioner=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca init options" --inputbox 'AcmeProvisioner (e.g. acme@YourDomainName)' 10 50 "$AcmeProvisioner" 3>&1 1>&2 2>&3)
+X509MinDur=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca init options" --inputbox 'X509MinDur (e.g. 48h)' 10 50 "$X509MinDur" 3>&1 1>&2 2>&3)
+X509MaxDur=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca init options" --inputbox 'X509MaxDur (e.g. 87600h)' 10 50 "$X509MaxDur" 3>&1 1>&2 2>&3)
+X509DefaultDur=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca init options" --inputbox 'X509DefaultDur (e.g. 168h)' 10 50 "$X509DefaultDur" 3>&1 1>&2 2>&3)
 
 done
 
@@ -249,11 +249,11 @@ if [[ -z "$IP" ]]; then
     exit
 fi
 HOST=$(echo $FQDN | awk -F'.' '{print $1}')
-IP=$(whiptail --title "step ca certificate options" --inputbox 'IP (e.g. x.x.x.x)' 10 50 "$IP" 3>&1 1>&2 2>&3)
-HOST=$(whiptail --title "step ca certificate options" --inputbox 'HOST (e.g. MyHostName)' 10 50 "$HOST" 3>&1 1>&2 2>&3)
-VALID_TO=$(whiptail --title "step ca certificate options" --inputbox 'VALID_TO (e.g. 2034-01-31T00:00:00Z)' 10 50 "2034-01-31T00:00:00Z" 3>&1 1>&2 2>&3)
+IP=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca certificate options" --inputbox 'IP (e.g. x.x.x.x)' 10 50 "$IP" 3>&1 1>&2 2>&3)
+HOST=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca certificate options" --inputbox 'HOST (e.g. MyHostName)' 10 50 "$HOST" 3>&1 1>&2 2>&3)
+VALID_TO=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca certificate options" --inputbox 'VALID_TO (e.g. 2034-01-31T00:00:00Z)' 10 50 "2034-01-31T00:00:00Z" 3>&1 1>&2 2>&3)
 
-if whiptail_yesno=$(whiptail --title "step ca certificate options" --yesno "Continue with below?\n
+if whiptail_yesno=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca certificate options" --yesno "Continue with below?\n
 HOST: $HOST
 IP: $IP
 FQDN: $FQDN
