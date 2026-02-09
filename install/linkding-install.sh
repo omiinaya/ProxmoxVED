@@ -52,7 +52,7 @@ msg_ok "Compiled SQLite ICU Extension"
 msg_info "Setting up linkding"
 rm -f bookmarks/settings/dev.py
 touch bookmarks/settings/custom.py
-$STD uv sync --no-dev
+$STD uv sync --no-dev --frozen
 $STD uv pip install gunicorn
 mkdir -p data/{favicons,previews,assets}
 ADMIN_PASS=$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | cut -c1-13)
