@@ -5157,9 +5157,9 @@ EOF
 # api_exit_script()
 #
 # - Exit trap handler for reporting to API telemetry
-# - Captures exit code and reports to API using centralized error descriptions
-# - Uses explain_exit_code() from error_handler.func for consistent error messages
-# - Posts failure status with exit code to API (error description added automatically)
+# - Captures exit code and reports to PocketBase using centralized error descriptions
+# - Uses explain_exit_code() from api.func for consistent error messages
+# - Posts failure status with exit code to API (error description resolved automatically)
 # - Only executes on non-zero exit codes
 # ------------------------------------------------------------------------------
 api_exit_script() {
@@ -5172,6 +5172,6 @@ api_exit_script() {
 if command -v pveversion >/dev/null 2>&1; then
   trap 'api_exit_script' EXIT
 fi
-trap 'post_update_to_api "failed" "$BASH_COMMAND"' ERR
-trap 'post_update_to_api "failed" "INTERRUPTED"' SIGINT
-trap 'post_update_to_api "failed" "TERMINATED"' SIGTERM
+trap 'post_update_to_api "failed" "$?"' ERR
+trap 'post_update_to_api "failed" "130"' SIGINT
+trap 'post_update_to_api "failed" "143"' SIGTERM

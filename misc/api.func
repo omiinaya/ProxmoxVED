@@ -3,11 +3,11 @@
 # License: MIT | https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/LICENSE
 
 # ==============================================================================
-# API.FUNC - TELEMETRY & DIAGNOSTICS API
+# API.FUNC - TELEMETRY & DIAGNOSTICS API (PocketBase)
 # ==============================================================================
 #
-# Provides functions for sending anonymous telemetry data to Community-Scripts
-# API for analytics and diagnostics purposes.
+# Provides functions for sending anonymous telemetry data to PocketBase
+# backend at db.community-scripts.org for analytics and diagnostics.
 #
 # Features:
 #   - Container/VM creation statistics
@@ -18,6 +18,7 @@
 # Usage:
 #   source <(curl -fsSL .../api.func)
 #   post_to_api          # Report container creation
+#   post_to_api_vm       # Report VM creation
 #   post_update_to_api   # Report installation status
 #
 # Privacy:
@@ -28,6 +29,16 @@
 # ==============================================================================
 
 # ==============================================================================
+# PocketBase Configuration
+# ==============================================================================
+PB_URL="http://db.community-scripts.org"
+PB_COLLECTION="_dev_telemetry_data"
+PB_API_URL="${PB_URL}/api/collections/${PB_COLLECTION}/records"
+
+# Store PocketBase record ID for update operations
+PB_RECORD_ID=""
+
+# ==============================================================================
 # SECTION 1: ERROR CODE DESCRIPTIONS
 # ==============================================================================
 
@@ -35,6 +46,8 @@
 # explain_exit_code()
 #
 # - Maps numeric exit codes to human-readable error descriptions
+# - Canonical source of truth for ALL exit code mappings
+# - Used by both api.func (telemetry) and error_handler.func (error display)
 # - Supports:
 #   * Generic/Shell errors (1, 2, 124, 126-130, 134, 137, 139, 141, 143)
 #   * curl/wget errors (6, 7, 22, 28, 35)
@@ -47,7 +60,6 @@
 #   * Proxmox custom codes (200-231)
 #   * Node.js/npm errors (243, 245-249)
 # - Returns description string for given exit code
-# - Shared function with error_handler.func for consistency
 # ------------------------------------------------------------------------------
 explain_exit_code() {
   local code="$1"
@@ -160,7 +172,8 @@ explain_exit_code() {
 # ------------------------------------------------------------------------------
 # post_to_api()
 #
-# - Sends LXC container creation statistics to Community-Scripts API
+# - Sends LXC container creation statistics to PocketBase
+# - Creates a new record in the _dev_telemetry_data collection
 # - Only executes if:
 #   * curl is available
 #   * DIAGNOSTICS=yes
@@ -168,62 +181,71 @@ explain_exit_code() {
 # - Payload includes:
 #   * Container type, disk size, CPU cores, RAM
 #   * OS type and version
-#   * IPv6 disable status
 #   * Application name (NSAPP)
 #   * Installation method
 #   * PVE version
 #   * Status: "installing"
 #   * Random UUID for session tracking
+# - Stores PB_RECORD_ID for later updates
 # - Anonymous telemetry (no personal data)
 # ------------------------------------------------------------------------------
 post_to_api() {
-
   if ! command -v curl &>/dev/null; then
     return
   fi
 
-  if [ "$DIAGNOSTICS" = "no" ]; then
+  if [[ "${DIAGNOSTICS:-no}" == "no" ]]; then
     return
   fi
 
-  if [ -z "$RANDOM_UUID" ]; then
+  if [[ -z "${RANDOM_UUID:-}" ]]; then
     return
   fi
 
-  local API_URL="http://api.community-scripts.org/dev/upload"
   local pve_version="not found"
-  pve_version=$(pveversion | awk -F'[/ ]' '{print $2}')
+  if command -v pveversion &>/dev/null; then
+    pve_version=$(pveversion | awk -F'[/ ]' '{print $2}')
+  fi
 
+  local JSON_PAYLOAD
   JSON_PAYLOAD=$(
     cat <<EOF
 {
-    "ct_type": $CT_TYPE,
-    "type":"lxc",
-    "disk_size": $DISK_SIZE,
-    "core_count": $CORE_COUNT,
-    "ram_size": $RAM_SIZE,
-    "os_type": "$var_os",
-    "os_version": "$var_version",
-    "nsapp": "$NSAPP",
-    "method": "$METHOD",
-    "pve_version": "$pve_version",
+    "ct_type": ${CT_TYPE:-1},
+    "type": "lxc",
+    "disk_size": ${DISK_SIZE:-0},
+    "core_count": ${CORE_COUNT:-0},
+    "ram_size": ${RAM_SIZE:-0},
+    "os_type": "${var_os:-}",
+    "os_version": "${var_version:-}",
+    "nsapp": "${NSAPP:-}",
+    "method": "${METHOD:-default}",
+    "pve_version": "${pve_version}",
     "status": "installing",
-    "random_id": "$RANDOM_UUID"
+    "random_id": "${RANDOM_UUID}"
 }
 EOF
   )
-  if [[ "$DIAGNOSTICS" == "yes" ]]; then
-    RESPONSE=$(curl -s -w "%{http_code}" -L -X POST "$API_URL" --post301 --post302 \
-      -H "Content-Type: application/json" \
-      -d "$JSON_PAYLOAD") || true
-  fi
 
+  local RESPONSE
+  RESPONSE=$(curl -s -w "\n%{http_code}" -L -X POST "${PB_API_URL}" \
+    -H "Content-Type: application/json" \
+    -d "$JSON_PAYLOAD" 2>/dev/null) || true
+
+  # Extract PocketBase record ID from response for later updates
+  local http_code body
+  http_code=$(echo "$RESPONSE" | tail -n1)
+  body=$(echo "$RESPONSE" | sed '$d')
+
+  if [[ "$http_code" == "200" ]] || [[ "$http_code" == "201" ]]; then
+    PB_RECORD_ID=$(echo "$body" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4) || true
+  fi
 }
 
 # ------------------------------------------------------------------------------
 # post_to_api_vm()
 #
-# - Sends VM creation statistics to Community-Scripts API
+# - Sends VM creation statistics to PocketBase
 # - Similar to post_to_api() but for virtual machines (not containers)
 # - Reads DIAGNOSTICS from /usr/local/community-scripts/diagnostics file
 # - Payload differences:
@@ -233,66 +255,78 @@ EOF
 # - Only executes if DIAGNOSTICS=yes and RANDOM_UUID is set
 # ------------------------------------------------------------------------------
 post_to_api_vm() {
-
   if [[ ! -f /usr/local/community-scripts/diagnostics ]]; then
     return
   fi
   DIAGNOSTICS=$(grep -i "^DIAGNOSTICS=" /usr/local/community-scripts/diagnostics | awk -F'=' '{print $2}')
+
   if ! command -v curl &>/dev/null; then
     return
   fi
 
-  if [ "$DIAGNOSTICS" = "no" ]; then
+  if [[ "${DIAGNOSTICS:-no}" == "no" ]]; then
     return
   fi
 
-  if [ -z "$RANDOM_UUID" ]; then
+  if [[ -z "${RANDOM_UUID:-}" ]]; then
     return
   fi
 
-  local API_URL="http://api.community-scripts.org/dev/upload"
   local pve_version="not found"
-  pve_version=$(pveversion | awk -F'[/ ]' '{print $2}')
+  if command -v pveversion &>/dev/null; then
+    pve_version=$(pveversion | awk -F'[/ ]' '{print $2}')
+  fi
 
-  DISK_SIZE_API=${DISK_SIZE%G}
+  local DISK_SIZE_API="${DISK_SIZE%G}"
 
+  local JSON_PAYLOAD
   JSON_PAYLOAD=$(
     cat <<EOF
 {
     "ct_type": 2,
-    "type":"vm",
-    "disk_size": $DISK_SIZE_API,
-    "core_count": $CORE_COUNT,
-    "ram_size": $RAM_SIZE,
-    "os_type": "$var_os",
-    "os_version": "$var_version",
-    "nsapp": "$NSAPP",
-    "method": "$METHOD",
-    "pve_version": "$pve_version",
+    "type": "vm",
+    "disk_size": ${DISK_SIZE_API:-0},
+    "core_count": ${CORE_COUNT:-0},
+    "ram_size": ${RAM_SIZE:-0},
+    "os_type": "${var_os:-}",
+    "os_version": "${var_version:-}",
+    "nsapp": "${NSAPP:-}",
+    "method": "${METHOD:-default}",
+    "pve_version": "${pve_version}",
     "status": "installing",
-    "random_id": "$RANDOM_UUID"
+    "random_id": "${RANDOM_UUID}"
 }
 EOF
   )
-  if [[ "$DIAGNOSTICS" == "yes" ]]; then
-    RESPONSE=$(curl -s -w "%{http_code}" -L -X POST "$API_URL" --post301 --post302 \
-      -H "Content-Type: application/json" \
-      -d "$JSON_PAYLOAD") || true
+
+  local RESPONSE
+  RESPONSE=$(curl -s -w "\n%{http_code}" -L -X POST "${PB_API_URL}" \
+    -H "Content-Type: application/json" \
+    -d "$JSON_PAYLOAD" 2>/dev/null) || true
+
+  # Extract PocketBase record ID from response for later updates
+  local http_code body
+  http_code=$(echo "$RESPONSE" | tail -n1)
+  body=$(echo "$RESPONSE" | sed '$d')
+
+  if [[ "$http_code" == "200" ]] || [[ "$http_code" == "201" ]]; then
+    PB_RECORD_ID=$(echo "$body" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4) || true
   fi
 }
 
 # ------------------------------------------------------------------------------
 # post_update_to_api()
 #
-# - Reports installation completion status to API
+# - Reports installation completion status to PocketBase via PATCH
 # - Prevents duplicate submissions via POST_UPDATE_DONE flag
 # - Arguments:
-#   * $1: status ("success" or "failed")
-#   * $2: exit_code (default: 1 for failed, 0 for success)
+#   * $1: status ("done" or "failed")
+#   * $2: exit_code (numeric, default: 1 for failed, 0 for done)
+# - Uses PB_RECORD_ID if available, otherwise looks up by random_id
 # - Payload includes:
-#   * Final status (success/failed)
-#   * Error description via get_error_description()
-#   * Random UUID for session correlation
+#   * Final status (mapped: "done"→"sucess", "failed"→"failed")
+#   * Error description via explain_exit_code()
+#   * Numeric exit code
 # - Only executes once per session
 # - Silently returns if:
 #   * curl not available
@@ -300,7 +334,6 @@ EOF
 #   * DIAGNOSTICS=no
 # ------------------------------------------------------------------------------
 post_update_to_api() {
-
   if ! command -v curl &>/dev/null; then
     return
   fi
@@ -308,42 +341,79 @@ post_update_to_api() {
   # Initialize flag if not set (prevents 'unbound variable' error with set -u)
   POST_UPDATE_DONE=${POST_UPDATE_DONE:-false}
 
-  if [ "$POST_UPDATE_DONE" = true ]; then
+  if [[ "$POST_UPDATE_DONE" == "true" ]]; then
     return 0
   fi
-  exit_code=${2:-1}
-  local API_URL="http://api.community-scripts.org/dev/upload/updatestatus"
+
+  if [[ "${DIAGNOSTICS:-no}" == "no" ]]; then
+    return
+  fi
+
+  if [[ -z "${RANDOM_UUID:-}" ]]; then
+    return
+  fi
+
   local status="${1:-failed}"
-  if [[ "$status" == "failed" ]]; then
-    local exit_code="${2:-1}"
-  elif [[ "$status" == "success" ]]; then
-    local exit_code="${2:-0}"
+  local raw_exit_code="${2:-1}"
+  local exit_code error pb_status
+
+  # Map status to PocketBase select values: installing, sucess, failed, unknown
+  case "$status" in
+  done | success | sucess)
+    pb_status="sucess"
+    exit_code=0
+    error=""
+    ;;
+  failed) pb_status="failed" ;;
+  *) pb_status="unknown" ;;
+  esac
+
+  # For failed status, resolve exit code and error description
+  if [[ "$pb_status" == "failed" ]] || [[ "$pb_status" == "unknown" ]]; then
+    # If exit_code is numeric, use it; otherwise default to 1
+    if [[ "$raw_exit_code" =~ ^[0-9]+$ ]]; then
+      exit_code="$raw_exit_code"
+    else
+      exit_code=1
+    fi
+    error=$(explain_exit_code "$exit_code")
+    if [[ -z "$error" ]]; then
+      error="Unknown error"
+    fi
   fi
 
-  if [[ -z "$exit_code" ]]; then
-    exit_code=1
+  # Resolve PocketBase record ID if not already known
+  local record_id="${PB_RECORD_ID:-}"
+
+  if [[ -z "$record_id" ]]; then
+    # Look up record by random_id filter
+    local lookup_url="${PB_API_URL}?filter=(random_id='${RANDOM_UUID}')&fields=id&perPage=1"
+    local lookup_response
+    lookup_response=$(curl -s -L "${lookup_url}" 2>/dev/null) || true
+
+    record_id=$(echo "$lookup_response" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4) || true
+
+    if [[ -z "$record_id" ]]; then
+      POST_UPDATE_DONE=true
+      return
+    fi
   fi
 
-  error=$(explain_exit_code "$exit_code")
-
-  if [ -z "$error" ]; then
-    error="Unknown error"
-  fi
-
+  local JSON_PAYLOAD
   JSON_PAYLOAD=$(
     cat <<EOF
 {
-    "status": "$status",
-    "error": "$error",
-    "random_id": "$RANDOM_UUID"
+    "status": "${pb_status}",
+    "error": "${error:-}",
+    "exit_code": ${exit_code:-0}
 }
 EOF
   )
-  if [[ "$DIAGNOSTICS" == "yes" ]]; then
-    RESPONSE=$(curl -s -w "%{http_code}" -L -X POST "$API_URL" --post301 --post302 \
-      -H "Content-Type: application/json" \
-      -d "$JSON_PAYLOAD") || true
-  fi
+
+  # PATCH to update the existing record
+  curl -s -L -X PATCH "${PB_API_URL}/${record_id}" \
+    -H "Content-Type: application/json" \
+    -d "$JSON_PAYLOAD" &>/dev/null || true
 
   POST_UPDATE_DONE=true
 }
