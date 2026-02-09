@@ -557,6 +557,39 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 
+	// Dashboard HTML page
+	mux.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write([]byte(DashboardHTML()))
+	})
+
+	// Dashboard API endpoint
+	mux.HandleFunc("/api/dashboard", func(w http.ResponseWriter, r *http.Request) {
+		days := 30
+		if d := r.URL.Query().Get("days"); d != "" {
+			fmt.Sscanf(d, "%d", &days)
+			if days < 1 {
+				days = 1
+			}
+			if days > 365 {
+				days = 365
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+
+		data, err := pb.FetchDashboardData(ctx, days)
+		if err != nil {
+			log.Printf("dashboard fetch failed: %v", err)
+			http.Error(w, "failed to fetch data", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(data)
+	})
+
 	mux.HandleFunc("/telemetry", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
