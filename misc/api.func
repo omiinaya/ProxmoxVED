@@ -3,11 +3,11 @@
 # License: MIT | https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/LICENSE
 
 # ==============================================================================
-# API.FUNC - TELEMETRY & DIAGNOSTICS API (PocketBase)
+# API.FUNC - TELEMETRY & DIAGNOSTICS API
 # ==============================================================================
 #
-# Provides functions for sending anonymous telemetry data to PocketBase
-# backend at db.community-scripts.org for analytics and diagnostics.
+# Provides functions for sending anonymous telemetry data via the community
+# telemetry ingest service at telemetry.community-scripts.org.
 #
 # Features:
 #   - Container/VM creation statistics
@@ -17,26 +17,25 @@
 #
 # Usage:
 #   source <(curl -fsSL .../api.func)
-#   post_to_api          # Report container creation
+#   post_to_api          # Report LXC container creation
 #   post_to_api_vm       # Report VM creation
 #   post_update_to_api   # Report installation status
 #
 # Privacy:
 #   - Only anonymous statistics (no personal data)
-#   - User can opt-out via diagnostics settings
+#   - User can opt-out via DIAGNOSTICS=no
 #   - Random UUID for session tracking only
+#   - Data retention: 30 days
 #
 # ==============================================================================
 
 # ==============================================================================
-# PocketBase Configuration
+# Telemetry Configuration
 # ==============================================================================
-PB_URL="http://db.community-scripts.org"
-PB_COLLECTION="_dev_telemetry_data"
-PB_API_URL="${PB_URL}/api/collections/${PB_COLLECTION}/records"
+TELEMETRY_URL="http://telemetry.community-scripts.org/telemetry"
 
-# Store PocketBase record ID for update operations
-PB_RECORD_ID=""
+# Timeout for telemetry requests (seconds)
+TELEMETRY_TIMEOUT=5
 
 # ==============================================================================
 # SECTION 1: ERROR CODE DESCRIPTIONS
@@ -172,8 +171,7 @@ explain_exit_code() {
 # ------------------------------------------------------------------------------
 # post_to_api()
 #
-# - Sends LXC container creation statistics to PocketBase
-# - Creates a new record in the _dev_telemetry_data collection
+# - Sends LXC container creation statistics to telemetry ingest service
 # - Only executes if:
 #   * curl is available
 #   * DIAGNOSTICS=yes
@@ -186,232 +184,181 @@ explain_exit_code() {
 #   * PVE version
 #   * Status: "installing"
 #   * Random UUID for session tracking
-# - Stores PB_RECORD_ID for later updates
 # - Anonymous telemetry (no personal data)
+# - Never blocks or fails script execution
 # ------------------------------------------------------------------------------
 post_to_api() {
-  if ! command -v curl &>/dev/null; then
-    return
-  fi
+  # Silent fail - telemetry should never break scripts
+  command -v curl &>/dev/null || return 0
+  [[ "${DIAGNOSTICS:-no}" == "no" ]] && return 0
+  [[ -z "${RANDOM_UUID:-}" ]] && return 0
 
-  if [[ "${DIAGNOSTICS:-no}" == "no" ]]; then
-    return
-  fi
+  # Set type for later status updates
+  TELEMETRY_TYPE="lxc"
 
-  if [[ -z "${RANDOM_UUID:-}" ]]; then
-    return
-  fi
-
-  local pve_version="not found"
+  local pve_version=""
   if command -v pveversion &>/dev/null; then
-    pve_version=$(pveversion | awk -F'[/ ]' '{print $2}')
+    pve_version=$(pveversion 2>/dev/null | awk -F'[/ ]' '{print $2}') || true
   fi
 
   local JSON_PAYLOAD
   JSON_PAYLOAD=$(
     cat <<EOF
 {
-    "ct_type": ${CT_TYPE:-1},
+    "random_id": "${RANDOM_UUID}",
     "type": "lxc",
+    "nsapp": "${NSAPP:-unknown}",
+    "status": "installing",
+    "ct_type": ${CT_TYPE:-1},
     "disk_size": ${DISK_SIZE:-0},
     "core_count": ${CORE_COUNT:-0},
     "ram_size": ${RAM_SIZE:-0},
     "os_type": "${var_os:-}",
     "os_version": "${var_version:-}",
-    "nsapp": "${NSAPP:-}",
-    "method": "${METHOD:-default}",
     "pve_version": "${pve_version}",
-    "status": "installing",
-    "random_id": "${RANDOM_UUID}"
+    "method": "${METHOD:-default}"
 }
 EOF
   )
 
-  local RESPONSE
-  RESPONSE=$(curl -s -w "\n%{http_code}" -L -X POST "${PB_API_URL}" \
+  # Fire-and-forget: never block, never fail
+  curl -fsS -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
     -H "Content-Type: application/json" \
-    -d "$JSON_PAYLOAD" 2>/dev/null) || true
-
-  # Extract PocketBase record ID from response for later updates
-  local http_code body
-  http_code=$(echo "$RESPONSE" | tail -n1)
-  body=$(echo "$RESPONSE" | sed '$d')
-
-  if [[ "$http_code" == "200" ]] || [[ "$http_code" == "201" ]]; then
-    PB_RECORD_ID=$(echo "$body" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4) || true
-  fi
+    -d "$JSON_PAYLOAD" &>/dev/null || true
 }
 
 # ------------------------------------------------------------------------------
 # post_to_api_vm()
 #
-# - Sends VM creation statistics to PocketBase
-# - Similar to post_to_api() but for virtual machines (not containers)
+# - Sends VM creation statistics to telemetry ingest service
 # - Reads DIAGNOSTICS from /usr/local/community-scripts/diagnostics file
-# - Payload differences:
+# - Payload differences from LXC:
 #   * ct_type=2 (VM instead of LXC)
 #   * type="vm"
-#   * Disk size without 'G' suffix (parsed from DISK_SIZE variable)
+#   * Disk size without 'G' suffix
 # - Only executes if DIAGNOSTICS=yes and RANDOM_UUID is set
+# - Never blocks or fails script execution
 # ------------------------------------------------------------------------------
 post_to_api_vm() {
-  if [[ ! -f /usr/local/community-scripts/diagnostics ]]; then
-    return
-  fi
-  DIAGNOSTICS=$(grep -i "^DIAGNOSTICS=" /usr/local/community-scripts/diagnostics | awk -F'=' '{print $2}')
-
-  if ! command -v curl &>/dev/null; then
-    return
+  # Read diagnostics setting from file
+  if [[ -f /usr/local/community-scripts/diagnostics ]]; then
+    DIAGNOSTICS=$(grep -i "^DIAGNOSTICS=" /usr/local/community-scripts/diagnostics 2>/dev/null | awk -F'=' '{print $2}') || true
   fi
 
-  if [[ "${DIAGNOSTICS:-no}" == "no" ]]; then
-    return
-  fi
+  # Silent fail - telemetry should never break scripts
+  command -v curl &>/dev/null || return 0
+  [[ "${DIAGNOSTICS:-no}" == "no" ]] && return 0
+  [[ -z "${RANDOM_UUID:-}" ]] && return 0
 
-  if [[ -z "${RANDOM_UUID:-}" ]]; then
-    return
-  fi
+  # Set type for later status updates
+  TELEMETRY_TYPE="vm"
 
-  local pve_version="not found"
+  local pve_version=""
   if command -v pveversion &>/dev/null; then
-    pve_version=$(pveversion | awk -F'[/ ]' '{print $2}')
+    pve_version=$(pveversion 2>/dev/null | awk -F'[/ ]' '{print $2}') || true
   fi
 
+  # Remove 'G' suffix from disk size
   local DISK_SIZE_API="${DISK_SIZE%G}"
 
   local JSON_PAYLOAD
   JSON_PAYLOAD=$(
     cat <<EOF
 {
-    "ct_type": 2,
+    "random_id": "${RANDOM_UUID}",
     "type": "vm",
+    "nsapp": "${NSAPP:-unknown}",
+    "status": "installing",
+    "ct_type": 2,
     "disk_size": ${DISK_SIZE_API:-0},
     "core_count": ${CORE_COUNT:-0},
     "ram_size": ${RAM_SIZE:-0},
     "os_type": "${var_os:-}",
     "os_version": "${var_version:-}",
-    "nsapp": "${NSAPP:-}",
-    "method": "${METHOD:-default}",
     "pve_version": "${pve_version}",
-    "status": "installing",
-    "random_id": "${RANDOM_UUID}"
+    "method": "${METHOD:-default}"
 }
 EOF
   )
 
-  local RESPONSE
-  RESPONSE=$(curl -s -w "\n%{http_code}" -L -X POST "${PB_API_URL}" \
+  # Fire-and-forget: never block, never fail
+  curl -fsS -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
     -H "Content-Type: application/json" \
-    -d "$JSON_PAYLOAD" 2>/dev/null) || true
-
-  # Extract PocketBase record ID from response for later updates
-  local http_code body
-  http_code=$(echo "$RESPONSE" | tail -n1)
-  body=$(echo "$RESPONSE" | sed '$d')
-
-  if [[ "$http_code" == "200" ]] || [[ "$http_code" == "201" ]]; then
-    PB_RECORD_ID=$(echo "$body" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4) || true
-  fi
+    -d "$JSON_PAYLOAD" &>/dev/null || true
 }
 
 # ------------------------------------------------------------------------------
 # post_update_to_api()
 #
-# - Reports installation completion status to PocketBase via PATCH
+# - Reports installation completion status to telemetry ingest service
 # - Prevents duplicate submissions via POST_UPDATE_DONE flag
 # - Arguments:
 #   * $1: status ("done" or "failed")
 #   * $2: exit_code (numeric, default: 1 for failed, 0 for done)
-# - Uses PB_RECORD_ID if available, otherwise looks up by random_id
 # - Payload includes:
 #   * Final status (mapped: "done"→"sucess", "failed"→"failed")
 #   * Error description via explain_exit_code()
 #   * Numeric exit code
 # - Only executes once per session
-# - Silently returns if:
-#   * curl not available
-#   * Already reported (POST_UPDATE_DONE=true)
-#   * DIAGNOSTICS=no
+# - Never blocks or fails script execution
 # ------------------------------------------------------------------------------
 post_update_to_api() {
-  if ! command -v curl &>/dev/null; then
-    return
-  fi
+  # Silent fail - telemetry should never break scripts
+  command -v curl &>/dev/null || return 0
 
-  # Initialize flag if not set (prevents 'unbound variable' error with set -u)
+  # Prevent duplicate submissions
   POST_UPDATE_DONE=${POST_UPDATE_DONE:-false}
+  [[ "$POST_UPDATE_DONE" == "true" ]] && return 0
 
-  if [[ "$POST_UPDATE_DONE" == "true" ]]; then
-    return 0
-  fi
-
-  if [[ "${DIAGNOSTICS:-no}" == "no" ]]; then
-    return
-  fi
-
-  if [[ -z "${RANDOM_UUID:-}" ]]; then
-    return
-  fi
+  [[ "${DIAGNOSTICS:-no}" == "no" ]] && return 0
+  [[ -z "${RANDOM_UUID:-}" ]] && return 0
 
   local status="${1:-failed}"
   local raw_exit_code="${2:-1}"
-  local exit_code error pb_status
+  local exit_code=0 error="" pb_status
 
-  # Map status to PocketBase select values: installing, sucess, failed, unknown
+  # Map status to telemetry values: installing, sucess, failed, unknown
   case "$status" in
   done | success | sucess)
     pb_status="sucess"
     exit_code=0
     error=""
     ;;
-  failed) pb_status="failed" ;;
-  *) pb_status="unknown" ;;
+  failed)
+    pb_status="failed"
+    ;;
+  *)
+    pb_status="unknown"
+    ;;
   esac
 
-  # For failed status, resolve exit code and error description
+  # For failed/unknown status, resolve exit code and error description
   if [[ "$pb_status" == "failed" ]] || [[ "$pb_status" == "unknown" ]]; then
-    # If exit_code is numeric, use it; otherwise default to 1
     if [[ "$raw_exit_code" =~ ^[0-9]+$ ]]; then
       exit_code="$raw_exit_code"
     else
       exit_code=1
     fi
     error=$(explain_exit_code "$exit_code")
-    if [[ -z "$error" ]]; then
-      error="Unknown error"
-    fi
-  fi
-
-  # Resolve PocketBase record ID if not already known
-  local record_id="${PB_RECORD_ID:-}"
-
-  if [[ -z "$record_id" ]]; then
-    # Look up record by random_id filter
-    local lookup_url="${PB_API_URL}?filter=(random_id='${RANDOM_UUID}')&fields=id&perPage=1"
-    local lookup_response
-    lookup_response=$(curl -s -L "${lookup_url}" 2>/dev/null) || true
-
-    record_id=$(echo "$lookup_response" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4) || true
-
-    if [[ -z "$record_id" ]]; then
-      POST_UPDATE_DONE=true
-      return
-    fi
+    [[ -z "$error" ]] && error="Unknown error"
   fi
 
   local JSON_PAYLOAD
   JSON_PAYLOAD=$(
     cat <<EOF
 {
+    "random_id": "${RANDOM_UUID}",
+    "type": "${TELEMETRY_TYPE:-lxc}",
+    "nsapp": "${NSAPP:-unknown}",
     "status": "${pb_status}",
-    "error": "${error:-}",
-    "exit_code": ${exit_code:-0}
+    "exit_code": ${exit_code},
+    "error": "${error}"
 }
 EOF
   )
 
-  # PATCH to update the existing record
-  curl -s -L -X PATCH "${PB_API_URL}/${record_id}" \
+  # Fire-and-forget: never block, never fail
+  curl -fsS -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
     -H "Content-Type: application/json" \
     -d "$JSON_PAYLOAD" &>/dev/null || true
 

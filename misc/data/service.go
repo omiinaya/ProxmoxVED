@@ -39,36 +39,47 @@ type Config struct {
 	EnableReqLogging bool          // default false (GDPR-friendly)
 }
 
+// TelemetryIn matches payload from api.func (bash client)
 type TelemetryIn struct {
-	Script    string `json:"script"`
-	Version   string `json:"version"`
-	Event     string `json:"event"`
-	OsType    string `json:"os_type"`
-	OsVersion string `json:"os_version,omitempty"`
+	// Required
+	RandomID string `json:"random_id"`         // Session UUID
+	Type     string `json:"type"`              // "lxc" or "vm"
+	NSAPP    string `json:"nsapp"`             // Application name (e.g., "jellyfin")
+	Status   string `json:"status"`            // "installing", "sucess", "failed", "unknown"
+
+	// Container/VM specs
+	CTType    int `json:"ct_type,omitempty"`    // 1=unprivileged, 2=privileged/VM
+	DiskSize  int `json:"disk_size,omitempty"`  // GB
+	CoreCount int `json:"core_count,omitempty"` // CPU cores
+	RAMSize   int `json:"ram_size,omitempty"`   // MB
+
+	// System info
+	OsType    string `json:"os_type,omitempty"`    // "debian", "ubuntu", "alpine", etc.
+	OsVersion string `json:"os_version,omitempty"` // "12", "24.04", etc.
 	PveVer    string `json:"pve_version,omitempty"`
-	Arch      string `json:"arch"`
-	Method    string `json:"method,omitempty"`
-	Status    string `json:"status,omitempty"`
-	ExitCode  int    `json:"exit_code,omitempty"`
-	Error     string `json:"error,omitempty"` // must be sanitized/short
+
+	// Optional
+	Method   string `json:"method,omitempty"`    // "default", "advanced"
+	Error    string `json:"error,omitempty"`     // Error description (max 120 chars)
+	ExitCode int    `json:"exit_code,omitempty"` // 0-255
 }
 
+// TelemetryOut is sent to PocketBase (matches _dev_telemetry_data collection)
 type TelemetryOut struct {
-	Script    string `json:"script"`
-	Version   string `json:"version"`
-	Event     string `json:"event"`
-	OsType    string `json:"os_type"`
+	RandomID  string `json:"random_id"`
+	Type      string `json:"type"`
+	NSAPP     string `json:"nsapp"`
+	Status    string `json:"status"`
+	CTType    int    `json:"ct_type,omitempty"`
+	DiskSize  int    `json:"disk_size,omitempty"`
+	CoreCount int    `json:"core_count,omitempty"`
+	RAMSize   int    `json:"ram_size,omitempty"`
+	OsType    string `json:"os_type,omitempty"`
 	OsVersion string `json:"os_version,omitempty"`
 	PveVer    string `json:"pve_version,omitempty"`
-	Arch      string `json:"arch"`
 	Method    string `json:"method,omitempty"`
-	Status    string `json:"status,omitempty"`
-	ExitCode  int    `json:"exit_code,omitempty"`
 	Error     string `json:"error,omitempty"`
-
-	TS        int64  `json:"ts"`
-	IngestDay string `json:"ingest_day"`
-	Hash      string `json:"hash"`
+	ExitCode  int    `json:"exit_code,omitempty"`
 }
 
 type PBClient struct {
@@ -297,9 +308,21 @@ func getClientIP(r *http.Request, pt *ProxyTrust) net.IP {
 // -------- Validation (strict allowlist) --------
 
 var (
-	allowedEvents = map[string]bool{"install": true, "update": true, "error": true}
-	allowedOsType = map[string]bool{"pve": true, "lxc": true, "vm": true, "debian": true, "ubuntu": true, "alpine": true}
-	allowedArch   = map[string]bool{"amd64": true, "arm64": true}
+	// Allowed values for 'type' field
+	allowedType = map[string]bool{"lxc": true, "vm": true}
+
+	// Allowed values for 'status' field (note: "sucess" is intentional, matches PB schema)
+	allowedStatus = map[string]bool{"installing": true, "sucess": true, "failed": true, "unknown": true}
+
+	// Allowed values for 'os_type' field
+	allowedOsType = map[string]bool{
+		"debian": true, "ubuntu": true, "alpine": true, "devuan": true,
+		"fedora": true, "rocky": true, "alma": true, "centos": true,
+		"opensuse": true, "gentoo": true, "openeuler": true,
+	}
+
+	// Allowed values for 'method' field
+	allowedMethod = map[string]bool{"default": true, "advanced": true, "": true}
 )
 
 func sanitizeShort(s string, max int) string {
@@ -317,42 +340,66 @@ func sanitizeShort(s string, max int) string {
 }
 
 func validate(in *TelemetryIn) error {
-	in.Script = sanitizeShort(in.Script, 64)
-	in.Version = sanitizeShort(in.Version, 32)
-	in.Event = sanitizeShort(in.Event, 16)
-	in.OsType = sanitizeShort(in.OsType, 16)
-	in.Arch = sanitizeShort(in.Arch, 16)
-	in.Method = sanitizeShort(in.Method, 32)
+	// Sanitize all string fields
+	in.RandomID = sanitizeShort(in.RandomID, 64)
+	in.Type = sanitizeShort(in.Type, 8)
+	in.NSAPP = sanitizeShort(in.NSAPP, 64)
 	in.Status = sanitizeShort(in.Status, 16)
+	in.OsType = sanitizeShort(in.OsType, 32)
 	in.OsVersion = sanitizeShort(in.OsVersion, 32)
 	in.PveVer = sanitizeShort(in.PveVer, 32)
+	in.Method = sanitizeShort(in.Method, 32)
 
 	// IMPORTANT: "error" must be short and not contain identifiers/logs
 	in.Error = sanitizeShort(in.Error, 120)
 
-	if in.Script == "" || in.Version == "" || in.Event == "" || in.OsType == "" || in.Arch == "" {
-		return errors.New("missing required fields")
+	// Required fields
+	if in.RandomID == "" || in.Type == "" || in.NSAPP == "" || in.Status == "" {
+		return errors.New("missing required fields: random_id, type, nsapp, status")
 	}
-	if !allowedEvents[in.Event] {
-		return errors.New("invalid event")
+
+	// Validate enums
+	if !allowedType[in.Type] {
+		return errors.New("invalid type (must be 'lxc' or 'vm')")
 	}
-	if !allowedOsType[in.OsType] {
+	if !allowedStatus[in.Status] {
+		return errors.New("invalid status")
+	}
+
+	// os_type is optional but if provided must be valid
+	if in.OsType != "" && !allowedOsType[in.OsType] {
 		return errors.New("invalid os_type")
 	}
-	if !allowedArch[in.Arch] {
-		return errors.New("invalid arch")
+
+	// method is optional but if provided must be valid
+	if !allowedMethod[in.Method] {
+		return errors.New("invalid method")
 	}
-	// exit_code only relevant for error, but allow 0..255
+
+	// Validate numeric ranges
+	if in.CTType < 0 || in.CTType > 2 {
+		return errors.New("invalid ct_type (must be 0, 1, or 2)")
+	}
+	if in.DiskSize < 0 || in.DiskSize > 100000 {
+		return errors.New("invalid disk_size")
+	}
+	if in.CoreCount < 0 || in.CoreCount > 256 {
+		return errors.New("invalid core_count")
+	}
+	if in.RAMSize < 0 || in.RAMSize > 1048576 {
+		return errors.New("invalid ram_size")
+	}
 	if in.ExitCode < 0 || in.ExitCode > 255 {
 		return errors.New("invalid exit_code")
 	}
+
 	return nil
 }
 
+// computeHash generates a hash for deduplication (GDPR-safe, no IP)
 func computeHash(out TelemetryOut) string {
-	// hash over non-identifying fields (no IP) to enable dedupe if needed
-	key := fmt.Sprintf("%s|%s|%s|%s|%s|%s|%d",
-		out.Script, out.Version, out.Event, out.OsType, out.Arch, out.IngestDay, out.ExitCode,
+	key := fmt.Sprintf("%s|%s|%s|%s|%d",
+		out.RandomID, out.NSAPP, out.Type, out.Status, out.ExitCode,
 	)
 	sum := sha256.Sum256([]byte(key))
 	return hex.EncodeToString(sum[:])
@@ -447,24 +494,24 @@ func main() {
 			return
 		}
 
-		now := time.Now().UTC()
+		// Map input to PocketBase schema
 		out := TelemetryOut{
-			Script:    in.Script,
-			Version:   in.Version,
-			Event:     in.Event,
+			RandomID:  in.RandomID,
+			Type:      in.Type,
+			NSAPP:     in.NSAPP,
+			Status:    in.Status,
+			CTType:    in.CTType,
+			DiskSize:  in.DiskSize,
+			CoreCount: in.CoreCount,
+			RAMSize:   in.RAMSize,
 			OsType:    in.OsType,
 			OsVersion: in.OsVersion,
 			PveVer:    in.PveVer,
-			Arch:      in.Arch,
 			Method:    in.Method,
-			Status:    in.Status,
-			ExitCode:  in.ExitCode,
 			Error:     in.Error,
-
-			TS:        now.Unix(),
-			IngestDay: now.Format("2006-01-02"),
+			ExitCode:  in.ExitCode,
 		}
-		out.Hash = computeHash(out)
+		_ = computeHash(out) // For future deduplication
 
 		ctx, cancel := context.WithTimeout(r.Context(), cfg.RequestTimeout)
 		defer cancel()
@@ -477,7 +524,7 @@ func main() {
 		}
 
 		if cfg.EnableReqLogging {
-			log.Printf("telemetry accepted script=%s event=%s", out.Script, out.Event)
+			log.Printf("telemetry accepted nsapp=%s status=%s", out.NSAPP, out.Status)
 		}
 
 		w.WriteHeader(http.StatusAccepted)
