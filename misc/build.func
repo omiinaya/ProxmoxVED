@@ -3606,6 +3606,9 @@ $PCT_OPTIONS_STRING"
       exit 214
     fi
     msg_ok "Storage space validated"
+
+    # Report installation start to API (early - captures failed installs too)
+    post_to_api
   fi
 
   create_lxc_container || exit $?
@@ -5088,9 +5091,6 @@ create_lxc_container() {
   }
 
   msg_ok "LXC Container ${BL}$CTID${CL} ${GN}was successfully created."
-
-  # Report container creation to API
-  post_to_api
 }
 
 # ==============================================================================
