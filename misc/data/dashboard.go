@@ -105,7 +105,7 @@ func (p *PBClient) FetchDashboardData(ctx context.Context, days int) (*Dashboard
 		data.TotalInstalls++
 
 		switch r.Status {
-		case "sucess":
+		case "success":
 			data.SuccessCount++
 		case "failed":
 			data.FailedCount++
@@ -155,7 +155,7 @@ func (p *PBClient) FetchDashboardData(ctx context.Context, days int) (*Dashboard
 		// Daily stats (use Created field if available)
 		if r.Created != "" {
 			date := r.Created[:10] // "2026-02-09"
-			if r.Status == "sucess" {
+			if r.Status == "success" {
 				dailySuccess[date]++
 			} else if r.Status == "failed" {
 				dailyFailed[date]++
@@ -700,7 +700,7 @@ func DashboardHTML() string {
             font-weight: 500;
         }
         
-        .status-badge.sucess { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+        .status-badge.success { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
         .status-badge.failed { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
         .status-badge.installing { background: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); }
         
@@ -1043,7 +1043,7 @@ func DashboardHTML() string {
             <input type="text" id="filterApp" placeholder="Filter by app..." oninput="filterTable()">
             <select id="filterStatus" onchange="filterTable()">
                 <option value="">All Status</option>
-                <option value="sucess">Success</option>
+                <option value="success">Success</option>
                 <option value="failed">Failed</option>
                 <option value="installing">Installing</option>
             </select>

@@ -264,12 +264,12 @@ func fetchPage(page, limit int) ([]OldDataModel, error) {
 }
 
 func importRecord(pbURL, collection string, old OldDataModel) error {
-	// Map status: "done" -> "sucess" (note the typo in the original schema)
+	// Map status: "done" -> "success"
 	status := old.Status
 	switch status {
 	case "done":
-		status = "sucess" // Note: original schema has typo "sucess" not "success"
-	case "installing", "failed", "unknown", "sucess":
+		status = "success"
+	case "installing", "failed", "unknown", "success":
 		// keep as-is
 	default:
 		status = "unknown"

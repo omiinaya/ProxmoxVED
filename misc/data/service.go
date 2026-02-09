@@ -64,7 +64,7 @@ type TelemetryIn struct {
 	RandomID string `json:"random_id"`         // Session UUID
 	Type     string `json:"type"`              // "lxc" or "vm"
 	NSAPP    string `json:"nsapp"`             // Application name (e.g., "jellyfin")
-	Status   string `json:"status"`            // "installing", "sucess", "failed", "unknown"
+	Status   string `json:"status"`            // "installing", "success", "failed", "unknown"
 
 	// Container/VM specs
 	CTType    int `json:"ct_type,omitempty"`    // 1=unprivileged, 2=privileged/VM
@@ -319,7 +319,7 @@ func (p *PBClient) UpsertTelemetry(ctx context.Context, payload TelemetryOut) er
 		return p.CreateTelemetry(ctx, payload)
 	}
 
-	// For status updates (sucess/failed/unknown), find and update existing record
+	// For status updates (success/failed/unknown), find and update existing record
 	recordID, err := p.FindRecordByRandomID(ctx, payload.RandomID)
 	if err != nil {
 		// Search failed, log and return error
@@ -493,8 +493,8 @@ var (
 	// Allowed values for 'type' field
 	allowedType = map[string]bool{"lxc": true, "vm": true}
 
-	// Allowed values for 'status' field (note: "sucess" is intentional, matches PB schema)
-	allowedStatus = map[string]bool{"installing": true, "sucess": true, "failed": true, "unknown": true}
+	// Allowed values for 'status' field
+	allowedStatus = map[string]bool{"installing": true, "success": true, "failed": true, "unknown": true}
 
 	// Allowed values for 'os_type' field
 	allowedOsType = map[string]bool{
