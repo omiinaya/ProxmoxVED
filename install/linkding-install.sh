@@ -22,6 +22,7 @@ $STD apt-get install -y \
   libpq-dev \
   libicu-dev \
   libsqlite3-dev \
+  libsqlite3-mod-icu \
   libffi-dev
 msg_ok "Installed Dependencies"
 
@@ -33,21 +34,8 @@ msg_info "Building Frontend"
 cd /opt/linkding
 $STD npm ci
 $STD npm run build
+ln -sf /usr/lib/x86_64-linux-gnu/mod_icu.so /opt/linkding/libicu.so
 msg_ok "Built Frontend"
-
-msg_info "Compiling SQLite ICU Extension"
-cd /tmp
-SQLITE_RELEASE_YEAR=2023
-SQLITE_RELEASE=3430000
-$STD wget https://www.sqlite.org/${SQLITE_RELEASE_YEAR}/sqlite-amalgamation-${SQLITE_RELEASE}.zip
-$STD unzip -o sqlite-amalgamation-${SQLITE_RELEASE}.zip
-cp sqlite-amalgamation-${SQLITE_RELEASE}/sqlite3.h .
-cp sqlite-amalgamation-${SQLITE_RELEASE}/sqlite3ext.h .
-$STD wget "https://www.sqlite.org/src/raw/ext/icu/icu.c?name=91c021c7e3e8bbba286960810fa303295c622e323567b2e6def4ce58e4466e60" -O icu.c
-$STD gcc -fPIC -shared icu.c $(pkg-config --libs --cflags icu-uc icu-io) -o /opt/linkding/libicu.so
-rm -rf sqlite-amalgamation-${SQLITE_RELEASE}* icu.c sqlite3.h sqlite3ext.h
-cd /opt/linkding
-msg_ok "Compiled SQLite ICU Extension"
 
 msg_info "Setting up linkding"
 rm -f bookmarks/settings/dev.py

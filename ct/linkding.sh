@@ -37,7 +37,6 @@ function update_script() {
     msg_info "Backing up Data"
     cp -r /opt/linkding/data /opt/linkding_data_backup
     cp /opt/linkding/.env /opt/linkding_env_backup
-    cp /opt/linkding/libicu.so /opt/linkding_libicu_backup
     msg_ok "Backed up Data"
 
     CLEAN_INSTALL=1 fetch_and_deploy_gh_release "linkding" "sissbruecker/linkding"
@@ -45,8 +44,8 @@ function update_script() {
     msg_info "Restoring Data"
     cp -r /opt/linkding_data_backup/. /opt/linkding/data
     cp /opt/linkding_env_backup /opt/linkding/.env
-    cp /opt/linkding_libicu_backup /opt/linkding/libicu.so
-    rm -rf /opt/linkding_data_backup /opt/linkding_env_backup /opt/linkding_libicu_backup
+    rm -rf /opt/linkding_data_backup /opt/linkding_env_backup
+    ln -sf /usr/lib/x86_64-linux-gnu/mod_icu.so /opt/linkding/libicu.so
     msg_ok "Restored Data"
 
     msg_info "Updating ${APP}"
