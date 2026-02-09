@@ -188,10 +188,15 @@ explain_exit_code() {
 # - Never blocks or fails script execution
 # ------------------------------------------------------------------------------
 post_to_api() {
+  # DEBUG: Show function entry
+  echo "[DEBUG] post_to_api() called" >&2
+
   # Silent fail - telemetry should never break scripts
-  command -v curl &>/dev/null || return 0
-  [[ "${DIAGNOSTICS:-no}" == "no" ]] && return 0
-  [[ -z "${RANDOM_UUID:-}" ]] && return 0
+  command -v curl &>/dev/null || { echo "[DEBUG] curl not found, skipping" >&2; return 0; }
+  [[ "${DIAGNOSTICS:-no}" == "no" ]] && { echo "[DEBUG] DIAGNOSTICS=no, skipping" >&2; return 0; }
+  [[ -z "${RANDOM_UUID:-}" ]] && { echo "[DEBUG] RANDOM_UUID empty, skipping" >&2; return 0; }
+
+  echo "[DEBUG] Checks passed: DIAGNOSTICS=$DIAGNOSTICS RANDOM_UUID=$RANDOM_UUID NSAPP=$NSAPP" >&2
 
   # Set type for later status updates
   TELEMETRY_TYPE="lxc"
@@ -221,10 +226,16 @@ post_to_api() {
 EOF
   )
 
+  echo "[DEBUG] Sending to: $TELEMETRY_URL" >&2
+  echo "[DEBUG] Payload: $JSON_PAYLOAD" >&2
+
   # Fire-and-forget: never block, never fail
-  curl -fsS -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
+  local http_code
+  http_code=$(curl -sS -w "%{http_code}" -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
     -H "Content-Type: application/json" \
-    -d "$JSON_PAYLOAD" &>/dev/null || true
+    -d "$JSON_PAYLOAD" -o /dev/stderr 2>&1) || true
+  
+  echo "[DEBUG] HTTP response code: $http_code" >&2
 }
 
 # ------------------------------------------------------------------------------
