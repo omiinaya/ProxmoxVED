@@ -1882,7 +1882,7 @@ advanced_settings() {
       fi
       ;;
 
-    # ═══════════════════════════════════════════════════════════════════════════
+    # ══════════════��════════════════════════════════════════════════════════════
     # STEP 3: Container ID
     # ═══════════════════════════════════════════════════════════════════════════
     3)
@@ -2810,16 +2810,16 @@ EOF
 dev_mode_menu() {
   local motd=OFF keep=OFF trace=OFF pause=OFF breakpoint=OFF logs=OFF dryrun=OFF verbose=OFF
 
-  IFS=',' read -r -a _modes <<< "$dev_mode"
+  IFS=',' read -r -a _modes <<<"$dev_mode"
   for m in "${_modes[@]}"; do
     case "$m" in
-      motd) motd=ON ;;
-      keep) keep=ON ;;
-      trace) trace=ON ;;
-      pause) pause=ON ;;
-      breakpoint) breakpoint=ON ;;
-      logs) logs=ON ;;
-      dryrun) dryrun=ON ;;
+    motd) motd=ON ;;
+    keep) keep=ON ;;
+    trace) trace=ON ;;
+    pause) pause=ON ;;
+    breakpoint) breakpoint=ON ;;
+    logs) logs=ON ;;
+    dryrun) dryrun=ON ;;
     esac
   done
 
@@ -2853,7 +2853,10 @@ dev_mode_menu() {
     fi
   done
 
-  dev_mode=$(IFS=,; echo "${modes_out[*]}")
+  dev_mode=$(
+    IFS=,
+    echo "${modes_out[*]}"
+  )
   unset DEV_MODE_MOTD DEV_MODE_KEEP DEV_MODE_TRACE DEV_MODE_PAUSE DEV_MODE_BREAKPOINT DEV_MODE_LOGS DEV_MODE_DRYRUN
   parse_dev_mode
   if [[ "${DEV_MODE_LOGS:-false}" == "true" ]]; then
