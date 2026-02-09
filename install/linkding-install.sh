@@ -14,10 +14,11 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt install -y \
+$STD apt-get install -y \
   build-essential \
   pkg-config \
   python3-dev \
+  nginx \
   libpq-dev \
   libicu-dev \
   libsqlite3-dev \
@@ -79,7 +80,7 @@ User=root
 WorkingDirectory=/opt/linkding
 EnvironmentFile=/opt/linkding/.env
 ExecStart=/opt/linkding/.venv/bin/gunicorn \
-  --bind 0.0.0.0:9090 \
+  --bind 127.0.0.1:8000 \
   --workers 3 \
   --threads 2 \
   --timeout 120 \
@@ -106,7 +107,31 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
-systemctl enable -q --now linkding linkding-tasks
+cat <<'EOF' >/etc/nginx/sites-available/linkding
+server {
+    listen 9090;
+    server_name _;
+
+    client_max_body_size 20M;
+
+    location /static/ {
+        alias /opt/linkding/static/;
+        expires 30d;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_redirect off;
+    }
+}
+EOF
+$STD rm -f /etc/nginx/sites-enabled/default
+$STD ln -sf /etc/nginx/sites-available/linkding /etc/nginx/sites-enabled/linkding
+systemctl enable -q --now nginx linkding linkding-tasks
+systemctl restart nginx
 msg_ok "Created Services"
 
 motd_ssh

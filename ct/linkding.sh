@@ -31,7 +31,7 @@ function update_script() {
 
   if check_for_gh_release "linkding" "sissbruecker/linkding"; then
     msg_info "Stopping Services"
-    systemctl stop linkding linkding-tasks
+    systemctl stop nginx linkding linkding-tasks
     msg_ok "Stopped Services"
 
     msg_info "Backing up Data"
@@ -63,7 +63,7 @@ function update_script() {
     msg_ok "Updated ${APP}"
 
     msg_info "Starting Services"
-    systemctl start linkding linkding-tasks
+    systemctl start nginx linkding linkding-tasks
     msg_ok "Started Services"
     msg_ok "Updated Successfully"
   fi
