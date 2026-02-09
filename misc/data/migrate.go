@@ -77,12 +77,20 @@ func main() {
 	sourceAPI = baseURL + "/paginated"
 	summaryAPI = baseURL + "/summary"
 
+	// Support both POCKETBASE_URL and PB_URL (Coolify uses PB_URL)
 	pbURL := os.Getenv("POCKETBASE_URL")
+	if pbURL == "" {
+		pbURL = os.Getenv("PB_URL")
+	}
 	if pbURL == "" {
 		pbURL = defaultPBURL
 	}
 
+	// Support both POCKETBASE_COLLECTION and PB_TARGET_COLLECTION
 	pbCollection := os.Getenv("POCKETBASE_COLLECTION")
+	if pbCollection == "" {
+		pbCollection = os.Getenv("PB_TARGET_COLLECTION")
+	}
 	if pbCollection == "" {
 		pbCollection = "_dev_telemetry_data"
 	}

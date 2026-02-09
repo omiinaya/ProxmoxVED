@@ -5,6 +5,11 @@ echo "============================================="
 echo "   ProxmoxVED Telemetry Service"
 echo "============================================="
 
+# Map Coolify ENV names to migration script names
+# Coolify uses PB_URL, PB_TARGET_COLLECTION
+export POCKETBASE_URL="${POCKETBASE_URL:-$PB_URL}"
+export POCKETBASE_COLLECTION="${POCKETBASE_COLLECTION:-$PB_TARGET_COLLECTION}"
+
 # Run migration if enabled
 if [ "$RUN_MIGRATION" = "true" ]; then
     echo ""
