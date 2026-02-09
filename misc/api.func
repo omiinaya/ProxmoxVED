@@ -32,7 +32,7 @@
 # ==============================================================================
 # Telemetry Configuration
 # ==============================================================================
-TELEMETRY_URL="http://telemetry.community-scripts.org/telemetry"
+TELEMETRY_URL="https://telemetry.community-scripts.org/telemetry"
 
 # Timeout for telemetry requests (seconds)
 TELEMETRY_TIMEOUT=5
