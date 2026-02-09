@@ -14,20 +14,18 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y \
+$STD apt install -y \
   build-essential \
   pkg-config \
+  python3-dev \
   libpq-dev \
   libicu-dev \
   libsqlite3-dev \
-  libffi-dev \
-  unzip \
-  wget
+  libffi-dev
 msg_ok "Installed Dependencies"
 
 NODE_VERSION="22" setup_nodejs
 setup_uv
-
 fetch_and_deploy_gh_release "linkding" "sissbruecker/linkding"
 
 msg_info "Building Frontend"
