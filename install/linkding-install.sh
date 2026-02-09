@@ -14,7 +14,7 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y \
+$STD apt install -y \
   build-essential \
   pkg-config \
   python3-dev \
@@ -22,7 +22,6 @@ $STD apt-get install -y \
   libpq-dev \
   libicu-dev \
   libsqlite3-dev \
-  libsqlite3-mod-icu \
   libffi-dev
 msg_ok "Installed Dependencies"
 
