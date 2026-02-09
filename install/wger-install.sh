@@ -21,7 +21,6 @@ $STD apt install -y \
   libpq-dev
 msg_ok "Installed Dependencies"
 
-import_local_ip
 NODE_VERSION="22" NODE_MODULE="sass" setup_nodejs
 setup_uv
 PG_VERSION="16" setup_postgresql
