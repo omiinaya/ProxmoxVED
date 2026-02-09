@@ -23,6 +23,7 @@ const (
 var (
 	sourceAPI  string
 	summaryAPI string
+	authToken  string // PocketBase auth token
 )
 
 // OldDataModel represents the data structure from the old API
@@ -95,12 +96,37 @@ func main() {
 		pbCollection = "_dev_telemetry_data"
 	}
 
+	// Auth collection
+	authCollection := os.Getenv("PB_AUTH_COLLECTION")
+	if authCollection == "" {
+		authCollection = "_dev_telemetry_service"
+	}
+
+	// Credentials
+	pbIdentity := os.Getenv("PB_IDENTITY")
+	pbPassword := os.Getenv("PB_PASSWORD")
+
 	fmt.Println("===========================================")
 	fmt.Println("   Data Migration to PocketBase")
 	fmt.Println("===========================================")
 	fmt.Printf("Source API:       %s\n", baseURL)
 	fmt.Printf("PocketBase URL:   %s\n", pbURL)
 	fmt.Printf("Collection:       %s\n", pbCollection)
+	fmt.Printf("Auth Collection:  %s\n", authCollection)
+	fmt.Println("-------------------------------------------")
+
+	// Authenticate with PocketBase
+	if pbIdentity != "" && pbPassword != "" {
+		fmt.Println("🔐 Authenticating with PocketBase...")
+		err := authenticate(pbURL, authCollection, pbIdentity, pbPassword)
+		if err != nil {
+			fmt.Printf("❌ Authentication failed: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("✅ Authentication successful")
+	} else {
+		fmt.Println("⚠️  No credentials provided, trying without auth...")
+	}
 	fmt.Println("-------------------------------------------")
 
 	// Get total count
@@ -175,6 +201,46 @@ func getSummary() (*Summary, error) {
 	return &summary, nil
 }
 
+func authenticate(pbURL, authCollection, identity, password string) error {
+	body := map[string]string{
+		"identity": identity,
+		"password": password,
+	}
+	jsonData, _ := json.Marshal(body)
+
+	url := fmt.Sprintf("%s/api/collections/%s/auth-with-password", pbURL, authCollection)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
+	}
+
+	var result struct {
+		Token string `json:"token"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return err
+	}
+	if result.Token == "" {
+		return fmt.Errorf("no token in response")
+	}
+
+	authToken = result.Token
+	return nil
+}
+
 func fetchPage(page, limit int) ([]OldDataModel, error) {
 	url := fmt.Sprintf("%s?page=%d&limit=%d", sourceAPI, page, limit)
 
@@ -226,6 +292,9 @@ func importRecord(pbURL, collection string, old OldDataModel) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	if authToken != "" {
+		req.Header.Set("Authorization", "Bearer "+authToken)
+	}
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
