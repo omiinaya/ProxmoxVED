@@ -320,9 +320,6 @@ var (
 		"fedora": true, "rocky": true, "alma": true, "centos": true,
 		"opensuse": true, "gentoo": true, "openeuler": true,
 	}
-
-	// Allowed values for 'method' field
-	allowedMethod = map[string]bool{"default": true, "advanced": true, "": true}
 )
 
 func sanitizeShort(s string, max int) string {
@@ -371,10 +368,8 @@ func validate(in *TelemetryIn) error {
 		return errors.New("invalid os_type")
 	}
 
-	// method is optional but if provided must be valid
-	if !allowedMethod[in.Method] {
-		return errors.New("invalid method")
-	}
+	// method is optional and flexible - just sanitized, no strict validation
+	// Values like "default", "advanced", "mydefaults-global", "mydefaults-app" are all valid
 
 	// Validate numeric ranges
 	if in.CTType < 0 || in.CTType > 2 {
