@@ -62,11 +62,11 @@ LD_SUPERUSER_PASSWORD=${ADMIN_PASS}
 LD_CSRF_TRUSTED_ORIGINS=http://${LOCAL_IP}:9090
 EOF
 set -a && source /opt/linkding/.env && set +a
-$STD uv run python manage.py generate_secret_key
-$STD uv run python manage.py migrate
-$STD uv run python manage.py enable_wal
-$STD uv run python manage.py create_initial_superuser
-$STD uv run python manage.py collectstatic --no-input
+$STD /opt/linkding/.venv/bin/python manage.py generate_secret_key
+$STD /opt/linkding/.venv/bin/python manage.py migrate
+$STD /opt/linkding/.venv/bin/python manage.py enable_wal
+$STD /opt/linkding/.venv/bin/python manage.py create_initial_superuser
+$STD /opt/linkding/.venv/bin/python manage.py collectstatic --no-input
 msg_ok "Set up linkding"
 
 msg_info "Creating Services"

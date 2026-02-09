@@ -55,11 +55,11 @@ function update_script() {
     touch bookmarks/settings/custom.py
     $STD npm ci
     $STD npm run build
-    $STD uv sync --no-dev
+    $STD uv sync --no-dev --frozen
     $STD uv pip install gunicorn
     set -a && source /opt/linkding/.env && set +a
-    $STD uv run python manage.py migrate
-    $STD uv run python manage.py collectstatic --no-input
+    $STD /opt/linkding/.venv/bin/python manage.py migrate
+    $STD /opt/linkding/.venv/bin/python manage.py collectstatic --no-input
     msg_ok "Updated ${APP}"
 
     msg_info "Starting Services"
