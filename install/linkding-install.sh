@@ -50,7 +50,7 @@ rm -rf sqlite-amalgamation-${SQLITE_RELEASE}* icu.c sqlite3.h sqlite3ext.h
 cd /opt/linkding
 msg_ok "Compiled SQLite ICU Extension"
 
-msg_info "Setting up ${APP}"
+msg_info "Setting up linkding"
 rm -f bookmarks/settings/dev.py
 touch bookmarks/settings/custom.py
 $STD uv sync --no-dev
@@ -68,7 +68,7 @@ $STD uv run python manage.py migrate
 $STD uv run python manage.py enable_wal
 $STD uv run python manage.py create_initial_superuser
 $STD uv run python manage.py collectstatic --no-input
-msg_ok "Set up ${APP}"
+msg_ok "Set up linkding"
 
 msg_info "Creating Services"
 cat <<EOF >/etc/systemd/system/linkding.service
