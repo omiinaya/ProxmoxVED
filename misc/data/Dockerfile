@@ -1,13 +1,9 @@
-# build stage
 FROM golang:1.25-alpine AS build
 WORKDIR /src
 COPY . .
-RUN go build -trimpath -ldflags "-s -w" -o /out/telemetry-ingest ./main.go
+RUN go build -trimpath -ldflags "-s -w" -o /out/telemetry-ingest .
 
-# runtime stage
 FROM alpine:3.23
-RUN adduser -D -H -s /sbin/nologin app
-USER app
 WORKDIR /app
 COPY --from=build /out/telemetry-ingest /app/telemetry-ingest
 EXPOSE 8080
