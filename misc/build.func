@@ -1882,7 +1882,7 @@ advanced_settings() {
       fi
       ;;
 
-    # ══════════════���════════════════════════════════════════════════════════════
+    # ══════════════����════════════════════════════════════════════════════════════
     # STEP 3: Container ID
     # ═══════════════════════════════════════════════════════════════════════════
     3)
@@ -4013,6 +4013,9 @@ EOF'
   # Installation failed?
   if [[ $install_exit_code -ne 0 ]]; then
     msg_error "Installation failed in container ${CTID} (exit code: ${install_exit_code})"
+
+    # Report failure to telemetry API
+    post_update_to_api "failed" "$install_exit_code"
 
     # Copy both logs from container before potential deletion
     local build_log_copied=false
