@@ -82,6 +82,13 @@ type TelemetryOut struct {
 	ExitCode  int    `json:"exit_code,omitempty"`
 }
 
+// TelemetryStatusUpdate contains only fields needed for status updates
+type TelemetryStatusUpdate struct {
+	Status   string `json:"status"`
+	Error    string `json:"error,omitempty"`
+	ExitCode int    `json:"exit_code"`
+}
+
 type PBClient struct {
 	baseURL        string
 	authCollection string
@@ -157,6 +164,109 @@ func (p *PBClient) ensureAuth(ctx context.Context) error {
 	p.token = out.Token
 	p.exp = time.Now().Add(50 * time.Minute)
 	return nil
+}
+
+// FindRecordByRandomID searches for an existing record by random_id
+func (p *PBClient) FindRecordByRandomID(ctx context.Context, randomID string) (string, error) {
+	if err := p.ensureAuth(ctx); err != nil {
+		return "", err
+	}
+
+	// URL encode the filter
+	filter := fmt.Sprintf("random_id='%s'", randomID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+		fmt.Sprintf("%s/api/collections/%s/records?filter=%s&fields=id&perPage=1",
+			p.baseURL, p.targetColl, filter),
+		nil,
+	)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", "Bearer "+p.token)
+
+	resp, err := p.http.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("pocketbase search failed: %s", resp.Status)
+	}
+
+	var result struct {
+		Items []struct {
+			ID string `json:"id"`
+		} `json:"items"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", err
+	}
+
+	if len(result.Items) == 0 {
+		return "", nil // Not found
+	}
+	return result.Items[0].ID, nil
+}
+
+// UpdateTelemetryStatus updates only status, error, and exit_code of an existing record
+func (p *PBClient) UpdateTelemetryStatus(ctx context.Context, recordID string, update TelemetryStatusUpdate) error {
+	if err := p.ensureAuth(ctx); err != nil {
+		return err
+	}
+
+	b, _ := json.Marshal(update)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch,
+		fmt.Sprintf("%s/api/collections/%s/records/%s", p.baseURL, p.targetColl, recordID),
+		bytes.NewReader(b),
+	)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+p.token)
+
+	resp, err := p.http.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		rb, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<10))
+		return fmt.Errorf("pocketbase update failed: %s: %s", resp.Status, strings.TrimSpace(string(rb)))
+	}
+	return nil
+}
+
+// UpsertTelemetry handles both creation and updates intelligently
+// - status="installing": Always creates a new record
+// - status!="installing": Updates existing record (found by random_id) with status/error/exit_code only
+func (p *PBClient) UpsertTelemetry(ctx context.Context, payload TelemetryOut) error {
+	// For "installing" status, always create new record
+	if payload.Status == "installing" {
+		return p.CreateTelemetry(ctx, payload)
+	}
+
+	// For status updates (sucess/failed/unknown), find and update existing record
+	recordID, err := p.FindRecordByRandomID(ctx, payload.RandomID)
+	if err != nil {
+		// Search failed, log and return error
+		return fmt.Errorf("cannot find record to update: %w", err)
+	}
+
+	if recordID == "" {
+		// Record not found - this shouldn't happen normally
+		// Create a full record as fallback
+		return p.CreateTelemetry(ctx, payload)
+	}
+
+	// Update only status, error, and exit_code
+	update := TelemetryStatusUpdate{
+		Status:   payload.Status,
+		Error:    payload.Error,
+		ExitCode: payload.ExitCode,
+	}
+	return p.UpdateTelemetryStatus(ctx, recordID, update)
 }
 
 func (p *PBClient) CreateTelemetry(ctx context.Context, payload TelemetryOut) error {
@@ -350,7 +460,7 @@ func validate(in *TelemetryIn) error {
 	// IMPORTANT: "error" must be short and not contain identifiers/logs
 	in.Error = sanitizeShort(in.Error, 120)
 
-	// Required fields
+	// Required fields for all requests
 	if in.RandomID == "" || in.Type == "" || in.NSAPP == "" || in.Status == "" {
 		return errors.New("missing required fields: random_id, type, nsapp, status")
 	}
@@ -363,6 +473,10 @@ func validate(in *TelemetryIn) error {
 		return errors.New("invalid status")
 	}
 
+	// For status updates (not installing), skip numeric field validation
+	// These are only required for initial creation
+	isUpdate := in.Status != "installing"
+
 	// os_type is optional but if provided must be valid
 	if in.OsType != "" && !allowedOsType[in.OsType] {
 		return errors.New("invalid os_type")
@@ -371,9 +485,11 @@ func validate(in *TelemetryIn) error {
 	// method is optional and flexible - just sanitized, no strict validation
 	// Values like "default", "advanced", "mydefaults-global", "mydefaults-app" are all valid
 
-	// Validate numeric ranges
-	if in.CTType < 0 || in.CTType > 2 {
-		return errors.New("invalid ct_type (must be 0, 1, or 2)")
+	// Validate numeric ranges (only strict for new records)
+	if !isUpdate {
+		if in.CTType < 0 || in.CTType > 2 {
+			return errors.New("invalid ct_type (must be 0, 1, or 2)")
+		}
 	}
 	if in.DiskSize < 0 || in.DiskSize > 100000 {
 		return errors.New("invalid disk_size")
@@ -511,7 +627,8 @@ func main() {
 		ctx, cancel := context.WithTimeout(r.Context(), cfg.RequestTimeout)
 		defer cancel()
 
-		if err := pb.CreateTelemetry(ctx, out); err != nil {
+		// Upsert: Creates new record if random_id doesn't exist, updates if it does
+		if err := pb.UpsertTelemetry(ctx, out); err != nil {
 			// GDPR: don't log raw payload, don't log IPs; log only generic error
 			log.Printf("pocketbase write failed: %v", err)
 			http.Error(w, "upstream error", http.StatusBadGateway)

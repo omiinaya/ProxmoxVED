@@ -378,12 +378,8 @@ post_update_to_api() {
     [[ -z "$error" ]] && error="Unknown error"
   fi
 
-  # Get PVE version for complete record
-  local pve_version=""
-  if command -v pveversion &>/dev/null; then
-    pve_version=$(pveversion 2>/dev/null | awk -F'[/ ]' '{print $2}') || true
-  fi
-
+  # Update payload: only fields that change (status, error, exit_code)
+  # The Go service will find the record by random_id and PATCH only these fields
   local JSON_PAYLOAD
   JSON_PAYLOAD=$(
     cat <<EOF
@@ -392,14 +388,6 @@ post_update_to_api() {
     "type": "${TELEMETRY_TYPE:-lxc}",
     "nsapp": "${NSAPP:-unknown}",
     "status": "${pb_status}",
-    "ct_type": ${CT_TYPE:-1},
-    "disk_size": ${DISK_SIZE:-0},
-    "core_count": ${CORE_COUNT:-0},
-    "ram_size": ${RAM_SIZE:-0},
-    "os_type": "${var_os:-}",
-    "os_version": "${var_version:-}",
-    "pve_version": "${pve_version}",
-    "method": "${METHOD:-default}",
     "exit_code": ${exit_code},
     "error": "${error}"
 }
