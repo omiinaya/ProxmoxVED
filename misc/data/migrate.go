@@ -264,8 +264,31 @@ func fetchPage(page, limit int) ([]OldDataModel, error) {
 }
 
 func importRecord(pbURL, collection string, old OldDataModel) error {
+	// Map status: "done" -> "sucess" (note the typo in the original schema)
+	status := old.Status
+	switch status {
+	case "done":
+		status = "sucess" // Note: original schema has typo "sucess" not "success"
+	case "installing", "failed", "unknown", "sucess":
+		// keep as-is
+	default:
+		status = "unknown"
+	}
+
+	// Ensure ct_type is not 0 (required field)
+	ctType := old.CtType
+	if ctType == 0 {
+		ctType = 1 // default to unprivileged
+	}
+
+	// Ensure type is set
+	recordType := old.Type
+	if recordType == "" {
+		recordType = "lxc"
+	}
+
 	record := PBRecord{
-		CtType:     old.CtType,
+		CtType:     ctType,
 		DiskSize:   old.DiskSize,
 		CoreCount:  old.CoreCount,
 		RamSize:    old.RamSize,
@@ -275,9 +298,9 @@ func importRecord(pbURL, collection string, old OldDataModel) error {
 		NsApp:      old.NsApp,
 		Method:     old.Method,
 		PveVersion: old.PveVersion,
-		Status:     old.Status,
+		Status:     status,
 		RandomID:   old.RandomID,
-		Type:       old.Type,
+		Type:       recordType,
 		Error:      old.Error,
 	}
 
@@ -318,7 +341,8 @@ func isUniqueViolation(err error) bool {
 	errStr := err.Error()
 	return contains(errStr, "UNIQUE constraint failed") ||
 		contains(errStr, "duplicate") ||
-		contains(errStr, "already exists")
+		contains(errStr, "already exists") ||
+		contains(errStr, "validation_not_unique")
 }
 
 func contains(s, substr string) bool {
