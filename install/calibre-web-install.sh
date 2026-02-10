@@ -37,10 +37,9 @@ cd /opt/calibre-web
 $STD pip3 install --no-cache-dir -r requirements.txt
 msg_ok "Installed Python Dependencies"
 
-mkdir -p /opt/calibre-web/data
-msg_ok "Created Data Directory"
-
 msg_info "Creating Service"
+mkdir -p /opt/calibre-web/data
+
 cat <<EOF
 [Unit]
 Description=Calibre-Web Service
@@ -64,8 +63,7 @@ motd_ssh
 customize
 
 msg_info "Cleaning up"
-$STD apt -y autoremove
-$STD apt -y autoclean
-msg_ok "Cleaned"
+apt -y autoremove
+apt -y autoclean
 
 cleanup_lxc

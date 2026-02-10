@@ -30,7 +30,6 @@ function update_script() {
   fi
 
   if check_for_gh_release "calibre-web" "janeczku/calibre-web"; then
-
     msg_info "Stopping Service"
     systemctl stop calibre-web
     msg_ok "Stopped Service"
