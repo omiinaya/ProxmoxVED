@@ -171,38 +171,97 @@ explain_exit_code() {
 # ------------------------------------------------------------------------------
 # detect_gpu()
 #
-# - Detects GPU vendor and passthrough type
-# - Sets GPU_VENDOR and GPU_PASSTHROUGH globals
+# - Detects GPU vendor, model, and passthrough type
+# - Sets GPU_VENDOR, GPU_MODEL, and GPU_PASSTHROUGH globals
 # - Used for GPU analytics
 # ------------------------------------------------------------------------------
 detect_gpu() {
-  GPU_VENDOR=""
-  GPU_PASSTHROUGH="none"
+  GPU_VENDOR="unknown"
+  GPU_MODEL=""
+  GPU_PASSTHROUGH="unknown"
 
-  # Detect Intel GPU
-  if lspci 2>/dev/null | grep -qi "VGA.*Intel"; then
-    GPU_VENDOR="intel"
-    GPU_PASSTHROUGH="igpu"
-  fi
+  local gpu_line
+  gpu_line=$(lspci 2>/dev/null | grep -iE "VGA|3D|Display" | head -1)
 
-  # Detect AMD GPU
-  if lspci 2>/dev/null | grep -qi "VGA.*AMD\|VGA.*ATI"; then
-    GPU_VENDOR="amd"
-    # Check if discrete
-    if lspci 2>/dev/null | grep -qi "AMD.*Radeon"; then
-      GPU_PASSTHROUGH="dgpu"
-    else
+  if [[ -n "$gpu_line" ]]; then
+    # Extract model: everything after the colon, clean up
+    GPU_MODEL=$(echo "$gpu_line" | sed 's/.*: //' | sed 's/ (rev .*)$//' | cut -c1-64)
+
+    # Detect vendor and passthrough type
+    if echo "$gpu_line" | grep -qi "Intel"; then
+      GPU_VENDOR="intel"
       GPU_PASSTHROUGH="igpu"
+    elif echo "$gpu_line" | grep -qi "AMD\|ATI"; then
+      GPU_VENDOR="amd"
+      if echo "$gpu_line" | grep -qi "Radeon RX\|Radeon Pro"; then
+        GPU_PASSTHROUGH="dgpu"
+      else
+        GPU_PASSTHROUGH="igpu"
+      fi
+    elif echo "$gpu_line" | grep -qi "NVIDIA"; then
+      GPU_VENDOR="nvidia"
+      GPU_PASSTHROUGH="dgpu"
     fi
   fi
 
-  # Detect NVIDIA GPU
-  if lspci 2>/dev/null | grep -qi "VGA.*NVIDIA\|3D.*NVIDIA"; then
-    GPU_VENDOR="nvidia"
-    GPU_PASSTHROUGH="dgpu"
+  export GPU_VENDOR GPU_MODEL GPU_PASSTHROUGH
+}
+
+# ------------------------------------------------------------------------------
+# detect_cpu()
+#
+# - Detects CPU vendor and model
+# - Sets CPU_VENDOR (intel/amd/arm/unknown) and CPU_MODEL globals
+# - Used for CPU analytics
+# ------------------------------------------------------------------------------
+detect_cpu() {
+  CPU_VENDOR="unknown"
+  CPU_MODEL=""
+
+  if [[ -f /proc/cpuinfo ]]; then
+    local vendor_id
+    vendor_id=$(grep -m1 "vendor_id" /proc/cpuinfo 2>/dev/null | cut -d: -f2 | tr -d ' ')
+
+    case "$vendor_id" in
+    GenuineIntel) CPU_VENDOR="intel" ;;
+    AuthenticAMD) CPU_VENDOR="amd" ;;
+    *)
+      # ARM doesn't have vendor_id, check for CPU implementer
+      if grep -qi "CPU implementer" /proc/cpuinfo 2>/dev/null; then
+        CPU_VENDOR="arm"
+      fi
+      ;;
+    esac
+
+    # Extract model name and clean it up
+    CPU_MODEL=$(grep -m1 "model name" /proc/cpuinfo 2>/dev/null | cut -d: -f2 | sed 's/^ *//' | sed 's/(R)//g' | sed 's/(TM)//g' | sed 's/  */ /g' | cut -c1-64)
   fi
 
-  export GPU_VENDOR GPU_PASSTHROUGH
+  export CPU_VENDOR CPU_MODEL
+}
+
+# ------------------------------------------------------------------------------
+# detect_ram()
+#
+# - Detects RAM speed using dmidecode
+# - Sets RAM_SPEED global (e.g., "4800" for DDR5-4800)
+# - Requires root access for dmidecode
+# - Returns empty if not available
+# ------------------------------------------------------------------------------
+detect_ram() {
+  RAM_SPEED=""
+
+  if command -v dmidecode &>/dev/null; then
+    # Get configured memory speed (actual running speed)
+    RAM_SPEED=$(dmidecode -t memory 2>/dev/null | grep -m1 "Configured Memory Speed:" | grep -oE "[0-9]+" | head -1)
+    
+    # Fallback to Speed: if Configured not available
+    if [[ -z "$RAM_SPEED" ]]; then
+      RAM_SPEED=$(dmidecode -t memory 2>/dev/null | grep -m1 "Speed:" | grep -oE "[0-9]+" | head -1)
+    fi
+  fi
+
+  export RAM_SPEED
 }
 
 # ------------------------------------------------------------------------------
@@ -256,8 +315,22 @@ post_to_api() {
   if [[ -z "${GPU_VENDOR:-}" ]]; then
     detect_gpu
   fi
-  local gpu_vendor="${GPU_VENDOR:-}"
-  local gpu_passthrough="${GPU_PASSTHROUGH:-none}"
+  local gpu_vendor="${GPU_VENDOR:-unknown}"
+  local gpu_model="${GPU_MODEL:-}"
+  local gpu_passthrough="${GPU_PASSTHROUGH:-unknown}"
+
+  # Detect CPU if not already set
+  if [[ -z "${CPU_VENDOR:-}" ]]; then
+    detect_cpu
+  fi
+  local cpu_vendor="${CPU_VENDOR:-unknown}"
+  local cpu_model="${CPU_MODEL:-}"
+
+  # Detect RAM if not already set
+  if [[ -z "${RAM_SPEED:-}" ]]; then
+    detect_ram
+  fi
+  local ram_speed="${RAM_SPEED:-}"
 
   local JSON_PAYLOAD
   JSON_PAYLOAD=$(
@@ -275,8 +348,12 @@ post_to_api() {
     "os_version": "${var_version:-}",
     "pve_version": "${pve_version}",
     "method": "${METHOD:-default}",
+    "cpu_vendor": "${cpu_vendor}",
+    "cpu_model": "${cpu_model}",
     "gpu_vendor": "${gpu_vendor}",
-    "gpu_passthrough": "${gpu_passthrough}"
+    "gpu_model": "${gpu_model}",
+    "gpu_passthrough": "${gpu_passthrough}",
+    "ram_speed": "${ram_speed}"
 }
 EOF
   )
@@ -384,8 +461,16 @@ post_update_to_api() {
   local exit_code=0 error="" pb_status error_category=""
 
   # Get GPU info (if detected)
-  local gpu_vendor="${GPU_VENDOR:-}"
-  local gpu_passthrough="${GPU_PASSTHROUGH:-}"
+  local gpu_vendor="${GPU_VENDOR:-unknown}"
+  local gpu_model="${GPU_MODEL:-}"
+  local gpu_passthrough="${GPU_PASSTHROUGH:-unknown}"
+
+  # Get CPU info (if detected)
+  local cpu_vendor="${CPU_VENDOR:-unknown}"
+  local cpu_model="${CPU_MODEL:-}"
+
+  # Get RAM info (if detected)
+  local ram_speed="${RAM_SPEED:-}"
 
   # Map status to telemetry values: installing, success, failed, unknown
   case "$status" in
@@ -449,8 +534,12 @@ post_update_to_api() {
     "error": "${error}",
     "error_category": "${error_category}",
     "install_duration": ${duration},
+    "cpu_vendor": "${cpu_vendor}",
+    "cpu_model": "${cpu_model}",
     "gpu_vendor": "${gpu_vendor}",
-    "gpu_passthrough": "${gpu_passthrough}"
+    "gpu_model": "${gpu_model}",
+    "gpu_passthrough": "${gpu_passthrough}",
+    "ram_speed": "${ram_speed}"
 }
 EOF
   )
