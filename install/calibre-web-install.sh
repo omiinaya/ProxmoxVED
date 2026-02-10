@@ -27,10 +27,7 @@ msg_info "Installing Calibre (for eBook conversion)"
 $STD apt install -y calibre
 msg_ok "Installed Calibre"
 
-msg_info "Setting up Calibre-Web"
 fetch_and_deploy_gh_release "calibre-web" "janeczku/calibre-web" "tarball" "latest" "/opt/calibre-web"
-msg_ok "Setup Calibre-Web"
-
 setup_uv
 
 msg_info "Installing Python Dependencies"
