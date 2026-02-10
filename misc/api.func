@@ -169,6 +169,43 @@ explain_exit_code() {
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
+# detect_gpu()
+#
+# - Detects GPU vendor and passthrough type
+# - Sets GPU_VENDOR and GPU_PASSTHROUGH globals
+# - Used for GPU analytics
+# ------------------------------------------------------------------------------
+detect_gpu() {
+  GPU_VENDOR=""
+  GPU_PASSTHROUGH="none"
+
+  # Detect Intel GPU
+  if lspci 2>/dev/null | grep -qi "VGA.*Intel"; then
+    GPU_VENDOR="intel"
+    GPU_PASSTHROUGH="igpu"
+  fi
+
+  # Detect AMD GPU
+  if lspci 2>/dev/null | grep -qi "VGA.*AMD\|VGA.*ATI"; then
+    GPU_VENDOR="amd"
+    # Check if discrete
+    if lspci 2>/dev/null | grep -qi "AMD.*Radeon"; then
+      GPU_PASSTHROUGH="dgpu"
+    else
+      GPU_PASSTHROUGH="igpu"
+    fi
+  fi
+
+  # Detect NVIDIA GPU
+  if lspci 2>/dev/null | grep -qi "VGA.*NVIDIA\|3D.*NVIDIA"; then
+    GPU_VENDOR="nvidia"
+    GPU_PASSTHROUGH="dgpu"
+  fi
+
+  export GPU_VENDOR GPU_PASSTHROUGH
+}
+
+# ------------------------------------------------------------------------------
 # post_to_api()
 #
 # - Sends LXC container creation statistics to telemetry ingest service
@@ -215,6 +252,13 @@ post_to_api() {
     pve_version=$(pveversion 2>/dev/null | awk -F'[/ ]' '{print $2}') || true
   fi
 
+  # Detect GPU if not already set
+  if [[ -z "${GPU_VENDOR:-}" ]]; then
+    detect_gpu
+  fi
+  local gpu_vendor="${GPU_VENDOR:-}"
+  local gpu_passthrough="${GPU_PASSTHROUGH:-none}"
+
   local JSON_PAYLOAD
   JSON_PAYLOAD=$(
     cat <<EOF
@@ -230,7 +274,9 @@ post_to_api() {
     "os_type": "${var_os:-}",
     "os_version": "${var_version:-}",
     "pve_version": "${pve_version}",
-    "method": "${METHOD:-default}"
+    "method": "${METHOD:-default}",
+    "gpu_vendor": "${gpu_vendor}",
+    "gpu_passthrough": "${gpu_passthrough}"
 }
 EOF
   )
@@ -335,7 +381,11 @@ post_update_to_api() {
 
   local status="${1:-failed}"
   local raw_exit_code="${2:-1}"
-  local exit_code=0 error="" pb_status
+  local exit_code=0 error="" pb_status error_category=""
+
+  # Get GPU info (if detected)
+  local gpu_vendor="${GPU_VENDOR:-}"
+  local gpu_passthrough="${GPU_PASSTHROUGH:-}"
 
   # Map status to telemetry values: installing, success, failed, unknown
   case "$status" in
@@ -343,6 +393,7 @@ post_update_to_api() {
     pb_status="success"
     exit_code=0
     error=""
+    error_category=""
     ;;
   failed)
     pb_status="failed"
@@ -360,16 +411,17 @@ post_update_to_api() {
       exit_code=1
     fi
     error=$(explain_exit_code "$exit_code")
+    error_category=$(categorize_error "$exit_code")
     [[ -z "$error" ]] && error="Unknown error"
   fi
 
   # Calculate duration if timer was started
   local duration=0
   if [[ -n "${INSTALL_START_TIME:-}" ]]; then
-    duration=$(( $(date +%s) - INSTALL_START_TIME ))
+    duration=$(($(date +%s) - INSTALL_START_TIME))
   fi
 
-  # Update payload: only fields that change (status, error, exit_code, duration)
+  # Update payload: only fields that change (status, error, exit_code, duration, gpu)
   # The Go service will find the record by random_id and PATCH only these fields
   local JSON_PAYLOAD
   JSON_PAYLOAD=$(
@@ -381,7 +433,10 @@ post_update_to_api() {
     "status": "${pb_status}",
     "exit_code": ${exit_code},
     "error": "${error}",
-    "install_duration": ${duration}
+    "error_category": "${error_category}",
+    "install_duration": ${duration},
+    "gpu_vendor": "${gpu_vendor}",
+    "gpu_passthrough": "${gpu_passthrough}"
 }
 EOF
   )
@@ -459,43 +514,6 @@ get_install_duration() {
   fi
   local now=$(date +%s)
   echo $((now - INSTALL_START_TIME))
-}
-
-# ------------------------------------------------------------------------------
-# detect_gpu()
-#
-# - Detects GPU vendor and passthrough type
-# - Sets GPU_VENDOR and GPU_PASSTHROUGH globals
-# - Used for GPU analytics
-# ------------------------------------------------------------------------------
-detect_gpu() {
-  GPU_VENDOR=""
-  GPU_PASSTHROUGH="none"
-
-  # Detect Intel GPU
-  if lspci 2>/dev/null | grep -qi "VGA.*Intel"; then
-    GPU_VENDOR="intel"
-    GPU_PASSTHROUGH="igpu"
-  fi
-
-  # Detect AMD GPU
-  if lspci 2>/dev/null | grep -qi "VGA.*AMD\|VGA.*ATI"; then
-    GPU_VENDOR="amd"
-    # Check if discrete
-    if lspci 2>/dev/null | grep -qi "AMD.*Radeon"; then
-      GPU_PASSTHROUGH="dgpu"
-    else
-      GPU_PASSTHROUGH="igpu"
-    fi
-  fi
-
-  # Detect NVIDIA GPU
-  if lspci 2>/dev/null | grep -qi "VGA.*NVIDIA\|3D.*NVIDIA"; then
-    GPU_VENDOR="nvidia"
-    GPU_PASSTHROUGH="dgpu"
-  fi
-
-  export GPU_VENDOR GPU_PASSTHROUGH
 }
 
 # ------------------------------------------------------------------------------
