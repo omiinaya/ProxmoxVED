@@ -35,7 +35,7 @@ setup_uv
 
 msg_info "Installing Python Dependencies"
 cd /opt/calibre-web
-$STD uv pip install --system --no-cache-dir -r requirements.txt
+$STD uv sync --no-dev
 msg_ok "Installed Python Dependencies"
 
 mkdir -p /opt/calibre-web/data
@@ -50,7 +50,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/calibre-web
-ExecStart=/usr/bin/python3 /opt/calibre-web/cps.py
+ExecStart=/opt/calibre-web/.venv/bin/python /opt/calibre-web/cps.py
 Restart=on-failure
 RestartSec=5
 

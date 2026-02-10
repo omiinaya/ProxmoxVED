@@ -44,7 +44,7 @@ function update_script() {
 
     msg_info "Installing Dependencies"
     cd /opt/calibre-web
-    $STD uv pip install --system --no-cache-dir -r requirements.txt
+    $STD uv sync --no-dev
     msg_ok "Installed Dependencies"
 
     msg_info "Restoring Data"
