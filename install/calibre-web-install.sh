@@ -38,9 +38,8 @@ cd /opt/calibre-web
 $STD uv sync --no-dev
 msg_ok "Installed Python Dependencies"
 
-mkdir -p /opt/calibre-web/data
-
 msg_info "Creating Service"
+mkdir -p /opt/calibre-web/data
 cat <<EOF >/etc/systemd/system/calibre-web.service
 [Unit]
 Description=Calibre-Web Service
