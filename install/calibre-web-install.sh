@@ -40,7 +40,7 @@ msg_ok "Installed Python Dependencies"
 msg_info "Creating Service"
 mkdir -p /opt/calibre-web/data
 
-cat <<EOF >/etc/systemd/system/calibre-web.service
+cat <<EOF> /etc/systemd/system/calibre-web.service
 [Unit]
 Description=Calibre-Web Service
 After=network.target
