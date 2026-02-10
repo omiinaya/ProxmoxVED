@@ -422,29 +422,29 @@ EOF
 categorize_error() {
   local code="$1"
   case "$code" in
-    # Network errors
-    6|7|22|28|35) echo "network" ;;
-    
-    # Storage errors
-    214|217|219) echo "storage" ;;
-    
-    # Dependency/Package errors
-    100|101|102|127|160|161|162) echo "dependency" ;;
-    
-    # Permission errors
-    126|152) echo "permission" ;;
-    
-    # Timeout errors
-    124|28|211) echo "timeout" ;;
-    
-    # Configuration errors
-    203|204|205|206|207|208) echo "config" ;;
-    
-    # Resource errors (OOM, etc)
-    137|134) echo "resource" ;;
-    
-    # Default
-    *) echo "unknown" ;;
+  # Network errors
+  6 | 7 | 22 | 28 | 35) echo "network" ;;
+
+  # Storage errors
+  214 | 217 | 219) echo "storage" ;;
+
+  # Dependency/Package errors
+  100 | 101 | 102 | 127 | 160 | 161 | 162) echo "dependency" ;;
+
+  # Permission errors
+  126 | 152) echo "permission" ;;
+
+  # Timeout errors
+  124 | 28 | 211) echo "timeout" ;;
+
+  # Configuration errors
+  203 | 204 | 205 | 206 | 207 | 208) echo "config" ;;
+
+  # Resource errors (OOM, etc)
+  137 | 134) echo "resource" ;;
+
+  # Default
+  *) echo "unknown" ;;
   esac
 }
 
@@ -485,13 +485,13 @@ get_install_duration() {
 detect_gpu() {
   GPU_VENDOR=""
   GPU_PASSTHROUGH="none"
-  
+
   # Detect Intel GPU
   if lspci 2>/dev/null | grep -qi "VGA.*Intel"; then
     GPU_VENDOR="intel"
     GPU_PASSTHROUGH="igpu"
   fi
-  
+
   # Detect AMD GPU
   if lspci 2>/dev/null | grep -qi "VGA.*AMD\|VGA.*ATI"; then
     GPU_VENDOR="amd"
@@ -502,13 +502,13 @@ detect_gpu() {
       GPU_PASSTHROUGH="igpu"
     fi
   fi
-  
+
   # Detect NVIDIA GPU
   if lspci 2>/dev/null | grep -qi "VGA.*NVIDIA\|3D.*NVIDIA"; then
     GPU_VENDOR="nvidia"
     GPU_PASSTHROUGH="dgpu"
   fi
-  
+
   export GPU_VENDOR GPU_PASSTHROUGH
 }
 
@@ -535,10 +535,10 @@ post_tool_to_api() {
   # Generate UUID for this tool execution
   uuid=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen 2>/dev/null || echo "tool-$(date +%s)")
   duration=$(get_install_duration)
-  
+
   # Map status
   [[ "$status" == "done" ]] && status="success"
-  
+
   if [[ "$status" == "failed" ]]; then
     [[ ! "$exit_code" =~ ^[0-9]+$ ]] && exit_code=1
     error=$(explain_exit_code "$exit_code")
@@ -551,7 +551,8 @@ post_tool_to_api() {
   fi
 
   local JSON_PAYLOAD
-  JSON_PAYLOAD=$(cat <<EOF
+  JSON_PAYLOAD=$(
+    cat <<EOF
 {
     "random_id": "${uuid}",
     "type": "tool",
@@ -565,7 +566,7 @@ post_tool_to_api() {
     "pve_version": "${pve_version}"
 }
 EOF
-)
+  )
 
   curl -fsS -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
     -H "Content-Type: application/json" \
@@ -597,10 +598,10 @@ post_addon_to_api() {
   # Generate UUID for this addon installation
   uuid=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen 2>/dev/null || echo "addon-$(date +%s)")
   duration=$(get_install_duration)
-  
+
   # Map status
   [[ "$status" == "done" ]] && status="success"
-  
+
   if [[ "$status" == "failed" ]]; then
     [[ ! "$exit_code" =~ ^[0-9]+$ ]] && exit_code=1
     error=$(explain_exit_code "$exit_code")
@@ -615,7 +616,8 @@ post_addon_to_api() {
   fi
 
   local JSON_PAYLOAD
-  JSON_PAYLOAD=$(cat <<EOF
+  JSON_PAYLOAD=$(
+    cat <<EOF
 {
     "random_id": "${uuid}",
     "type": "addon",
@@ -630,7 +632,7 @@ post_addon_to_api() {
     "os_version": "${os_version}"
 }
 EOF
-)
+  )
 
   curl -fsS -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
     -H "Content-Type: application/json" \
@@ -667,7 +669,7 @@ post_update_to_api_extended() {
 
   # Get duration
   duration=$(get_install_duration)
-  
+
   # Get GPU info (if detected)
   gpu_vendor="${GPU_VENDOR:-}"
   gpu_passthrough="${GPU_PASSTHROUGH:-}"
@@ -701,7 +703,8 @@ post_update_to_api_extended() {
   fi
 
   local JSON_PAYLOAD
-  JSON_PAYLOAD=$(cat <<EOF
+  JSON_PAYLOAD=$(
+    cat <<EOF
 {
     "random_id": "${RANDOM_UUID}",
     "type": "${TELEMETRY_TYPE:-lxc}",
@@ -715,7 +718,7 @@ post_update_to_api_extended() {
     "gpu_passthrough": "${gpu_passthrough}"
 }
 EOF
-)
+  )
 
   curl -fsS -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
     -H "Content-Type: application/json" \
