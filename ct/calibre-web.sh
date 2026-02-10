@@ -29,6 +29,8 @@ function update_script() {
     exit
   fi
 
+  setup_uv
+
   if check_for_gh_release "calibre-web" "janeczku/calibre-web"; then
     msg_info "Stopping Service"
     systemctl stop calibre-web
@@ -42,7 +44,7 @@ function update_script() {
 
     msg_info "Installing Dependencies"
     cd /opt/calibre-web
-    $STD pip3 install --no-cache-dir -r requirements.txt
+    $STD uv pip install --system --no-cache-dir -r requirements.txt
     msg_ok "Installed Dependencies"
 
     msg_info "Restoring Data"

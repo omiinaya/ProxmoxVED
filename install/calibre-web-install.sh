@@ -16,7 +16,6 @@ update_os
 msg_info "Installing Dependencies"
 $STD apt install -y \
   python3 \
-  python3-pip \
   imagemagick \
   libpango-1.0-0 \
   libharfbuzz0b \
@@ -32,14 +31,17 @@ msg_info "Setting up Calibre-Web"
 fetch_and_deploy_gh_release "calibre-web" "janeczku/calibre-web" "tarball" "latest" "/opt/calibre-web"
 msg_ok "Setup Calibre-Web"
 
+setup_uv
+
 msg_info "Installing Python Dependencies"
 cd /opt/calibre-web
-$STD pip3 install --no-cache-dir -r requirements.txt
+$STD uv pip install --system --no-cache-dir -r requirements.txt
 msg_ok "Installed Python Dependencies"
+
+mkdir -p /opt/calibre-web/data
 
 msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/calibre-web.service
-mkdir -p /opt/calibre-web/data
 [Unit]
 Description=Calibre-Web Service
 After=network.target
