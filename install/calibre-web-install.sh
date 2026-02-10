@@ -2,7 +2,7 @@
 
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: mikolaj92
-# License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://github.com/janeczku/calibre-web
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
@@ -37,10 +37,9 @@ cd /opt/calibre-web
 $STD pip3 install --no-cache-dir -r requirements.txt
 msg_ok "Installed Python Dependencies"
 
-msg_info "Creating Service"
 mkdir -p /opt/calibre-web/data
 
-cat <<EOF> /etc/systemd/system/calibre-web.service
+cat <<EOF >/etc/systemd/system/calibre-web.service
 [Unit]
 Description=Calibre-Web Service
 After=network.target

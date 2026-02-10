@@ -28,13 +28,13 @@
     }
   ],
   "default_credentials": {
-    "username": "admin",
-    "password": "admin123"
+    "username": null,
+    "password": null
   },
   "notes": [
     {
-      "text": "Default credentials: admin / admin123 - Change immediately after first login!",
-      "type": "warning"
+      "text": "No credentials are set by this script. Complete setup and create credentials in the first-run wizard.",
+      "type": "info"
     },
     {
       "text": "Upload your Calibre library metadata.db during first setup wizard.",
