@@ -33,18 +33,16 @@ APP_DIR="/opt/nextExplorer/app"
 LOCAL_IP="$(hostname -I | awk '{print $1}')"
 mkdir -p "$APP_DIR"
 mkdir -p /etc/nextExplorer
-cd /opt/nextExplorer/backend
-export NODE_ENV=production
-$STD npm ci
-unset NODE_ENV
-
-cd /opt/nextExplorer/frontend
-export NODE_ENV=development
-$STD npm ci
-$STD npm run build -- --sourcemap false
-unset NODE_ENV
-
 cd /opt/nextExplorer
+export NODE_ENV=production
+$STD npm ci --workspace backend
+unset NODE_ENV
+
+export NODE_ENV=development
+$STD npm ci --workspace frontend
+$STD npm run -w frontend build -- --sourcemap false
+unset NODE_ENV
+
 mv backend/{node_modules,src,package.json} "$APP_DIR"
 mv frontend/dist/ "$APP_DIR"/src/public
 msg_ok "Built nextExplorer"
@@ -84,6 +82,7 @@ SESSION_SECRET="${SECRET}"
 # OIDC_CLIENT_ID=
 # OIDC_CLIENT_SECRET=
 # OIDC_CALLBACK_URL=
+# OIDC_LOGOUT_URL=
 # OIDC_SCOPES=
 # OIDC_AUTO_CREATE_USERS=true
 
