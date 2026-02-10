@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)
+source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/build.func)
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: mikolaj92
-# License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://github.com/janeczku/calibre-web
 
-APP="Calibre-Web"
+APP="calibre-web"
 var_tags="${var_tags:-media;books}" # Max 2 tags, semicolon-separated
 var_cpu="${var_cpu:-2}"                         # CPU cores: 1-4 typical
 var_ram="${var_ram:-2048}"                      # RAM in MB: 512, 1024, 2048, etc.
@@ -25,7 +25,7 @@ function update_script() {
   check_container_resources
 
   if [[ ! -d /opt/calibre-web ]]; then
-    msg_error "No ${APP} Installation Found!"
+    msg_error "No Calibre-Web Installation Found!"
     exit
   fi
 
@@ -36,7 +36,7 @@ function update_script() {
     msg_ok "Stopped Service"
 
     msg_info "Backing up Data"
-    cp -r /opt/calibre-web/app.db /opt/calibre-web/app.db_backup 2>/dev/null || true
+    cp -r /opt/calibre-web/app.db /opt/calibre-web/app.db_backup 2>/dev/null
     msg_ok "Backed up Data"
 
     CLEAN_INSTALL=1 fetch_and_deploy_gh_release "calibre-web" "janeczku/calibre-web" "tarball" "latest" "/opt/calibre-web"
@@ -47,7 +47,7 @@ function update_script() {
     msg_ok "Installed Dependencies"
 
     msg_info "Restoring Data"
-    cp /opt/calibre-web/app.db_backup /opt/calibre-web/app.db 2>/dev/null || true
+    cp /opt/calibre-web/app.db_backup /opt/calibre-web/app.db 2>/dev/null
     rm -f /opt/calibre-web/app.db_backup
     msg_ok "Restored Data"
 
