@@ -35,15 +35,16 @@ mkdir -p "$APP_DIR"
 mkdir -p /etc/nextExplorer
 cd /opt/nextExplorer
 export NODE_ENV=production
-$STD npm ci --workspace backend
+$STD npm ci --omit=dev --workspace backend
+mv node_modules "$APP_DIR"
+mv backend/{src,package.json} "$APP_DIR"
 unset NODE_ENV
 
 export NODE_ENV=development
+export NODE_OPTIONS="--max-old-space-size=2048"
 $STD npm ci --workspace frontend
 $STD npm run -w frontend build -- --sourcemap false
 unset NODE_ENV
-
-mv backend/{node_modules,src,package.json} "$APP_DIR"
 mv frontend/dist/ "$APP_DIR"/src/public
 msg_ok "Built nextExplorer"
 
@@ -144,7 +145,7 @@ User=explorer
 Group=explorer
 WorkingDirectory=/opt/nextExplorer/app
 EnvironmentFile=/etc/nextExplorer/.env
-ExecStart=/usr/bin/node ./src/app.js
+ExecStart=/usr/bin/node ./src/server.js
 Restart=always
 RestartSec=5
 StandardOutput=journal
