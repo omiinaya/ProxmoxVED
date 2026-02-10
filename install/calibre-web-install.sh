@@ -56,6 +56,7 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 systemctl enable -q --now calibre-web
+msg_ok "Created Service"
 
 motd_ssh
 customize
