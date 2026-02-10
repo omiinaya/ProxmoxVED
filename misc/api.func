@@ -323,30 +323,15 @@ EOF
 # - Never blocks or fails script execution
 # ------------------------------------------------------------------------------
 post_update_to_api() {
-  # DEBUG: Show function entry
-  echo "[DEBUG] post_update_to_api() called with status=$1 exit_code=$2" >&2
-
   # Silent fail - telemetry should never break scripts
-  command -v curl &>/dev/null || {
-    echo "[DEBUG] curl not found, skipping" >&2
-    return 0
-  }
+  command -v curl &>/dev/null || return 0
 
   # Prevent duplicate submissions
   POST_UPDATE_DONE=${POST_UPDATE_DONE:-false}
-  [[ "$POST_UPDATE_DONE" == "true" ]] && {
-    echo "[DEBUG] Already sent update, skipping" >&2
-    return 0
-  }
+  [[ "$POST_UPDATE_DONE" == "true" ]] && return 0
 
-  [[ "${DIAGNOSTICS:-no}" == "no" ]] && {
-    echo "[DEBUG] DIAGNOSTICS=no, skipping" >&2
-    return 0
-  }
-  [[ -z "${RANDOM_UUID:-}" ]] && {
-    echo "[DEBUG] RANDOM_UUID empty, skipping" >&2
-    return 0
-  }
+  [[ "${DIAGNOSTICS:-no}" == "no" ]] && return 0
+  [[ -z "${RANDOM_UUID:-}" ]] && return 0
 
   local status="${1:-failed}"
   local raw_exit_code="${2:-1}"
@@ -378,7 +363,13 @@ post_update_to_api() {
     [[ -z "$error" ]] && error="Unknown error"
   fi
 
-  # Update payload: only fields that change (status, error, exit_code)
+  # Calculate duration if timer was started
+  local duration=0
+  if [[ -n "${INSTALL_START_TIME:-}" ]]; then
+    duration=$(( $(date +%s) - INSTALL_START_TIME ))
+  fi
+
+  # Update payload: only fields that change (status, error, exit_code, duration)
   # The Go service will find the record by random_id and PATCH only these fields
   local JSON_PAYLOAD
   JSON_PAYLOAD=$(
@@ -389,21 +380,16 @@ post_update_to_api() {
     "nsapp": "${NSAPP:-unknown}",
     "status": "${pb_status}",
     "exit_code": ${exit_code},
-    "error": "${error}"
+    "error": "${error}",
+    "install_duration": ${duration}
 }
 EOF
   )
 
-  echo "[DEBUG] Sending update to: $TELEMETRY_URL" >&2
-  echo "[DEBUG] Update payload: $JSON_PAYLOAD" >&2
-
   # Fire-and-forget: never block, never fail
-  local http_code
-  http_code=$(curl -sS -w "%{http_code}" -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
+  curl -sS -w "%{http_code}" -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
     -H "Content-Type: application/json" \
-    -d "$JSON_PAYLOAD" -o /dev/stderr 2>&1) || true
-
-  echo "[DEBUG] HTTP response code: $http_code" >&2
+    -d "$JSON_PAYLOAD" -o /dev/null 2>&1 || true
 
   POST_UPDATE_DONE=true
 }

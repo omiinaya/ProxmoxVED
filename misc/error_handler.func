@@ -187,12 +187,7 @@ error_handler() {
 
       # Create error flag file with exit code for host detection
       echo "$exit_code" >"/root/.install-${SESSION_ID:-error}.failed" 2>/dev/null || true
-
-      if declare -f msg_custom >/dev/null 2>&1; then
-        msg_custom "📋" "${YW}" "Log saved to: ${container_log}"
-      else
-        echo -e "${YW}Log saved to:${CL} ${BL}${container_log}${CL}"
-      fi
+      # Log path is shown by host as combined log - no need to show container path
     else
       # HOST CONTEXT: Show local log path and offer container cleanup
       if declare -f msg_custom >/dev/null 2>&1; then

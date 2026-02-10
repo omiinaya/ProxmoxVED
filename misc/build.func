@@ -4023,6 +4023,9 @@ EOF'
   install_ssh_keys_into_ct
 
   # Run application installer
+  # Start timer for duration tracking
+  start_install_timer
+
   # Disable error trap - container errors are handled internally via flag file
   set +Eeuo pipefail # Disable ALL error handling temporarily
   trap - ERR         # Remove ERR trap completely
