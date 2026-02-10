@@ -13,10 +13,6 @@ setting_up_container
 network_check
 update_os
 
-# =============================================================================
-# DEPENDENCIES - Calibre-Web requires Python and pip
-# =============================================================================
-
 msg_info "Installing Dependencies"
 $STD apt install -y \
   python3 \
@@ -28,44 +24,25 @@ $STD apt install -y \
   fonts-liberation
 msg_ok "Installed Dependencies"
 
-# =============================================================================
-# OPTIONAL - Install Calibre for eBook conversion
-# =============================================================================
 msg_info "Installing Calibre (for eBook conversion)"
 $STD apt install -y calibre
 msg_ok "Installed Calibre"
 
-# =============================================================================
-# DOWNLOAD & DEPLOY APPLICATION
-# =============================================================================
-
 msg_info "Setting up Calibre-Web"
 fetch_and_deploy_gh_release "calibre-web" "janeczku/calibre-web" "tarball" "latest" "/opt/calibre-web"
 msg_ok "Setup Calibre-Web"
-
-# =============================================================================
-# INSTALL PYTHON DEPENDENCIES
-# =============================================================================
 
 msg_info "Installing Python Dependencies"
 cd /opt/calibre-web
 $STD pip3 install --no-cache-dir -r requirements.txt
 msg_ok "Installed Python Dependencies"
 
-# =============================================================================
-# CREATE DATA DIRECTORY
-# =============================================================================
-
 msg_info "Creating Data Directory"
 mkdir -p /opt/calibre-web/data
 msg_ok "Created Data Directory"
 
-# =============================================================================
-# CREATE SYSTEMD SERVICE
-# =============================================================================
-
 msg_info "Creating Service"
-cat <<EOF >/etc/systemd/system/calibre-web.service
+cat <<EOF
 [Unit]
 Description=Calibre-Web Service
 After=network.target
@@ -84,13 +61,12 @@ EOF
 systemctl enable -q --now calibre-web
 msg_ok "Created Service"
 
-# =============================================================================
-# CLEANUP & FINALIZATION
-# =============================================================================
 motd_ssh
 customize
 
 msg_info "Cleaning up"
-$STD apt-get -y autoremove
-$STD apt-get -y autoclean
+$STD apt -y autoremove
+$STD apt -y autoclean
 msg_ok "Cleaned"
+
+cleanup_lxc
