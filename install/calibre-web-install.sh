@@ -37,9 +37,9 @@ cd /opt/calibre-web
 $STD pip3 install --no-cache-dir -r requirements.txt
 msg_ok "Installed Python Dependencies"
 
-mkdir -p /opt/calibre-web/data
-
+msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/calibre-web.service
+mkdir -p /opt/calibre-web/data
 [Unit]
 Description=Calibre-Web Service
 After=network.target
