@@ -17,6 +17,7 @@ fetch_and_deploy_gh_release "sonobarr" "Dodelidoo-Labs/sonobarr" "tarball"
 PYTHON_VERSION="3.12" setup_uv
 
 msg_info "Setting up sonobarr"
+$STD uv venv -c /opt/sonobarr/venv
 source /opt/sonobarr/venv/bin/activate
 $STD uv pip install --no-cache-dir -r /opt/sonobarr/requirements.txt
 mkdir -p /etc/sonobarr
