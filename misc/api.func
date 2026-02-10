@@ -557,7 +557,6 @@ post_tool_to_api() {
     "random_id": "${uuid}",
     "type": "tool",
     "nsapp": "${tool_name}",
-    "tool_name": "${tool_name}",
     "status": "${status}",
     "exit_code": ${exit_code},
     "error": "${error}",
@@ -580,8 +579,7 @@ EOF
 # - Arguments:
 #   * $1: addon_name (e.g., "filebrowser", "netdata")
 #   * $2: status ("success" or "failed")
-#   * $3: parent_ct (optional, name of parent container)
-#   * $4: exit_code (optional)
+#   * $3: exit_code (optional)
 # - For addons installed inside containers
 # ------------------------------------------------------------------------------
 post_addon_to_api() {
@@ -590,8 +588,7 @@ post_addon_to_api() {
 
   local addon_name="${1:-unknown}"
   local status="${2:-success}"
-  local parent_ct="${3:-}"
-  local exit_code="${4:-0}"
+  local exit_code="${3:-0}"
   local error="" error_category=""
   local uuid duration
 
@@ -623,7 +620,6 @@ post_addon_to_api() {
     "type": "addon",
     "nsapp": "${addon_name}",
     "status": "${status}",
-    "parent_ct": "${parent_ct}",
     "exit_code": ${exit_code},
     "error": "${error}",
     "error_category": "${error_category}",
