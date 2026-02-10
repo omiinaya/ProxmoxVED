@@ -407,3 +407,319 @@ EOF
 
   POST_UPDATE_DONE=true
 }
+
+# ==============================================================================
+# SECTION 3: EXTENDED TELEMETRY FUNCTIONS
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# categorize_error()
+#
+# - Maps exit codes to error categories for better analytics
+# - Categories: network, storage, dependency, permission, timeout, config, resource, unknown
+# - Used to group errors in dashboard
+# ------------------------------------------------------------------------------
+categorize_error() {
+  local code="$1"
+  case "$code" in
+    # Network errors
+    6|7|22|28|35) echo "network" ;;
+    
+    # Storage errors
+    214|217|219) echo "storage" ;;
+    
+    # Dependency/Package errors
+    100|101|102|127|160|161|162) echo "dependency" ;;
+    
+    # Permission errors
+    126|152) echo "permission" ;;
+    
+    # Timeout errors
+    124|28|211) echo "timeout" ;;
+    
+    # Configuration errors
+    203|204|205|206|207|208) echo "config" ;;
+    
+    # Resource errors (OOM, etc)
+    137|134) echo "resource" ;;
+    
+    # Default
+    *) echo "unknown" ;;
+  esac
+}
+
+# ------------------------------------------------------------------------------
+# start_install_timer()
+#
+# - Captures start time for installation duration tracking
+# - Call at the beginning of installation
+# - Sets INSTALL_START_TIME global variable
+# ------------------------------------------------------------------------------
+start_install_timer() {
+  INSTALL_START_TIME=$(date +%s)
+  export INSTALL_START_TIME
+}
+
+# ------------------------------------------------------------------------------
+# get_install_duration()
+#
+# - Returns elapsed seconds since start_install_timer() was called
+# - Returns 0 if timer was not started
+# ------------------------------------------------------------------------------
+get_install_duration() {
+  if [[ -z "${INSTALL_START_TIME:-}" ]]; then
+    echo "0"
+    return
+  fi
+  local now=$(date +%s)
+  echo $((now - INSTALL_START_TIME))
+}
+
+# ------------------------------------------------------------------------------
+# detect_gpu()
+#
+# - Detects GPU vendor and passthrough type
+# - Sets GPU_VENDOR and GPU_PASSTHROUGH globals
+# - Used for GPU analytics
+# ------------------------------------------------------------------------------
+detect_gpu() {
+  GPU_VENDOR=""
+  GPU_PASSTHROUGH="none"
+  
+  # Detect Intel GPU
+  if lspci 2>/dev/null | grep -qi "VGA.*Intel"; then
+    GPU_VENDOR="intel"
+    GPU_PASSTHROUGH="igpu"
+  fi
+  
+  # Detect AMD GPU
+  if lspci 2>/dev/null | grep -qi "VGA.*AMD\|VGA.*ATI"; then
+    GPU_VENDOR="amd"
+    # Check if discrete
+    if lspci 2>/dev/null | grep -qi "AMD.*Radeon"; then
+      GPU_PASSTHROUGH="dgpu"
+    else
+      GPU_PASSTHROUGH="igpu"
+    fi
+  fi
+  
+  # Detect NVIDIA GPU
+  if lspci 2>/dev/null | grep -qi "VGA.*NVIDIA\|3D.*NVIDIA"; then
+    GPU_VENDOR="nvidia"
+    GPU_PASSTHROUGH="dgpu"
+  fi
+  
+  export GPU_VENDOR GPU_PASSTHROUGH
+}
+
+# ------------------------------------------------------------------------------
+# post_tool_to_api()
+#
+# - Reports tool usage to telemetry
+# - Arguments:
+#   * $1: tool_name (e.g., "microcode", "lxc-update", "post-pve-install")
+#   * $2: status ("success" or "failed")
+#   * $3: exit_code (optional, default: 0 for success, 1 for failed)
+# - For PVE host tools, not container installations
+# ------------------------------------------------------------------------------
+post_tool_to_api() {
+  command -v curl &>/dev/null || return 0
+  [[ "${DIAGNOSTICS:-no}" == "no" ]] && return 0
+
+  local tool_name="${1:-unknown}"
+  local status="${2:-success}"
+  local exit_code="${3:-0}"
+  local error="" error_category=""
+  local uuid duration
+
+  # Generate UUID for this tool execution
+  uuid=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen 2>/dev/null || echo "tool-$(date +%s)")
+  duration=$(get_install_duration)
+  
+  # Map status
+  [[ "$status" == "done" ]] && status="success"
+  
+  if [[ "$status" == "failed" ]]; then
+    [[ ! "$exit_code" =~ ^[0-9]+$ ]] && exit_code=1
+    error=$(explain_exit_code "$exit_code")
+    error_category=$(categorize_error "$exit_code")
+  fi
+
+  local pve_version=""
+  if command -v pveversion &>/dev/null; then
+    pve_version=$(pveversion 2>/dev/null | awk -F'[/ ]' '{print $2}') || true
+  fi
+
+  local JSON_PAYLOAD
+  JSON_PAYLOAD=$(cat <<EOF
+{
+    "random_id": "${uuid}",
+    "type": "tool",
+    "nsapp": "${tool_name}",
+    "tool_name": "${tool_name}",
+    "status": "${status}",
+    "exit_code": ${exit_code},
+    "error": "${error}",
+    "error_category": "${error_category}",
+    "install_duration": ${duration:-0},
+    "pve_version": "${pve_version}"
+}
+EOF
+)
+
+  curl -fsS -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
+    -H "Content-Type: application/json" \
+    -d "$JSON_PAYLOAD" &>/dev/null || true
+}
+
+# ------------------------------------------------------------------------------
+# post_addon_to_api()
+#
+# - Reports addon installation to telemetry
+# - Arguments:
+#   * $1: addon_name (e.g., "filebrowser", "netdata")
+#   * $2: status ("success" or "failed")
+#   * $3: parent_ct (optional, name of parent container)
+#   * $4: exit_code (optional)
+# - For addons installed inside containers
+# ------------------------------------------------------------------------------
+post_addon_to_api() {
+  command -v curl &>/dev/null || return 0
+  [[ "${DIAGNOSTICS:-no}" == "no" ]] && return 0
+
+  local addon_name="${1:-unknown}"
+  local status="${2:-success}"
+  local parent_ct="${3:-}"
+  local exit_code="${4:-0}"
+  local error="" error_category=""
+  local uuid duration
+
+  # Generate UUID for this addon installation
+  uuid=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen 2>/dev/null || echo "addon-$(date +%s)")
+  duration=$(get_install_duration)
+  
+  # Map status
+  [[ "$status" == "done" ]] && status="success"
+  
+  if [[ "$status" == "failed" ]]; then
+    [[ ! "$exit_code" =~ ^[0-9]+$ ]] && exit_code=1
+    error=$(explain_exit_code "$exit_code")
+    error_category=$(categorize_error "$exit_code")
+  fi
+
+  # Detect OS info
+  local os_type="" os_version=""
+  if [[ -f /etc/os-release ]]; then
+    os_type=$(grep "^ID=" /etc/os-release | cut -d= -f2 | tr -d '"')
+    os_version=$(grep "^VERSION_ID=" /etc/os-release | cut -d= -f2 | tr -d '"')
+  fi
+
+  local JSON_PAYLOAD
+  JSON_PAYLOAD=$(cat <<EOF
+{
+    "random_id": "${uuid}",
+    "type": "addon",
+    "nsapp": "${addon_name}",
+    "status": "${status}",
+    "parent_ct": "${parent_ct}",
+    "exit_code": ${exit_code},
+    "error": "${error}",
+    "error_category": "${error_category}",
+    "install_duration": ${duration:-0},
+    "os_type": "${os_type}",
+    "os_version": "${os_version}"
+}
+EOF
+)
+
+  curl -fsS -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
+    -H "Content-Type: application/json" \
+    -d "$JSON_PAYLOAD" &>/dev/null || true
+}
+
+# ------------------------------------------------------------------------------
+# post_update_to_api_extended()
+#
+# - Extended version of post_update_to_api with duration, GPU, and error category
+# - Same arguments as post_update_to_api:
+#   * $1: status ("done" or "failed")
+#   * $2: exit_code (numeric)
+# - Automatically includes:
+#   * Install duration (if start_install_timer was called)
+#   * Error category (for failed status)
+#   * GPU info (if detect_gpu was called)
+# ------------------------------------------------------------------------------
+post_update_to_api_extended() {
+  # Silent fail - telemetry should never break scripts
+  command -v curl &>/dev/null || return 0
+
+  # Prevent duplicate submissions
+  POST_UPDATE_DONE=${POST_UPDATE_DONE:-false}
+  [[ "$POST_UPDATE_DONE" == "true" ]] && return 0
+
+  [[ "${DIAGNOSTICS:-no}" == "no" ]] && return 0
+  [[ -z "${RANDOM_UUID:-}" ]] && return 0
+
+  local status="${1:-failed}"
+  local raw_exit_code="${2:-1}"
+  local exit_code=0 error="" pb_status error_category=""
+  local duration gpu_vendor gpu_passthrough
+
+  # Get duration
+  duration=$(get_install_duration)
+  
+  # Get GPU info (if detected)
+  gpu_vendor="${GPU_VENDOR:-}"
+  gpu_passthrough="${GPU_PASSTHROUGH:-}"
+
+  # Map status to telemetry values
+  case "$status" in
+  done | success)
+    pb_status="success"
+    exit_code=0
+    error=""
+    error_category=""
+    ;;
+  failed)
+    pb_status="failed"
+    ;;
+  *)
+    pb_status="unknown"
+    ;;
+  esac
+
+  # For failed/unknown status, resolve exit code and error description
+  if [[ "$pb_status" == "failed" ]] || [[ "$pb_status" == "unknown" ]]; then
+    if [[ "$raw_exit_code" =~ ^[0-9]+$ ]]; then
+      exit_code="$raw_exit_code"
+    else
+      exit_code=1
+    fi
+    error=$(explain_exit_code "$exit_code")
+    error_category=$(categorize_error "$exit_code")
+    [[ -z "$error" ]] && error="Unknown error"
+  fi
+
+  local JSON_PAYLOAD
+  JSON_PAYLOAD=$(cat <<EOF
+{
+    "random_id": "${RANDOM_UUID}",
+    "type": "${TELEMETRY_TYPE:-lxc}",
+    "nsapp": "${NSAPP:-unknown}",
+    "status": "${pb_status}",
+    "exit_code": ${exit_code},
+    "error": "${error}",
+    "error_category": "${error_category}",
+    "install_duration": ${duration:-0},
+    "gpu_vendor": "${gpu_vendor}",
+    "gpu_passthrough": "${gpu_passthrough}"
+}
+EOF
+)
+
+  curl -fsS -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
+    -H "Content-Type: application/json" \
+    -d "$JSON_PAYLOAD" &>/dev/null || true
+
+  POST_UPDATE_DONE=true
+}

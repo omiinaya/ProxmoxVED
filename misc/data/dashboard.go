@@ -26,6 +26,15 @@ type DashboardData struct {
 	FailedApps      []AppFailure      `json:"failed_apps"`
 	RecentRecords   []TelemetryRecord `json:"recent_records"`
 	DailyStats      []DailyStat       `json:"daily_stats"`
+
+	// Extended metrics
+	GPUStats           []GPUCount       `json:"gpu_stats"`
+	ErrorCategories    []ErrorCatCount  `json:"error_categories"`
+	TopTools           []ToolCount      `json:"top_tools"`
+	TopAddons          []AddonCount     `json:"top_addons"`
+	AvgInstallDuration float64          `json:"avg_install_duration"` // seconds
+	TotalTools         int              `json:"total_tools"`
+	TotalAddons        int              `json:"total_addons"`
 }
 
 type AppCount struct {
@@ -72,6 +81,29 @@ type DailyStat struct {
 	Failed  int    `json:"failed"`
 }
 
+// Extended metric types
+type GPUCount struct {
+	Vendor     string `json:"vendor"`
+	Passthrough string `json:"passthrough"`
+	Count      int    `json:"count"`
+}
+
+type ErrorCatCount struct {
+	Category string `json:"category"`
+	Count    int    `json:"count"`
+}
+
+type ToolCount struct {
+	Tool  string `json:"tool"`
+	Count int    `json:"count"`
+}
+
+type AddonCount struct {
+	Addon    string `json:"addon"`
+	ParentCT string `json:"parent_ct"`
+	Count    int    `json:"count"`
+}
+
 // FetchDashboardData retrieves aggregated data from PocketBase
 func (p *PBClient) FetchDashboardData(ctx context.Context, days int) (*DashboardData, error) {
 	if err := p.ensureAuth(ctx); err != nil {
@@ -100,6 +132,13 @@ func (p *PBClient) FetchDashboardData(ctx context.Context, days int) (*Dashboard
 	errorPatterns := make(map[string]map[string]bool) // pattern -> set of apps
 	dailySuccess := make(map[string]int)
 	dailyFailed := make(map[string]int)
+
+	// Extended metrics maps
+	gpuCounts := make(map[string]int)              // "vendor|passthrough" -> count
+	errorCatCounts := make(map[string]int)          // category -> count
+	toolCounts := make(map[string]int)              // tool_name -> count
+	addonCounts := make(map[string]int)             // addon_name -> count
+	var totalDuration, durationCount int
 
 	for _, r := range records {
 		data.TotalInstalls++
