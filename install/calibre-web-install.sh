@@ -65,7 +65,7 @@ msg_ok "Created Data Directory"
 # =============================================================================
 
 msg_info "Creating Service"
-cat <<EOF >/etc/systemd/system/cps.service
+cat <<EOF >/etc/systemd/system/calibre-web.service
 [Unit]
 Description=Calibre-Web Service
 After=network.target
@@ -81,7 +81,7 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
-systemctl enable -q --now cps
+systemctl enable -q --now calibre-web
 msg_ok "Created Service"
 
 # =============================================================================
