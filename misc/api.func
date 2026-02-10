@@ -316,7 +316,7 @@ EOF
 #   * $1: status ("done" or "failed")
 #   * $2: exit_code (numeric, default: 1 for failed, 0 for done)
 # - Payload includes:
-#   * Final status (mapped: "done"→"sucess", "failed"→"failed")
+#   * Final status (mapped: "done"→"success", "failed"→"failed")
 #   * Error description via explain_exit_code()
 #   * Numeric exit code
 # - Only executes once per session
@@ -352,10 +352,10 @@ post_update_to_api() {
   local raw_exit_code="${2:-1}"
   local exit_code=0 error="" pb_status
 
-  # Map status to telemetry values: installing, sucess, failed, unknown
+  # Map status to telemetry values: installing, success, failed, unknown
   case "$status" in
-  done | success | sucess)
-    pb_status="sucess"
+  done | success)
+    pb_status="success"
     exit_code=0
     error=""
     ;;
