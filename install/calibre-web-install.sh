@@ -61,7 +61,6 @@ systemctl enable -q --now calibre-web
 motd_ssh
 customize
 
-msg_info "Cleaning up"
 apt -y autoremove
 apt -y autoclean
 cleanup_lxc
