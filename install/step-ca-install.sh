@@ -241,33 +241,41 @@ PROVISIONER_PASSWORD=$(step path)/encryption/provisioner.pwd
 while true;
 do
 
-FQDN=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca certificate options" --inputbox 'FQDN (e.g. MyLXC.example.com)' 10 50 "$FQDN" 3>&1 1>&2 2>&3)
+FQDN=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --inputbox 'FQDN (e.g. MyLXC.example.com)' 10 50 "$FQDN" 3>&1 1>&2 2>&3)
 IP=$(dig +short $FQDN)
 if [[ -z "$IP" ]]; then
     echo "Resolution failed for $FQDN"
     exit
 fi
 HOST=$(echo $FQDN | awk -F'.' '{print $1}')
-IP=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca certificate options" --inputbox 'IP (e.g. x.x.x.x)' 10 50 "$IP" 3>&1 1>&2 2>&3)
-HOST=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca certificate options" --inputbox 'HOST (e.g. MyHostName)' 10 50 "$HOST" 3>&1 1>&2 2>&3)
-VALID_TO=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca certificate options" --inputbox 'VALID_TO (e.g. 2034-01-31T00:00:00Z)' 10 50 "2034-01-31T00:00:00Z" 3>&1 1>&2 2>&3)
+IP=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --inputbox 'IP (e.g. x.x.x.x)' 10 50 "$IP" 3>&1 1>&2 2>&3)
+HOST=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --inputbox 'HOST (e.g. MyHostName)' 10 50 "$HOST" 3>&1 1>&2 2>&3)
+SAN=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --inputbox 'Subject Alternative Name(s) (SANs) (e.g. myapp-1.example.com, myapp-2.example.com)' 10 50 "$SAN" 3>&1 1>&2 2>&3)
+VALID_TO=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --inputbox 'VALID_TO (e.g. 2034-01-31T00:00:00Z)' 10 50 "2034-01-31T00:00:00Z" 3>&1 1>&2 2>&3)
 
-if whiptail_yesno=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "step ca certificate options" --yesno "Continue with below?\n
-HOST: $HOST
-IP: $IP
+if whiptail_yesno=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --yesno "Continue with below?\n
 FQDN: $FQDN
+Hostname: $HOST
+IP Address: $IP
+Subject Alternative Name(s) (SANs): $SAN
 VALID_TO: $VALID_TO" --no-button "Change" --yes-button "Continue" 15 70 3>&1 1>&2 2>&3); then
 break
 fi
 
 done
 
+SAN="$FQDN, $HOST, $IP, $SAN"
+
+IFS=', ' read -r -a array <<< "$SAN"
+for element in "${array[@]}"
+do
+    SAN_ARRAY+=(--san "$element")
+done
+
 step ca certificate $FQDN $StepCertDir/$FQDN.crt $StepCertDir/$FQDN.key \
   --provisioner-password-file=$PROVISIONER_PASSWORD \
   --not-after=$VALID_TO \
-  --san $FQDN \
-  --san $HOST \
-  --san $IP \
+  "${SAN_ARRAY[@]}" \
   && step certificate inspect $StepCertDir/$FQDN.crt \
   || echo "Failed to request certificate"; exit
 EOF
