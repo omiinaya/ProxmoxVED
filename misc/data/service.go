@@ -24,10 +24,10 @@ type Config struct {
 
 	// PocketBase
 	PBBaseURL        string
-	PBAuthCollection string // "_telemetry_service"
+	PBAuthCollection string // PB auth collection name (from env)
 	PBIdentity       string // email
 	PBPassword       string
-	PBTargetColl     string // "_telemetry_data"
+	PBTargetColl     string // PB data collection name (from env)
 
 	// Limits
 	MaxBodyBytes     int64
@@ -743,10 +743,10 @@ func main() {
 		TrustedProxiesCIDR: splitCSV(env("TRUSTED_PROXIES_CIDR", "")),
 
 		PBBaseURL:        mustEnv("PB_URL"),
-		PBAuthCollection: env("PB_AUTH_COLLECTION", "_telemetry_service"),
+		PBAuthCollection: mustEnv("PB_AUTH_COLLECTION"),
 		PBIdentity:       mustEnv("PB_IDENTITY"),
 		PBPassword:       mustEnv("PB_PASSWORD"),
-		PBTargetColl:     env("PB_TARGET_COLLECTION", "_telemetry_data"),
+		PBTargetColl:     mustEnv("PB_TARGET_COLLECTION"),
 
 		MaxBodyBytes:     envInt64("MAX_BODY_BYTES", 1024),
 		RateLimitRPM:     envInt("RATE_LIMIT_RPM", 60),
