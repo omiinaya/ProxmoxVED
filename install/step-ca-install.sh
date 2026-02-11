@@ -236,7 +236,7 @@ $STD cat <<'EOF' >$StepRequest
 #!/usr/bin/env bash
 #
 StepCertDir="$STEPHOME/certs/x509"
-PROVISIONER_PASSWORD=$(step path)/encryption//provisioner.pwd
+PROVISIONER_PASSWORD=$(step path)/encryption/provisioner.pwd
 
 while true;
 do
