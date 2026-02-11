@@ -111,12 +111,17 @@ func (p *PBClient) FetchDashboardData(ctx context.Context, days int) (*Dashboard
 
 	data := &DashboardData{}
 
-	// Calculate date filter
-	since := time.Now().AddDate(0, 0, -days).Format("2006-01-02 00:00:00")
-	filter := url.QueryEscape(fmt.Sprintf("created >= '%s'", since))
+	// Calculate date filter (days=0 means all entries)
+	var filter string
+	if days > 0 {
+		since := time.Now().AddDate(0, 0, -days).Format("2006-01-02 00:00:00")
+		filter = url.QueryEscape(fmt.Sprintf("created >= '%s'", since))
+	} else {
+		filter = "" // No filter = all entries
+	}
 
 	// Fetch all records for the period
-	records, err := p.fetchRecords(ctx, filter, 500)
+	records, err := p.fetchRecords(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -292,17 +297,22 @@ type TelemetryRecord struct {
 	Created string `json:"created"`
 }
 
-func (p *PBClient) fetchRecords(ctx context.Context, filter string, limit int) ([]TelemetryRecord, error) {
+func (p *PBClient) fetchRecords(ctx context.Context, filter string) ([]TelemetryRecord, error) {
 	var allRecords []TelemetryRecord
 	page := 1
-	perPage := 100
+	perPage := 500
 
 	for {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet,
-			fmt.Sprintf("%s/api/collections/%s/records?filter=%s&sort=-created&page=%d&perPage=%d",
-				p.baseURL, p.targetColl, filter, page, perPage),
-			nil,
-		)
+		var url string
+		if filter != "" {
+			url = fmt.Sprintf("%s/api/collections/%s/records?filter=%s&sort=-created&page=%d&perPage=%d",
+				p.baseURL, p.devColl, filter, page, perPage)
+		} else {
+			url = fmt.Sprintf("%s/api/collections/%s/records?sort=-created&page=%d&perPage=%d",
+				p.baseURL, p.devColl, page, perPage)
+		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -325,7 +335,7 @@ func (p *PBClient) fetchRecords(ctx context.Context, filter string, limit int) (
 
 		allRecords = append(allRecords, result.Items...)
 
-		if len(allRecords) >= limit || len(allRecords) >= result.TotalItems {
+		if len(allRecords) >= result.TotalItems {
 			break
 		}
 		page++
@@ -746,6 +756,36 @@ func DashboardHTML() string {
             color: #fff;
         }
         
+        .quickfilter {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-tertiary);
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .filter-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .filter-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        .filter-btn.active {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+        
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -951,6 +991,98 @@ func DashboardHTML() string {
             background: var(--bg-secondary);
         }
         
+        .admin-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        
+        .admin-btn:hover {
+            background: var(--accent-blue);
+            color: #fff;
+            border-color: var(--accent-blue);
+        }
+        
+        .admin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .footer-btn {
+            background: transparent;
+            border: none;
+            color: var(--accent-blue);
+            cursor: pointer;
+            font-size: 12px;
+            padding: 0;
+            margin-right: 8px;
+        }
+        
+        .footer-btn:hover {
+            text-decoration: underline;
+        }
+        
+        .health-modal {
+            max-width: 400px;
+        }
+        
+        .health-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .health-status.ok {
+            background: rgba(63, 185, 80, 0.1);
+            border: 1px solid var(--accent-green);
+        }
+        
+        .health-status.error {
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid var(--accent-red);
+        }
+        
+        .health-status .icon {
+            font-size: 32px;
+        }
+        
+        .health-status .details {
+            flex: 1;
+        }
+        
+        .health-status .title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .health-status .subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        .health-info {
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+        }
+        
+        .health-info div {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+        }
+        
         .pve-version-card {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -1104,6 +1236,171 @@ func DashboardHTML() string {
             color: var(--text-secondary);
             font-size: 14px;
         }
+        
+        /* Detail Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.2s;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: var(--bg-secondary);
+            z-index: 10;
+        }
+        
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .modal-close:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        .detail-section {
+            margin-bottom: 24px;
+        }
+        
+        .detail-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .detail-section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .detail-section-header svg {
+            opacity: 0.7;
+        }
+        
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .detail-item {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px 16px;
+        }
+        
+        .detail-item .label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 4px;
+        }
+        
+        .detail-item .value {
+            font-size: 15px;
+            font-weight: 500;
+            word-break: break-word;
+        }
+        
+        .detail-item .value.mono {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 13px;
+        }
+        
+        .detail-item.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .detail-item .value.status-success { color: var(--accent-green); }
+        .detail-item .value.status-failed { color: var(--accent-red); }
+        .detail-item .value.status-installing { color: var(--accent-yellow); }
+        
+        .error-box {
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid rgba(248, 81, 73, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 13px;
+            color: var(--accent-red);
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        tr.clickable-row {
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        
+        tr.clickable-row:hover {
+            background: rgba(88, 166, 255, 0.1) !important;
+        }
     </style>
 </head>
 <body>
@@ -1116,13 +1413,13 @@ func DashboardHTML() string {
             Telemetry Dashboard
         </h1>
         <div class="controls">
-            <select id="timeRange">
-                <option value="7">Last 7 days</option>
-                <option value="14">Last 14 days</option>
-                <option value="30" selected>Last 30 days</option>
-                <option value="90">Last 90 days</option>
-                <option value="365">Last year</option>
-            </select>
+            <div class="quickfilter">
+                <button class="filter-btn" data-days="7">7 Days</button>
+                <button class="filter-btn active" data-days="30">30 Days</button>
+                <button class="filter-btn" data-days="90">90 Days</button>
+                <button class="filter-btn" data-days="365">1 Year</button>
+                <button class="filter-btn" data-days="0">All</button>
+            </div>
             <button class="export-btn" onclick="exportCSV()">Export CSV</button>
             <button onclick="refreshData()">Refresh</button>
             <button class="theme-toggle" onclick="toggleTheme()">
@@ -1277,9 +1574,42 @@ func DashboardHTML() string {
             &bull; Telemetry is anonymous and privacy-friendly
         </div>
         <div>
-            <a href="/healthz" target="_blank">Health Check</a> &bull;
-            <a href="/metrics" target="_blank">Metrics</a> &bull;
+            <button class="footer-btn" onclick="showHealthCheck()">Health Check</button>
             <a href="/api/dashboard" target="_blank">API</a>
+        </div>
+    </div>
+    
+    <!-- Health Check Modal -->
+    <div class="modal-overlay" id="healthModal" onclick="closeHealthModal(event)">
+        <div class="modal-content health-modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>🏥 Health Check</h2>
+                <button class="modal-close" onclick="closeHealthModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="healthModalBody">
+                <div class="loading">Checking...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal" onclick="closeModalOutside(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 id="modalTitle">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="9" y1="9" x2="15" y2="9"/>
+                        <line x1="9" y1="13" x2="15" y2="13"/>
+                        <line x1="9" y1="17" x2="11" y2="17"/>
+                    </svg>
+                    <span>Record Details</span>
+                </h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content filled by JavaScript -->
+            </div>
         </div>
     </div>
     
@@ -1344,7 +1674,8 @@ func DashboardHTML() string {
         };
         
         async function fetchData() {
-            const days = document.getElementById('timeRange').value;
+            const activeBtn = document.querySelector('.filter-btn.active');
+            const days = activeBtn ? activeBtn.dataset.days : '30';
             try {
                 const response = await fetch('/api/dashboard?days=' + days);
                 if (!response.ok) throw new Error('Failed to fetch data');
@@ -1546,9 +1877,25 @@ func DashboardHTML() string {
                     }]
                 },
                 options: {
-                    ...chartDefaults,
+                    responsive: true,
+                    maintainAspectRatio: false,
                     indexAxis: 'y',
-                    plugins: { legend: { display: false } }
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { 
+                                color: '#8b949e',
+                                stepSize: 1,
+                                callback: function(value) { return Number.isInteger(value) ? value : ''; }
+                            },
+                            grid: { color: '#30363d' }
+                        },
+                        y: {
+                            ticks: { color: '#8b949e' },
+                            grid: { color: '#30363d' }
+                        }
+                    }
                 }
             });
             
@@ -1652,20 +1999,25 @@ func DashboardHTML() string {
             }
         }
         
+        // Store current records for detail view
+        let currentRecords = [];
+        
         function renderTableRows(records) {
             const tbody = document.getElementById('recordsTable');
+            currentRecords = records; // Store for detail modal
+            
             if (records.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="loading">No records found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="loading">No records found</td></tr>';
                 return;
             }
             
-            tbody.innerHTML = records.map(r => {
+            tbody.innerHTML = records.map((r, index) => {
                 const statusClass = r.status || 'unknown';
                 const resources = r.core_count || r.ram_size || r.disk_size 
                     ? (r.core_count || '?') + 'C / ' + (r.ram_size ? Math.round(r.ram_size/1024) + 'G' : '?') + ' / ' + (r.disk_size || '?') + 'GB'
                     : '-';
                 const created = r.created ? formatTimestamp(r.created) : '-';
-                return '<tr>' +
+                return '<tr class="clickable-row" onclick="showRecordDetail(' + index + ')">' +
                     '<td><strong>' + escapeHtml(r.nsapp || '-') + '</strong></td>' +
                     '<td><span class="status-badge ' + statusClass + '">' + escapeHtml(r.status || '-') + '</span></td>' +
                     '<td>' + escapeHtml(r.os_type || '-') + ' ' + escapeHtml(r.os_version || '') + '</td>' +
@@ -1679,6 +2031,171 @@ func DashboardHTML() string {
                 '</tr>';
             }).join('');
         }
+        
+        function showRecordDetail(index) {
+            const record = currentRecords[index];
+            if (!record) return;
+            
+            const modal = document.getElementById('detailModal');
+            const modalTitle = document.getElementById('modalTitle').querySelector('span');
+            const modalBody = document.getElementById('modalBody');
+            
+            modalTitle.textContent = record.nsapp || 'Record Details';
+            
+            // Build detail content with sections
+            let html = '';
+            
+            // General Information Section
+            html += '<div class="detail-section">';
+            html += '<div class="detail-section-header"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> General Information</div>';
+            html += '<div class="detail-grid">';
+            html += buildDetailItem('App Name', record.nsapp);
+            html += buildDetailItem('Status', record.status, 'status-' + (record.status || 'unknown'));
+            html += buildDetailItem('Type', formatType(record.type));
+            html += buildDetailItem('Method', record.method || 'default');
+            html += buildDetailItem('Random ID', record.random_id, 'mono');
+            html += '</div></div>';
+            
+            // System Resources Section
+            html += '<div class="detail-section">';
+            html += '<div class="detail-section-header"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg> System Resources</div>';
+            html += '<div class="detail-grid">';
+            html += buildDetailItem('CPU Cores', record.core_count ? record.core_count + ' Cores' : null);
+            html += buildDetailItem('RAM', record.ram_size ? formatBytes(record.ram_size * 1024 * 1024) : null);
+            html += buildDetailItem('Disk Size', record.disk_size ? record.disk_size + ' GB' : null);
+            html += buildDetailItem('CT Type', record.ct_type !== undefined ? (record.ct_type === 1 ? 'Unprivileged' : 'Privileged') : null);
+            html += '</div></div>';
+            
+            // Operating System Section
+            html += '<div class="detail-section">';
+            html += '<div class="detail-section-header"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Operating System</div>';
+            html += '<div class="detail-grid">';
+            html += buildDetailItem('OS Type', record.os_type);
+            html += buildDetailItem('OS Version', record.os_version);
+            html += buildDetailItem('PVE Version', record.pve_version);
+            html += '</div></div>';
+            
+            // Hardware Section (CPU & GPU)
+            const hasHardwareInfo = record.cpu_vendor || record.cpu_model || record.gpu_vendor || record.gpu_model || record.ram_speed;
+            if (hasHardwareInfo) {
+                html += '<div class="detail-section">';
+                html += '<div class="detail-section-header"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Hardware</div>';
+                html += '<div class="detail-grid">';
+                html += buildDetailItem('CPU Vendor', record.cpu_vendor);
+                html += buildDetailItem('CPU Model', record.cpu_model);
+                html += buildDetailItem('RAM Speed', record.ram_speed);
+                html += buildDetailItem('GPU Vendor', record.gpu_vendor);
+                html += buildDetailItem('GPU Model', record.gpu_model);
+                html += buildDetailItem('GPU Passthrough', formatPassthrough(record.gpu_passthrough));
+                html += '</div></div>';
+            }
+            
+            // Installation Details Section
+            html += '<div class="detail-section">';
+            html += '<div class="detail-section-header"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Installation</div>';
+            html += '<div class="detail-grid">';
+            html += buildDetailItem('Exit Code', record.exit_code !== undefined ? record.exit_code : null, record.exit_code === 0 ? 'status-success' : (record.exit_code ? 'status-failed' : ''));
+            html += buildDetailItem('Duration', record.install_duration ? formatDuration(record.install_duration) : null);
+            html += buildDetailItem('Error Category', record.error_category);
+            html += '</div></div>';
+            
+            // Error Section (if present)
+            if (record.error) {
+                html += '<div class="detail-section">';
+                html += '<div class="detail-section-header"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Error Details</div>';
+                html += '<div class="error-box">' + escapeHtml(record.error) + '</div>';
+                html += '</div>';
+            }
+            
+            // Timestamps Section
+            html += '<div class="detail-section">';
+            html += '<div class="detail-section-header"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Timestamps</div>';
+            html += '<div class="detail-grid">';
+            html += buildDetailItem('Created', formatFullTimestamp(record.created));
+            html += buildDetailItem('Updated', formatFullTimestamp(record.updated));
+            html += '</div></div>';
+            
+            modalBody.innerHTML = html;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function buildDetailItem(label, value, extraClass) {
+            if (value === null || value === undefined || value === '') {
+                return '<div class="detail-item"><div class="label">' + escapeHtml(label) + '</div><div class="value" style="color: var(--text-secondary);">—</div></div>';
+            }
+            const valueClass = extraClass ? 'value ' + extraClass : 'value';
+            return '<div class="detail-item"><div class="label">' + escapeHtml(label) + '</div><div class="' + valueClass + '">' + escapeHtml(String(value)) + '</div></div>';
+        }
+        
+        function formatType(type) {
+            if (!type) return null;
+            const types = {
+                'lxc': 'LXC Container',
+                'vm': 'Virtual Machine',
+                'addon': 'Add-on',
+                'pve': 'Proxmox VE',
+                'tool': 'Tool'
+            };
+            return types[type.toLowerCase()] || type;
+        }
+        
+        function formatPassthrough(pt) {
+            if (!pt) return null;
+            const modes = {
+                'igpu': 'Integrated GPU',
+                'dgpu': 'Dedicated GPU',
+                'vgpu': 'Virtual GPU',
+                'none': 'None',
+                'unknown': 'Unknown'
+            };
+            return modes[pt.toLowerCase()] || pt;
+        }
+        
+        function formatBytes(bytes) {
+            if (!bytes) return null;
+            const gb = bytes / (1024 * 1024 * 1024);
+            if (gb >= 1) return gb.toFixed(1) + ' GB';
+            const mb = bytes / (1024 * 1024);
+            return mb.toFixed(0) + ' MB';
+        }
+        
+        function formatDuration(seconds) {
+            if (!seconds) return null;
+            if (seconds < 60) return seconds + 's';
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            if (mins < 60) return mins + 'm ' + secs + 's';
+            const hours = Math.floor(mins / 60);
+            const remainMins = mins % 60;
+            return hours + 'h ' + remainMins + 'm';
+        }
+        
+        function formatFullTimestamp(ts) {
+            if (!ts) return null;
+            const d = new Date(ts);
+            return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById('detailModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        function closeModalOutside(event) {
+            if (event.target === document.getElementById('detailModal')) {
+                closeModal();
+            }
+        }
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeHealthModal();
+            }
+        });
         
         function filterTable() {
             currentPage = 1;
@@ -1717,6 +2234,52 @@ func DashboardHTML() string {
             URL.revokeObjectURL(url);
         }
         
+        async function showHealthCheck() {
+            const modal = document.getElementById('healthModal');
+            const body = document.getElementById('healthModalBody');
+            body.innerHTML = '<div class="loading">Checking...</div>';
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            try {
+                const resp = await fetch('/healthz');
+                const data = await resp.json();
+                
+                const isOk = data.status === 'ok';
+                const statusClass = isOk ? 'ok' : 'error';
+                const icon = isOk ? '✅' : '❌';
+                const title = isOk ? 'All Systems Operational' : 'Service Degraded';
+                
+                let html = '<div class="health-status ' + statusClass + '">';
+                html += '<span class="icon">' + icon + '</span>';
+                html += '<div class="details">';
+                html += '<div class="title">' + title + '</div>';
+                html += '<div class="subtitle">Last checked: ' + new Date().toLocaleTimeString() + '</div>';
+                html += '</div></div>';
+                
+                html += '<div class="health-info">';
+                html += '<div><span>Status</span><span>' + data.status + '</span></div>';
+                html += '<div><span>Server Time</span><span>' + new Date(data.time).toLocaleString() + '</span></div>';
+                if (data.pocketbase) {
+                    html += '<div><span>PocketBase</span><span>' + (data.pocketbase === 'connected' ? '🟢 Connected' : '🔴 ' + data.pocketbase) + '</span></div>';
+                }
+                if (data.version) {
+                    html += '<div><span>Version</span><span>' + data.version + '</span></div>';
+                }
+                html += '</div>';
+                
+                body.innerHTML = html;
+            } catch (e) {
+                body.innerHTML = '<div class="health-status error"><span class="icon">❌</span><div class="details"><div class="title">Connection Failed</div><div class="subtitle">' + e.message + '</div></div></div>';
+            }
+        }
+        
+        function closeHealthModal(event) {
+            if (event && event.target !== document.getElementById('healthModal')) return;
+            document.getElementById('healthModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
         async function refreshData() {
             try {
                 const data = await fetchData();
@@ -1732,8 +2295,14 @@ func DashboardHTML() string {
         refreshData();
         initSortableHeaders();
         
-        // Refresh on time range change
-        document.getElementById('timeRange').addEventListener('change', refreshData);
+        // Quickfilter button clicks
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                refreshData();
+            });
+        });
         
         // Auto-refresh every 60 seconds
         setInterval(refreshData, 60000);

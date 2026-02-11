@@ -3,13 +3,13 @@ WORKDIR /src
 COPY go.mod go.sum* ./
 RUN go mod download 2>/dev/null || true
 COPY . .
-RUN go build -trimpath -ldflags "-s -w" -o /out/telemetry-ingest .
-RUN go build -trimpath -ldflags "-s -w" -o /out/migrate migrate.go
+RUN go build -trimpath -ldflags "-s -w" -o /out/telemetry-service .
+RUN go build -trimpath -ldflags "-s -w" -o /out/migrate ./migration/migrate.go
 
 FROM alpine:3.23
 RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /app
-COPY --from=build /out/telemetry-ingest /app/telemetry-ingest
+COPY --from=build /out/telemetry-service /app/telemetry-service
 COPY --from=build /out/migrate /app/migrate
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh /app/migrate

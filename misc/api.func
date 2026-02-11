@@ -37,6 +37,10 @@ TELEMETRY_URL="https://telemetry.community-scripts.org/telemetry"
 # Timeout for telemetry requests (seconds)
 TELEMETRY_TIMEOUT=5
 
+# Repository source identifier (auto-transformed by CI on promotion to ProxmoxVE)
+# DO NOT CHANGE - this is used by the telemetry service to route data to the correct collection
+REPO_SOURCE="community-scripts/ProxmoxVED"
+
 # ==============================================================================
 # SECTION 1: ERROR CODE DESCRIPTIONS
 # ==============================================================================
@@ -350,7 +354,8 @@ post_to_api() {
     "gpu_vendor": "${gpu_vendor}",
     "gpu_model": "${gpu_model}",
     "gpu_passthrough": "${gpu_passthrough}",
-    "ram_speed": "${ram_speed}"
+    "ram_speed": "${ram_speed}",
+    "repo_source": "${REPO_SOURCE}"
 }
 EOF
   )
@@ -421,7 +426,8 @@ post_to_api_vm() {
     "os_type": "${var_os:-}",
     "os_version": "${var_version:-}",
     "pve_version": "${pve_version}",
-    "method": "${METHOD:-default}"
+    "method": "${METHOD:-default}",
+    "repo_source": "${REPO_SOURCE}"
 }
 EOF
   )
@@ -541,7 +547,8 @@ post_update_to_api() {
     "gpu_vendor": "${gpu_vendor}",
     "gpu_model": "${gpu_model}",
     "gpu_passthrough": "${gpu_passthrough}",
-    "ram_speed": "${ram_speed}"
+    "ram_speed": "${ram_speed}",
+    "repo_source": "${REPO_SOURCE}"
 }
 EOF
   )
@@ -671,7 +678,8 @@ post_tool_to_api() {
     "error": "${error}",
     "error_category": "${error_category}",
     "install_duration": ${duration:-0},
-    "pve_version": "${pve_version}"
+    "pve_version": "${pve_version}",
+    "repo_source": "${REPO_SOURCE}"
 }
 EOF
   )
@@ -734,7 +742,8 @@ post_addon_to_api() {
     "error_category": "${error_category}",
     "install_duration": ${duration:-0},
     "os_type": "${os_type}",
-    "os_version": "${os_version}"
+    "os_version": "${os_version}",
+    "repo_source": "${REPO_SOURCE}"
 }
 EOF
   )
@@ -820,7 +829,8 @@ post_update_to_api_extended() {
     "error_category": "${error_category}",
     "install_duration": ${duration:-0},
     "gpu_vendor": "${gpu_vendor}",
-    "gpu_passthrough": "${gpu_passthrough}"
+    "gpu_passthrough": "${gpu_passthrough}",
+    "repo_source": "${REPO_SOURCE}"
 }
 EOF
   )
