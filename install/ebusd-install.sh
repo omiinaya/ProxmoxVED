@@ -13,16 +13,9 @@ setting_up_container
 network_check
 update_os
 
-setup_deb822_repo \
-  "ebusd" \
-  "https://raw.githubusercontent.com/john30/ebusd-debian/master/ebusd.gpg" \
-  "https://repo.ebusd.eu/apt/default/bookworm/" \
-  "bookworm" \
-  "main"
-
 msg_info "Installing ebusd"
-$STD apt install -y ebusd
-systemctl enable -q ebusd
+fetch_and_deploy_gh_release "ebusd" "john30/ebusd" "binary" "latest" "" "ebusd-*_amd64-trixie_mqtt1.deb"
+systemctl enable -q ebusd.service
 msg_ok "Installed ebusd"
 
 motd_ssh

@@ -178,7 +178,7 @@ NODE_VERSION="22" NODE_MODULE="yarn" setup_nodejs
 
 msg_info "Downloading Inference Models"
 mkdir -p /models /openvino-model
-wget -q -O edgetpu_model.tflite https://github.com/google-coral/test_data/raw/release-frogfish/ssdlite_mobiledet_coco_qat_postprocess_edgetpu.tflite
+wget -q -O /edgetpu_model.tflite https://github.com/google-coral/test_data/raw/release-frogfish/ssdlite_mobiledet_coco_qat_postprocess_edgetpu.tflite
 wget -q -O /models/cpu_model.tflite https://github.com/google-coral/test_data/raw/release-frogfish/ssdlite_mobiledet_coco_qat_postprocess.tflite
 cp /opt/frigate/labelmap.txt /labelmap.txt
 msg_ok "Downloaded Inference Models"
@@ -210,12 +210,15 @@ msg_info "Building OpenVino Model"
 cd /models
 wget -q http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz
 $STD tar -zxf ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz --no-same-owner
-$STD python3 /opt/frigate/docker/main/build_ov_model.py
-cp /models/ssdlite_mobilenet_v2.xml /openvino-model/
-cp /models/ssdlite_mobilenet_v2.bin /openvino-model/
-wget -q https://github.com/openvinotoolkit/open_model_zoo/raw/master/data/dataset_classes/coco_91cl_bkgr.txt -O /openvino-model/coco_91cl_bkgr.txt
-sed -i 's/truck/car/g' /openvino-model/coco_91cl_bkgr.txt
-msg_ok "Built OpenVino Model"
+if python3 /opt/frigate/docker/main/build_ov_model.py 2>&1; then
+  cp /models/ssdlite_mobilenet_v2.xml /openvino-model/
+  cp /models/ssdlite_mobilenet_v2.bin /openvino-model/
+  wget -q https://github.com/openvinotoolkit/open_model_zoo/raw/master/data/dataset_classes/coco_91cl_bkgr.txt -O /openvino-model/coco_91cl_bkgr.txt
+  sed -i 's/truck/car/g' /openvino-model/coco_91cl_bkgr.txt
+  msg_ok "Built OpenVino Model"
+else
+  msg_warn "OpenVino build failed (CPU may not support required instructions). Frigate will use CPU model."
+fi
 
 msg_info "Building Frigate Application (Patience)"
 cd /opt/frigate

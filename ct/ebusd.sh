@@ -23,16 +23,22 @@ function update_script() {
   header_info
   check_container_storage
   check_container_resources
-  if [[ ! -f /etc/apt/sources.list.d/ebusd.sources ]]; then
+  if [[ ! -f /etc/default/ebusd ]]; then
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  
-  msg_info "Updating ebusd"
-  $STD apt update
-  $STD apt upgrade -y ebusd
-  msg_ok "Updated ebusd"
-  msg_ok "Updated successfully!"
+  if check_for_gh_release "ebusd" "john30/ebusd"; then
+    msg_info "Stopping Services"
+    systemctl stop ebusd.service
+    msg_ok "Stopped Services"
+
+    fetch_and_deploy_gh_release "ebusd" "john30/ebusd" "binary" "latest" "/opt/ebusd" "ebusd-*_amd64-trixie_mqtt1.deb"
+
+    msg_info "Starting Services"
+    systemctl start ebusd.service
+    msg_ok "Started Services"
+    msg_ok "Updated successfully!"
+  fi
   exit
 }
 

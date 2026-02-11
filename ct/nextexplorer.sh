@@ -41,20 +41,20 @@ function update_script() {
     msg_info "Updating nextExplorer"
     APP_DIR="/opt/nextExplorer/app"
     mkdir -p "$APP_DIR"
-    cd /opt/nextExplorer/backend
+    cd /opt/nextExplorer
     export NODE_ENV=production
-    $STD npm ci
-    cd /opt/nextExplorer/frontend
+    $STD npm ci --omit=dev --workspace backend
+    mv node_modules "$APP_DIR"
+    mv backend/{src,package.json} "$APP_DIR"
     unset NODE_ENV
     export NODE_ENV=development
-    $STD npm ci
-    $STD npm run build -- --sourcemap false
+    $STD npm ci --workspace frontend
+    $STD npm run -w frontend build -- --sourcemap false
     unset NODE_ENV
-    cd /opt/nextExplorer/
-    mv backend/{node_modules,src,package.json} "$APP_DIR"
     mv frontend/dist/ "$APP_DIR"/src/public
     chown -R explorer:explorer "$APP_DIR" /etc/nextExplorer
     sed -i "\|version|s|$(jq -cr '.version' ${APP_DIR}/package.json)|$(cat ~/.nextexplorer)|" "$APP_DIR"/package.json
+    sed -i 's/app.js/server.js/' /etc/systemd/system/nextexplorer.service && systemctl daemon-reload
     msg_ok "Updated nextExplorer"
 
     msg_info "Starting nextExplorer"

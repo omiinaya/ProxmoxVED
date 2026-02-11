@@ -1778,7 +1778,7 @@ function fetch_and_deploy_gh_release() {
   local app="$1"
   local repo="$2"
   local mode="${3:-tarball}" # tarball | binary | prebuild | singlefile | tag
-  local version="${4:-latest}"
+  local version="${APPLICATION_VERSION:-${4:-latest}}"
   local target="${5:-/opt/$app}"
   local asset_pattern="${6:-}"
 
@@ -1974,6 +1974,12 @@ function fetch_and_deploy_gh_release() {
     [[ "$arch" == "x86_64" ]] && arch="amd64"
     [[ "$arch" == "aarch64" ]] && arch="arm64"
 
+    # Get Debian codename for distro-specific packages
+    local codename=""
+    if [[ -f /etc/os-release ]]; then
+      codename=$(grep -oP '(?<=VERSION_CODENAME=).*' /etc/os-release 2>/dev/null || true)
+    fi
+
     local assets url_match=""
     assets=$(echo "$json" | jq -r '.assets[].browser_download_url')
 
@@ -1989,7 +1995,17 @@ function fetch_and_deploy_gh_release() {
       done
     fi
 
-    # If no match via explicit pattern, fall back to architecture heuristic
+    # If no match via explicit pattern, try architecture + codename match
+    if [[ -z "$url_match" && -n "$codename" ]]; then
+      for u in $assets; do
+        if [[ "$u" =~ $arch.*$codename.*\.deb$ ]] || [[ "$u" =~ $arch.*-$codename\.deb$ ]] || [[ "$u" =~ ${arch}-${codename}\.deb$ ]] || [[ "$u" =~ ${arch}_${codename}\.deb$ ]]; then
+          url_match="$u"
+          break
+        fi
+      done
+    fi
+
+    # Fallback: architecture heuristic without codename
     if [[ -z "$url_match" ]]; then
       for u in $assets; do
         if [[ "$u" =~ ($arch|amd64|x86_64|aarch64|arm64).*\.deb$ ]]; then
@@ -2230,7 +2246,7 @@ function fetch_and_deploy_codeberg_release() {
   local app="$1"
   local repo="$2"
   local mode="${3:-tarball}" # tarball | binary | prebuild | singlefile | tag
-  local version="${4:-latest}"
+  local version="${APPLICATION_VERSION:-${4:-latest}}"
   local target="${5:-/opt/$app}"
   local asset_pattern="${6:-}"
 

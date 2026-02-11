@@ -38,15 +38,16 @@
 # - Captures app-declared resource defaults (CPU, RAM, Disk)
 # ------------------------------------------------------------------------------
 variables() {
-  NSAPP=$(echo "${APP,,}" | tr -d ' ')              # This function sets the NSAPP variable by converting the value of the APP variable to lowercase and removing any spaces.
-  var_install="${NSAPP}-install"                    # sets the var_install variable by appending "-install" to the value of NSAPP.
-  INTEGER='^[0-9]+([.][0-9]+)?$'                    # it defines the INTEGER regular expression pattern.
-  PVEHOST_NAME=$(hostname)                          # gets the Proxmox Hostname and sets it to Uppercase
-  DIAGNOSTICS="yes"                                 # sets the DIAGNOSTICS variable to "yes", used for the API call.
-  METHOD="default"                                  # sets the METHOD variable to "default", used for the API call.
-  RANDOM_UUID="$(cat /proc/sys/kernel/random/uuid)" # generates a random UUID and sets it to the RANDOM_UUID variable.
-  SESSION_ID="${RANDOM_UUID:0:8}"                   # Short session ID (first 8 chars of UUID) for log files
-  BUILD_LOG="/tmp/create-lxc-${SESSION_ID}.log"     # Host-side container creation log
+  NSAPP=$(echo "${APP,,}" | tr -d ' ')                   # This function sets the NSAPP variable by converting the value of the APP variable to lowercase and removing any spaces.
+  var_install="${NSAPP}-install"                         # sets the var_install variable by appending "-install" to the value of NSAPP.
+  INTEGER='^[0-9]+([.][0-9]+)?$'                         # it defines the INTEGER regular expression pattern.
+  PVEHOST_NAME=$(hostname)                               # gets the Proxmox Hostname and sets it to Uppercase
+  DIAGNOSTICS="yes"                                      # sets the DIAGNOSTICS variable to "yes", used for the API call.
+  METHOD="default"                                       # sets the METHOD variable to "default", used for the API call.
+  RANDOM_UUID="$(cat /proc/sys/kernel/random/uuid)"      # generates a random UUID and sets it to the RANDOM_UUID variable.
+  SESSION_ID="${RANDOM_UUID:0:8}"                        # Short session ID (first 8 chars of UUID) for log files
+  BUILD_LOG="/tmp/create-lxc-${SESSION_ID}.log"          # Host-side container creation log
+  combined_log="/tmp/install-${SESSION_ID}-combined.log" # Combined log (build + install) for failed installations
   CTTYPE="${CTTYPE:-${CT_TYPE:-1}}"
 
   # Parse dev_mode early
@@ -56,6 +57,7 @@ variables() {
   if [[ "${DEV_MODE_LOGS:-false}" == "true" ]]; then
     mkdir -p /var/log/community-scripts
     BUILD_LOG="/var/log/community-scripts/create-lxc-${SESSION_ID}-$(date +%Y%m%d_%H%M%S).log"
+    combined_log="/var/log/community-scripts/install-${SESSION_ID}-combined-$(date +%Y%m%d_%H%M%S).log"
   fi
 
   # Get Proxmox VE version and kernel version
@@ -2728,6 +2730,26 @@ Advanced:
   [[ "$APT_CACHER" == "yes" ]] && echo -e "${INFO}${BOLD}${DGN}APT Cacher: ${BGN}$APT_CACHER_IP${CL}"
   echo -e "${SEARCH}${BOLD}${DGN}Verbose Mode: ${BGN}$VERBOSE${CL}"
   echo -e "${CREATING}${BOLD}${RD}Creating a ${APP} LXC using the above advanced settings${CL}"
+
+  # Log settings to file
+  log_section "CONTAINER SETTINGS (ADVANCED) - ${APP}"
+  log_msg "Application: ${APP}"
+  log_msg "PVE Version: ${PVEVERSION} (Kernel: ${KERNEL_VERSION})"
+  log_msg "Operating System: $var_os ($var_version)"
+  log_msg "Container Type: $([ "$CT_TYPE" == "1" ] && echo "Unprivileged" || echo "Privileged")"
+  log_msg "Container ID: $CT_ID"
+  log_msg "Hostname: $HN"
+  log_msg "Disk Size: ${DISK_SIZE} GB"
+  log_msg "CPU Cores: $CORE_COUNT"
+  log_msg "RAM Size: ${RAM_SIZE} MiB"
+  log_msg "Bridge: $BRG"
+  log_msg "IPv4: $NET"
+  log_msg "IPv6: $IPV6_METHOD"
+  log_msg "FUSE Support: ${ENABLE_FUSE:-no}"
+  log_msg "Nesting: $([ "${ENABLE_NESTING:-1}" == "1" ] && echo "Enabled" || echo "Disabled")"
+  log_msg "GPU Passthrough: ${ENABLE_GPU:-no}"
+  log_msg "Verbose Mode: $VERBOSE"
+  log_msg "Session ID: ${SESSION_ID}"
 }
 
 # ==============================================================================
@@ -2807,6 +2829,65 @@ EOF
   fi
 }
 
+dev_mode_menu() {
+  local motd=OFF keep=OFF trace=OFF pause=OFF breakpoint=OFF logs=OFF dryrun=OFF verbose=OFF
+
+  IFS=',' read -r -a _modes <<<"$dev_mode"
+  for m in "${_modes[@]}"; do
+    case "$m" in
+    motd) motd=ON ;;
+    keep) keep=ON ;;
+    trace) trace=ON ;;
+    pause) pause=ON ;;
+    breakpoint) breakpoint=ON ;;
+    logs) logs=ON ;;
+    dryrun) dryrun=ON ;;
+    esac
+  done
+
+  [[ "$var_verbose" == "yes" ]] && verbose=ON
+
+  local selection
+  selection=$(whiptail --backtitle "Proxmox VE Helper Scripts" \
+    --title "DEV MODE" \
+    --checklist "Choose one or more Options" 16 51 10 \
+    "motd" "Early SSH/MOTD Setup" "$motd" \
+    "keep" "Preserve Container on Failure" "$keep" \
+    "trace" "Bash Command Tracing" "$trace" \
+    "pause" "Step-by-Step Execution" "$pause" \
+    "breakpoint" "Interactive Shell on Error" "$breakpoint" \
+    "logs" "Persistent Logging" "$logs" \
+    "dryrun" "Simulation Mode" "$dryrun" \
+    "verbose" "Verbose logging" "$verbose" \
+    3>&1 1>&2 2>&3) || exit_script
+
+  dev_mode=""
+  var_verbose="no"
+  local modes_out=()
+
+  for tag in $selection; do
+    tag="${tag%\"}"
+    tag="${tag#\"}"
+    if [[ "$tag" == "verbose" ]]; then
+      var_verbose="yes"
+    else
+      modes_out+=("$tag")
+    fi
+  done
+
+  dev_mode=$(
+    IFS=,
+    echo "${modes_out[*]}"
+  )
+  unset DEV_MODE_MOTD DEV_MODE_KEEP DEV_MODE_TRACE DEV_MODE_PAUSE DEV_MODE_BREAKPOINT DEV_MODE_LOGS DEV_MODE_DRYRUN
+  parse_dev_mode
+  if [[ "${DEV_MODE_LOGS:-false}" == "true" ]]; then
+    mkdir -p /var/log/community-scripts
+    BUILD_LOG="/var/log/community-scripts/create-lxc-${SESSION_ID}-$(date +%Y%m%d_%H%M%S).log"
+    combined_log="/var/log/community-scripts/install-${SESSION_ID}-combined-$(date +%Y%m%d_%H%M%S).log"
+  fi
+}
+
 diagnostics_menu() {
   if [ "${DIAGNOSTICS:-no}" = "yes" ]; then
     if whiptail --backtitle "Proxmox VE Helper Scripts" \
@@ -2856,6 +2937,20 @@ echo_default() {
   fi
   echo -e "${CREATING}${BOLD}${BL}Creating a ${APP} LXC using the above default settings${CL}"
   echo -e "  "
+
+  # Log settings to file
+  log_section "CONTAINER SETTINGS - ${APP}"
+  log_msg "Application: ${APP}"
+  log_msg "PVE Version: ${PVEVERSION} (Kernel: ${KERNEL_VERSION})"
+  log_msg "Container ID: ${CT_ID}"
+  log_msg "Operating System: $var_os ($var_version)"
+  log_msg "Container Type: $CT_TYPE_DESC"
+  log_msg "Disk Size: ${DISK_SIZE} GB"
+  log_msg "CPU Cores: ${CORE_COUNT}"
+  log_msg "RAM Size: ${RAM_SIZE} MiB"
+  [[ -n "${var_gpu:-}" && "${var_gpu}" == "yes" ]] && log_msg "GPU Passthrough: Enabled"
+  [[ "$VERBOSE" == "yes" ]] && log_msg "Verbose Mode: Enabled"
+  log_msg "Session ID: ${SESSION_ID}"
 }
 
 # ------------------------------------------------------------------------------
@@ -3024,12 +3119,13 @@ settings_menu() {
     local settings_items=(
       "1" "Manage API-Diagnostic Setting"
       "2" "Edit Default.vars"
+      "3" "Configure dev mode"
     )
     if [ -f "$(get_app_defaults_path)" ]; then
-      settings_items+=("3" "Edit App.vars for ${APP}")
-      settings_items+=("4" "Back to Main Menu")
+      settings_items+=("4" "Edit App.vars for ${APP}")
+      settings_items+=("5" "Back to Main Menu")
     else
-      settings_items+=("3" "Back to Main Menu")
+      settings_items+=("4" "Back to Main Menu")
     fi
 
     local choice
@@ -3043,7 +3139,8 @@ settings_menu() {
     case "$choice" in
     1) diagnostics_menu ;;
     2) nano /usr/local/community-scripts/default.vars ;;
-    3)
+    3) dev_mode_menu ;;
+    4)
       if [ -f "$(get_app_defaults_path)" ]; then
         nano "$(get_app_defaults_path)"
       else
@@ -3051,7 +3148,7 @@ settings_menu() {
         return
       fi
       ;;
-    4)
+    5)
       # Back to main menu
       return
       ;;
@@ -3456,6 +3553,7 @@ build_container() {
   export PCT_DISK_SIZE="$DISK_SIZE"
   export IPV6_METHOD="$IPV6_METHOD"
   export ENABLE_GPU="$ENABLE_GPU"
+  export APPLICATION_VERSION="${var_appversion:-}"
 
   # DEV_MODE exports (optional, for debugging)
   export BUILD_LOG="$BUILD_LOG"
@@ -3546,6 +3644,9 @@ $PCT_OPTIONS_STRING"
       exit 214
     fi
     msg_ok "Storage space validated"
+
+    # Report installation start to API (early - captures failed installs too)
+    post_to_api
   fi
 
   create_lxc_container || exit $?
@@ -3922,6 +4023,9 @@ EOF'
   install_ssh_keys_into_ct
 
   # Run application installer
+  # Start timer for duration tracking
+  start_install_timer
+
   # Disable error trap - container errors are handled internally via flag file
   set +Eeuo pipefail # Disable ALL error handling temporarily
   trap - ERR         # Remove ERR trap completely
@@ -3951,25 +4055,54 @@ EOF'
   if [[ $install_exit_code -ne 0 ]]; then
     msg_error "Installation failed in container ${CTID} (exit code: ${install_exit_code})"
 
+    # Report failure to telemetry API
+    post_update_to_api "failed" "$install_exit_code"
+
     # Copy both logs from container before potential deletion
     local build_log_copied=false
     local install_log_copied=false
 
     if [[ -n "$CTID" && -n "${SESSION_ID:-}" ]]; then
-      # Copy BUILD_LOG (creation log) if it exists
+      # Create combined log with header
+      {
+        echo "================================================================================"
+        echo "COMBINED INSTALLATION LOG - ${APP:-LXC}"
+        echo "Container ID: ${CTID}"
+        echo "Session ID: ${SESSION_ID}"
+        echo "Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "================================================================================"
+        echo ""
+      } >"$combined_log"
+
+      # Append BUILD_LOG (host-side creation log) if it exists
       if [[ -f "${BUILD_LOG}" ]]; then
-        cp "${BUILD_LOG}" "/tmp/create-lxc-${CTID}-${SESSION_ID}.log" 2>/dev/null && build_log_copied=true
+        {
+          echo "================================================================================"
+          echo "PHASE 1: CONTAINER CREATION (Host)"
+          echo "================================================================================"
+          cat "${BUILD_LOG}"
+          echo ""
+        } >>"$combined_log"
+        build_log_copied=true
       fi
 
-      # Copy INSTALL_LOG from container
-      if pct pull "$CTID" "/root/.install-${SESSION_ID}.log" "/tmp/install-lxc-${CTID}-${SESSION_ID}.log" 2>/dev/null; then
+      # Copy and append INSTALL_LOG from container
+      local temp_install_log="/tmp/.install-temp-${SESSION_ID}.log"
+      if pct pull "$CTID" "/root/.install-${SESSION_ID}.log" "$temp_install_log" 2>/dev/null; then
+        {
+          echo "================================================================================"
+          echo "PHASE 2: APPLICATION INSTALLATION (Container)"
+          echo "================================================================================"
+          cat "$temp_install_log"
+          echo ""
+        } >>"$combined_log"
+        rm -f "$temp_install_log"
         install_log_copied=true
       fi
 
-      # Show available logs
+      # Show combined log
       echo ""
-      [[ "$build_log_copied" == true ]] && echo -e "${GN}✔${CL} Container creation log: ${BL}/tmp/create-lxc-${CTID}-${SESSION_ID}.log${CL}"
-      [[ "$install_log_copied" == true ]] && echo -e "${GN}✔${CL} Installation log: ${BL}/tmp/install-lxc-${CTID}-${SESSION_ID}.log${CL}"
+      echo -e "${GN}✔${CL} Installation log: ${BL}${combined_log}${CL}"
     fi
 
     # Dev mode: Keep container or open breakpoint shell
@@ -5028,9 +5161,6 @@ create_lxc_container() {
   }
 
   msg_ok "LXC Container ${BL}$CTID${CL} ${GN}was successfully created."
-
-  # Report container creation to API
-  post_to_api
 }
 
 # ==============================================================================
@@ -5100,9 +5230,9 @@ EOF
 # api_exit_script()
 #
 # - Exit trap handler for reporting to API telemetry
-# - Captures exit code and reports to API using centralized error descriptions
-# - Uses explain_exit_code() from error_handler.func for consistent error messages
-# - Posts failure status with exit code to API (error description added automatically)
+# - Captures exit code and reports to PocketBase using centralized error descriptions
+# - Uses explain_exit_code() from api.func for consistent error messages
+# - Posts failure status with exit code to API (error description resolved automatically)
 # - Only executes on non-zero exit codes
 # ------------------------------------------------------------------------------
 api_exit_script() {
@@ -5115,6 +5245,6 @@ api_exit_script() {
 if command -v pveversion >/dev/null 2>&1; then
   trap 'api_exit_script' EXIT
 fi
-trap 'post_update_to_api "failed" "$BASH_COMMAND"' ERR
-trap 'post_update_to_api "failed" "INTERRUPTED"' SIGINT
-trap 'post_update_to_api "failed" "TERMINATED"' SIGTERM
+trap 'post_update_to_api "failed" "$?"' ERR
+trap 'post_update_to_api "failed" "130"' SIGINT
+trap 'post_update_to_api "failed" "143"' SIGTERM

@@ -414,6 +414,69 @@ get_active_logfile() {
 SILENT_LOGFILE="$(get_active_logfile)"
 
 # ------------------------------------------------------------------------------
+# strip_ansi()
+#
+# - Removes ANSI escape sequences from input text
+# - Used to clean colored output for log files
+# - Handles both piped input and arguments
+# ------------------------------------------------------------------------------
+strip_ansi() {
+  if [[ $# -gt 0 ]]; then
+    echo -e "$*" | sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[a-zA-Z]//g'
+  else
+    sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[a-zA-Z]//g'
+  fi
+}
+
+# ------------------------------------------------------------------------------
+# log_msg()
+#
+# - Writes message to active log file without ANSI codes
+# - Adds timestamp prefix for log correlation
+# - Creates log file if it doesn't exist
+# - Arguments: message text (can include ANSI codes, will be stripped)
+# ------------------------------------------------------------------------------
+log_msg() {
+  local msg="$*"
+  local logfile
+  logfile="$(get_active_logfile)"
+
+  [[ -z "$msg" ]] && return
+  [[ -z "$logfile" ]] && return
+
+  # Ensure log directory exists
+  mkdir -p "$(dirname "$logfile")" 2>/dev/null || true
+
+  # Strip ANSI codes and write with timestamp
+  local clean_msg
+  clean_msg=$(strip_ansi "$msg")
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $clean_msg" >>"$logfile"
+}
+
+# ------------------------------------------------------------------------------
+# log_section()
+#
+# - Writes a section header to the log file
+# - Used for separating different phases of installation
+# - Arguments: section name
+# ------------------------------------------------------------------------------
+log_section() {
+  local section="$1"
+  local logfile
+  logfile="$(get_active_logfile)"
+
+  [[ -z "$logfile" ]] && return
+  mkdir -p "$(dirname "$logfile")" 2>/dev/null || true
+
+  {
+    echo ""
+    echo "================================================================================"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $section"
+    echo "================================================================================"
+  } >>"$logfile"
+}
+
+# ------------------------------------------------------------------------------
 # silent()
 #
 # - Executes command with output redirected to active log file
@@ -555,6 +618,9 @@ msg_info() {
   [[ -n "${MSG_INFO_SHOWN["$msg"]+x}" ]] && return
   MSG_INFO_SHOWN["$msg"]=1
 
+  # Log to file
+  log_msg "[INFO] $msg"
+
   stop_spinner
   SPINNER_MSG="$msg"
 
@@ -598,6 +664,7 @@ msg_ok() {
   stop_spinner
   clear_line
   echo -e "$CM ${GN}${msg}${CL}"
+  log_msg "[OK] $msg"
   local sanitized_msg
   sanitized_msg=$(printf '%s' "$msg" | sed 's/\x1b\[[0-9;]*m//g; s/[^a-zA-Z0-9_]/_/g')
   unset 'MSG_INFO_SHOWN['"$sanitized_msg"']' 2>/dev/null || true
@@ -615,6 +682,7 @@ msg_error() {
   stop_spinner
   local msg="$1"
   echo -e "${BFR:-}${CROSS:-✖️} ${RD}${msg}${CL}" >&2
+  log_msg "[ERROR] $msg"
 }
 
 # ------------------------------------------------------------------------------
@@ -629,6 +697,7 @@ msg_warn() {
   stop_spinner
   local msg="$1"
   echo -e "${BFR:-}${INFO:-ℹ️} ${YWB}${msg}${CL}" >&2
+  log_msg "[WARN] $msg"
 }
 
 # ------------------------------------------------------------------------------
@@ -646,6 +715,7 @@ msg_custom() {
   [[ -z "$msg" ]] && return
   stop_spinner
   echo -e "${BFR:-} ${symbol} ${color}${msg}${CL:-\e[0m}"
+  log_msg "$msg"
 }
 
 # ------------------------------------------------------------------------------
@@ -833,29 +903,29 @@ is_verbose_mode() {
 is_unattended() {
   # Primary: Check MODE variable (case-insensitive)
   local mode="${MODE:-${mode:-}}"
-  mode="${mode,,}"  # lowercase
+  mode="${mode,,}" # lowercase
 
   case "$mode" in
-    default|1)
+  default | 1)
+    return 0
+    ;;
+  mydefaults | userdefaults | 3)
+    return 0
+    ;;
+  appdefaults | 4)
+    return 0
+    ;;
+  advanced | 2)
+    # Advanced mode is interactive ONLY during wizard
+    # Inside container (install scripts), it should be unattended
+    # Check if we're inside a container (no pveversion command)
+    if ! command -v pveversion &>/dev/null; then
+      # We're inside the container - all values already collected
       return 0
-      ;;
-    mydefaults|userdefaults|3)
-      return 0
-      ;;
-    appdefaults|4)
-      return 0
-      ;;
-    advanced|2)
-      # Advanced mode is interactive ONLY during wizard
-      # Inside container (install scripts), it should be unattended
-      # Check if we're inside a container (no pveversion command)
-      if ! command -v pveversion &>/dev/null; then
-        # We're inside the container - all values already collected
-        return 0
-      fi
-      # On host during wizard - interactive
-      return 1
-      ;;
+    fi
+    # On host during wizard - interactive
+    return 1
+    ;;
   esac
 
   # Legacy fallbacks for compatibility
@@ -977,29 +1047,29 @@ prompt_confirm() {
     # User provided input
     response="${response,,}" # lowercase
     case "$response" in
-      y|yes)
+    y | yes)
+      return 0
+      ;;
+    n | no)
+      return 1
+      ;;
+    "")
+      # Empty response, use default
+      if [[ "$default" == "y" ]]; then
         return 0
-        ;;
-      n|no)
+      else
         return 1
-        ;;
-      "")
-        # Empty response, use default
-        if [[ "$default" == "y" ]]; then
-          return 0
-        else
-          return 1
-        fi
-        ;;
-      *)
-        # Invalid input, use default
-        echo -e "${YW}Invalid response, using default: ${default}${CL}"
-        if [[ "$default" == "y" ]]; then
-          return 0
-        else
-          return 1
-        fi
-        ;;
+      fi
+      ;;
+    *)
+      # Invalid input, use default
+      echo -e "${YW}Invalid response, using default: ${default}${CL}"
+      if [[ "$default" == "y" ]]; then
+        return 0
+      else
+        return 1
+      fi
+      ;;
     esac
   else
     # Timeout occurred
