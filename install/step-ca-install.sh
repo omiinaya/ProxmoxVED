@@ -248,17 +248,17 @@ if [[ -z "$IP" ]]; then
     exit
 fi
 HOST=$(echo $FQDN | awk -F'.' '{print $1}')
-IP=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --inputbox 'IP (e.g. x.x.x.x)' 10 50 "$IP" 3>&1 1>&2 2>&3)
-HOST=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --inputbox 'HOST (e.g. MyHostName)' 10 50 "$HOST" 3>&1 1>&2 2>&3)
-SAN=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --inputbox 'Subject Alternative Name(s) (SANs) (e.g. myapp-1.example.com, myapp-2.example.com)' 10 50 "$SAN" 3>&1 1>&2 2>&3)
-VALID_TO=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --inputbox 'VALID_TO (e.g. 2034-01-31T00:00:00Z)' 10 50 "2034-01-31T00:00:00Z" 3>&1 1>&2 2>&3)
+IP=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --inputbox 'IP Address (e.g. x.x.x.x)' 10 50 "$IP" 3>&1 1>&2 2>&3)
+HOST=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --inputbox 'Hostname (e.g. MyHostName)' 10 50 "$HOST" 3>&1 1>&2 2>&3)
+SAN=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --inputbox 'Subject Alternative Name(s) (SAN) (e.g. myapp-1.example.com, myapp-2.example.com)' 10 50 "$SAN" 3>&1 1>&2 2>&3)
+VALID_TO=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --inputbox 'Validity (e.g. 2034-01-31T00:00:00Z)' 10 50 "2034-01-31T00:00:00Z" 3>&1 1>&2 2>&3)
 
 if whiptail_yesno=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "Certificate Signing Request (CSR)" --yesno "Continue with below?\n
 FQDN: $FQDN
 Hostname: $HOST
 IP Address: $IP
-Subject Alternative Name(s) (SANs): $SAN
-VALID_TO: $VALID_TO" --no-button "Change" --yes-button "Continue" 15 70 3>&1 1>&2 2>&3); then
+Subject Alternative Name(s) (SAN): $SAN
+Validity: $VALID_TO" --no-button "Change" --yes-button "Continue" 15 70 3>&1 1>&2 2>&3); then
 break
 fi
 
