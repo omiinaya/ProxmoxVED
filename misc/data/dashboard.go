@@ -1424,20 +1424,20 @@ func DashboardHTML() string {
             Telemetry Dashboard
         </h1>
         <div class="controls">
-            <select id="repoFilter" onchange="refreshData()" title="Filter by repository source">
-                <option value="ProxmoxVE" selected>ProxmoxVE (Production)</option>
-                <option value="ProxmoxVED">ProxmoxVED (Development)</option>
-                <option value="external">External (Forks)</option>
-                <option value="all">All Sources</option>
-            </select>
             <div class="quickfilter">
+                <select id="repoFilter" onchange="refreshData()" title="Filter by repository source" style="background:var(--bg-tertiary);border:none;color:var(--text-primary);padding:6px 10px;border-radius:6px;font-size:13px;cursor:pointer;outline:none;">
+                    <option value="ProxmoxVE" selected>ProxmoxVE</option>
+                    <option value="ProxmoxVED">ProxmoxVED</option>
+                    <option value="external">External</option>
+                    <option value="all">All Sources</option>
+                </select>
+                <span style="color:var(--border-color);padding:0 2px;">|</span>
                 <button class="filter-btn" data-days="7">7 Days</button>
                 <button class="filter-btn active" data-days="30">30 Days</button>
                 <button class="filter-btn" data-days="90">90 Days</button>
                 <button class="filter-btn" data-days="365">1 Year</button>
                 <button class="filter-btn" data-days="0">All</button>
             </div>
-            <button class="export-btn" onclick="exportCSV()">Export CSV</button>
             <button onclick="refreshData()">Refresh</button>
             <button class="theme-toggle" onclick="toggleTheme()">
                 <span id="themeIcon">🌙</span>
@@ -1591,6 +1591,7 @@ func DashboardHTML() string {
             &bull; Telemetry is anonymous and privacy-friendly
         </div>
         <div>
+            <button class="footer-btn" onclick="exportCSV()">Export CSV</button>
             <button class="footer-btn" onclick="showHealthCheck()">Health Check</button>
             <a href="/api/dashboard" target="_blank">API</a>
         </div>
