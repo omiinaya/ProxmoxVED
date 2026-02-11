@@ -30,6 +30,7 @@ function update_script() {
   msg_info "Updating step-ca and step-cli"
   $STD apt update
   $STD apt upgrade -y step-ca step-cli
+  $STD systemctl restart step-ca
   msg_ok "Updated step-ca and step-cli"
 
   if check_for_gh_release "step-badger" "lukasz-lobocki/step-badger"; then
