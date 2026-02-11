@@ -104,20 +104,31 @@ type AddonCount struct {
 }
 
 // FetchDashboardData retrieves aggregated data from PocketBase
-func (p *PBClient) FetchDashboardData(ctx context.Context, days int) (*DashboardData, error) {
+// repoSource filters by repo_source field ("ProxmoxVE", "ProxmoxVED", "external", or "" for all)
+func (p *PBClient) FetchDashboardData(ctx context.Context, days int, repoSource string) (*DashboardData, error) {
 	if err := p.ensureAuth(ctx); err != nil {
 		return nil, err
 	}
 
 	data := &DashboardData{}
 
-	// Calculate date filter (days=0 means all entries)
-	var filter string
+	// Build filter parts
+	var filterParts []string
+
+	// Date filter (days=0 means all entries)
 	if days > 0 {
 		since := time.Now().AddDate(0, 0, -days).Format("2006-01-02 00:00:00")
-		filter = url.QueryEscape(fmt.Sprintf("created >= '%s'", since))
-	} else {
-		filter = "" // No filter = all entries
+		filterParts = append(filterParts, fmt.Sprintf("created >= '%s'", since))
+	}
+
+	// Repo source filter
+	if repoSource != "" {
+		filterParts = append(filterParts, fmt.Sprintf("repo_source = '%s'", repoSource))
+	}
+
+	var filter string
+	if len(filterParts) > 0 {
+		filter = url.QueryEscape(strings.Join(filterParts, " && "))
 	}
 
 	// Fetch all records for the period
@@ -306,10 +317,10 @@ func (p *PBClient) fetchRecords(ctx context.Context, filter string) ([]Telemetry
 		var url string
 		if filter != "" {
 			url = fmt.Sprintf("%s/api/collections/%s/records?filter=%s&sort=-created&page=%d&perPage=%d",
-				p.baseURL, p.devColl, filter, page, perPage)
+				p.baseURL, p.targetColl, filter, page, perPage)
 		} else {
 			url = fmt.Sprintf("%s/api/collections/%s/records?sort=-created&page=%d&perPage=%d",
-				p.baseURL, p.devColl, page, perPage)
+				p.baseURL, p.targetColl, page, perPage)
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -1413,6 +1424,12 @@ func DashboardHTML() string {
             Telemetry Dashboard
         </h1>
         <div class="controls">
+            <select id="repoFilter" onchange="refreshData()" title="Filter by repository source">
+                <option value="ProxmoxVE" selected>ProxmoxVE (Production)</option>
+                <option value="ProxmoxVED">ProxmoxVED (Development)</option>
+                <option value="external">External (Forks)</option>
+                <option value="all">All Sources</option>
+            </select>
             <div class="quickfilter">
                 <button class="filter-btn" data-days="7">7 Days</button>
                 <button class="filter-btn active" data-days="30">30 Days</button>
@@ -1676,8 +1693,9 @@ func DashboardHTML() string {
         async function fetchData() {
             const activeBtn = document.querySelector('.filter-btn.active');
             const days = activeBtn ? activeBtn.dataset.days : '30';
+            const repo = document.getElementById('repoFilter').value;
             try {
-                const response = await fetch('/api/dashboard?days=' + days);
+                const response = await fetch('/api/dashboard?days=' + days + '&repo=' + repo);
                 if (!response.ok) throw new Error('Failed to fetch data');
                 return await response.json();
             } catch (error) {

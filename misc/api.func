@@ -37,9 +37,74 @@ TELEMETRY_URL="https://telemetry.community-scripts.org/telemetry"
 # Timeout for telemetry requests (seconds)
 TELEMETRY_TIMEOUT=5
 
-# Repository source identifier (auto-transformed by CI on promotion to ProxmoxVE)
-# DO NOT CHANGE - this is used by the telemetry service to route data to the correct collection
-REPO_SOURCE="community-scripts/ProxmoxVED"
+# ==============================================================================
+# SECTION 0: REPOSITORY SOURCE DETECTION
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# detect_repo_source()
+#
+# - Dynamically detects which GitHub/Gitea repo the scripts were loaded from
+# - Inspects /proc/$$/cmdline and $0 to find the source URL
+# - Maps detected repo to one of three canonical values:
+#   * "ProxmoxVE"  — official community-scripts/ProxmoxVE (production)
+#   * "ProxmoxVED" — official community-scripts/ProxmoxVED (development)
+#   * "external"   — any fork or unknown source
+# - Fallback: "ProxmoxVED" (CI sed transforms ProxmoxVED → ProxmoxVE on promotion)
+# - Sets and exports REPO_SOURCE global variable
+# - Skips detection if REPO_SOURCE is already set (e.g., by environment)
+# ------------------------------------------------------------------------------
+detect_repo_source() {
+  # Allow explicit override via environment
+  [[ -n "${REPO_SOURCE:-}" ]] && return 0
+
+  local content="" owner_repo=""
+
+  # Method 1: Read from /proc/$$/cmdline
+  # When invoked via: bash -c "$(curl -fsSL https://.../ct/app.sh)"
+  # the full CT/VM script content is in /proc/$$/cmdline (same PID through source chain)
+  if [[ -r /proc/$$/cmdline ]]; then
+    content=$(tr '\0' ' ' </proc/$$/cmdline 2>/dev/null) || true
+  fi
+
+  # Method 2: Read from the original script file (bash ct/app.sh / bash vm/app.sh)
+  if [[ -z "$content" ]] || ! echo "$content" | grep -qE 'githubusercontent\.com|community-scripts\.org' 2>/dev/null; then
+    if [[ -f "$0" ]] && [[ "$0" != *bash* ]]; then
+      content=$(head -10 "$0" 2>/dev/null) || true
+    fi
+  fi
+
+  # Extract owner/repo from URL patterns found in the script content
+  if [[ -n "$content" ]]; then
+    # GitHub raw URL: raw.githubusercontent.com/OWNER/REPO/...
+    owner_repo=$(echo "$content" | grep -oE 'raw\.githubusercontent\.com/[^/]+/[^/]+' | head -1 | sed 's|raw\.githubusercontent\.com/||') || true
+
+    # Gitea URL: git.community-scripts.org/OWNER/REPO/...
+    if [[ -z "$owner_repo" ]]; then
+      owner_repo=$(echo "$content" | grep -oE 'git\.community-scripts\.org/[^/]+/[^/]+' | head -1 | sed 's|git\.community-scripts\.org/||') || true
+    fi
+  fi
+
+  # Map detected owner/repo to canonical repo_source value
+  case "$owner_repo" in
+    community-scripts/ProxmoxVE)  REPO_SOURCE="ProxmoxVE" ;;
+    community-scripts/ProxmoxVED) REPO_SOURCE="ProxmoxVED" ;;
+    "")
+      # No URL detected — use hardcoded fallback
+      # CI sed transforms this on promotion: ProxmoxVED → ProxmoxVE
+      REPO_SOURCE="ProxmoxVED"
+      ;;
+    *)
+      # Fork or unknown repo
+      REPO_SOURCE="external"
+      ;;
+  esac
+
+  export REPO_SOURCE
+}
+
+# Run detection immediately when api.func is sourced
+detect_repo_source
 
 # ==============================================================================
 # SECTION 1: ERROR CODE DESCRIPTIONS
