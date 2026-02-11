@@ -27,11 +27,15 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-
   msg_info "Updating step-ca and step-cli"
   $STD apt update
   $STD apt upgrade -y step-ca step-cli
   msg_ok "Updated step-ca and step-cli"
+
+  if check_for_gh_release "step-badger" "lukasz-lobocki/step-badger"; then
+    fetch_and_deploy_gh_release "step-badger" "lukasz-lobocki/step-badger" "prebuild" "latest" "/opt/step-badger" "step-badger_Linux_x86_64.tar.gz"
+    msg_ok "Updated successfully!"
+  fi
   msg_ok "Updated successfully!"
   exit
 }
