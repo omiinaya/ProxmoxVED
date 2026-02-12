@@ -1,0 +1,56 @@
+{
+    "name": "Split-Pro",
+    "slug": "split-pro",
+    "categories": [
+        12
+    ],
+    "date_created": "2026-02-12",
+    "type": "ct",
+    "updateable": true,
+    "privileged": false,
+    "interface_port": 3000,
+    "documentation": "https://github.com/oss-apps/split-pro",
+    "website": "https://github.com/oss-apps/split-pro",
+    "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/splitpro.webp",
+    "config_path": "/opt/split-pro/.env",
+    "description": "SplitPro is a self-hosted, open source way to share expenses with friends. It is designed as a replacement for Splitwise.",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "ct/split-pro.sh",
+            "resources": {
+                "cpu": 2,
+                "ram": 2048,
+                "hdd": 10,
+                "os": "debian",
+                "version": "13"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": null,
+        "password": null
+    },
+    "notes": [
+        {
+            "text": "First visit will prompt you to create an account",
+            "type": "info"
+        },
+        {
+            "text": "Installation builds Next.js application from source - takes 5-10 minutes",
+            "type": "info"
+        },
+        {
+            "text": "PostgreSQL database with pg_cron extension is installed automatically",
+            "type": "info"
+        },
+        {
+            "text": "Supports OAuth (Google), OIDC providers, and email authentication",
+            "type": "info"
+        },
+        {
+            "text": "Receipt uploads are stored in /opt/splitpro_data/uploads",
+            "type": "info"
+        }
+    ]
+}
