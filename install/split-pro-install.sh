@@ -55,8 +55,11 @@ sed -i "s|^DATABASE_URL=.*|DATABASE_URL=\"postgresql://${PG_DB_USER}:${PG_DB_PAS
 sed -i "s|^NEXTAUTH_SECRET=.*|NEXTAUTH_SECRET=\"${NEXTAUTH_SECRET}\"|" .env
 sed -i "s|^NEXTAUTH_URL=.*|NEXTAUTH_URL=\"http://${LOCAL_IP}:3000\"|" .env
 sed -i "s|^NEXTAUTH_URL_INTERNAL=.*|NEXTAUTH_URL_INTERNAL=\"http://localhost:3000\"|" .env
-cat >> /opt/split-pro/.env <<'EOF'
-EOF
+sed -i "/^POSTGRES_CONTAINER_NAME=/d" .env
+sed -i "/^POSTGRES_USER=/d" .env
+sed -i "/^POSTGRES_PASSWORD=/d" .env
+sed -i "/^POSTGRES_DB=/d" .env
+sed -i "/^POSTGRES_PORT=/d" .env
 $STD pnpm build
 $STD pnpm exec prisma migrate deploy
 msg_ok "Built Split Pro"

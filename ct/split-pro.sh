@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-source <(curl -fsSL ttps://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/build.func)
+source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/build.func)
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: johanngrobe
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/oss-apps/split-pro
 
-APP="Split-Pro"
+APP="Split Pro"
 var_tags="${var_tags:-finance;expense-sharing}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-4096}"
@@ -24,7 +24,7 @@ function update_script() {
   check_container_resources
 
   if [[ ! -d /opt/split-pro ]]; then
-    msg_error "No ${APP} Installation Found!"
+    msg_error "No Split Pro Installation Found!"
     exit
   fi
 
@@ -46,7 +46,6 @@ function update_script() {
     cp /tmp/split-pro_backup /opt/split-pro/.env
     rm -f /tmp/split-pro_backup
     ln -sf /opt/split-pro_data/uploads /opt/split-pro/uploads
-    cd /opt/split-pro
     $STD pnpm exec prisma migrate deploy
     msg_ok "Built Application"
 
@@ -64,6 +63,6 @@ start
 build_container
 description
 msg_ok "Completed successfully!\n"
-echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
+echo -e "${CREATING}${GN} Split Pro setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Access it using the following URL:${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}http://${IP}:3000${CL}"
