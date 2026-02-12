@@ -87,17 +87,17 @@ detect_repo_source() {
 
   # Map detected owner/repo to canonical repo_source value
   case "$owner_repo" in
-    community-scripts/ProxmoxVE)  REPO_SOURCE="ProxmoxVE" ;;
-    community-scripts/ProxmoxVED) REPO_SOURCE="ProxmoxVED" ;;
-    "")
-      # No URL detected — use hardcoded fallback
-      # CI sed transforms this on promotion: ProxmoxVED → ProxmoxVE
-      REPO_SOURCE="ProxmoxVED"
-      ;;
-    *)
-      # Fork or unknown repo
-      REPO_SOURCE="external"
-      ;;
+  community-scripts/ProxmoxVE) REPO_SOURCE="ProxmoxVE" ;;
+  community-scripts/ProxmoxVED) REPO_SOURCE="ProxmoxVED" ;;
+  "")
+    # No URL detected — use hardcoded fallback
+    # CI sed transforms this on promotion: ProxmoxVED → ProxmoxVE
+    REPO_SOURCE="ProxmoxVED"
+    ;;
+  *)
+    # Fork or unknown repo
+    REPO_SOURCE="external"
+    ;;
   esac
 
   export REPO_SOURCE
