@@ -273,6 +273,12 @@ function default_settings() {
 }
 
 function advanced_settings() {
+  DISK_SIZE="16"
+  HN="truenas"
+  CORE_COUNT="2"
+  RAM_SIZE="8192"
+  BRG="vmbr0"
+
   METHOD="advanced"
   [ -z "${VMID:-}" ] && VMID=$(get_valid_nextid)
   while true; do
@@ -293,7 +299,7 @@ function advanced_settings() {
   done
 
   ISOARRAY=()
-  local last_stable_index=0
+  local last_stable_index=-1
   local current_item=0
 
   while read -r ISOPATH; do
@@ -334,9 +340,8 @@ function advanced_settings() {
     exit-script
   fi
 
-  if VM_NAME=$(whiptail --backtitle "Proxmox VE Helper Scripts" --inputbox "Set Hostname" 8 58 truenas --title "HOSTNAME" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
+  if VM_NAME=$(whiptail --backtitle "Proxmox VE Helper Scripts" --inputbox "Set Hostname" 8 58 "$HN" --title "HOSTNAME" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
     if [ -z $VM_NAME ]; then
-      HN="truenas"
       echo -e "${HOSTNAME}${BOLD}${DGN}Hostname: ${BGN}$HN${CL}"
     else
       HN=$(echo ${VM_NAME,,} | tr -d ' ')
@@ -364,7 +369,7 @@ function advanced_settings() {
     exit-script
   fi
 
-  if CORE_COUNT=$(whiptail --backtitle "Proxmox VE Helper Scripts" --inputbox "Allocate CPU Cores" 8 58 2 --title "CORE COUNT" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
+  if CORE_COUNT=$(whiptail --backtitle "Proxmox VE Helper Scripts" --inputbox "Allocate CPU Cores" 8 58 "$CORE_COUNT" --title "CORE COUNT" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
     if [ -z $CORE_COUNT ]; then
       CORE_COUNT="2"
       echo -e "${CPUCORE}${BOLD}${DGN}CPU Cores: ${BGN}$CORE_COUNT${CL}"
@@ -375,7 +380,7 @@ function advanced_settings() {
     exit-script
   fi
 
-  if RAM_SIZE=$(whiptail --backtitle "Proxmox VE Helper Scripts" --inputbox "Allocate RAM in MiB" 8 58 8192 --title "RAM" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
+  if RAM_SIZE=$(whiptail --backtitle "Proxmox VE Helper Scripts" --inputbox "Allocate RAM in MiB" 8 58 "$RAM_SIZE" --title "RAM" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
     if [ -z $RAM_SIZE ]; then
       RAM_SIZE="8192"
       echo -e "${RAMSIZE}${BOLD}${DGN}RAM Size: ${BGN}$RAM_SIZE${CL}"
@@ -386,7 +391,7 @@ function advanced_settings() {
     exit-script
   fi
 
-  if BRG=$(whiptail --backtitle "Proxmox VE Helper Scripts" --inputbox "Set a Bridge" 8 58 vmbr0 --title "BRIDGE" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
+  if BRG=$(whiptail --backtitle "Proxmox VE Helper Scripts" --inputbox "Set a Bridge" 8 58 "$BRG" --title "BRIDGE" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
     if [ -z $BRG ]; then
       BRG="vmbr0"
       echo -e "${BRIDGE}${BOLD}${DGN}Bridge: ${BGN}$BRG${CL}"
