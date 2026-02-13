@@ -36,8 +36,6 @@ $STD sudo -u postgres psql -d splitpro -c "GRANT USAGE ON SCHEMA cron TO splitpr
 $STD sudo -u postgres psql -d splitpro -c "GRANT ALL ON ALL TABLES IN SCHEMA cron TO splitpro"
 msg_ok "Setup pg_cron complete"
 
-get_lxc_ip
-
 fetch_and_deploy_gh_release "split-pro" "oss-apps/split-pro" "tarball" "latest" "/opt/split-pro"
 
 msg_info "Installing Dependencies"
