@@ -52,9 +52,7 @@ function update_script() {
     msg_info "Starting Service"
     systemctl start split-pro
     msg_ok "Started Service"
-    msg_ok "Updated Successfully"
-  else
-    msg_ok "No update required"
+    msg_ok "Updated successfully!"
   fi
   exit
 }
