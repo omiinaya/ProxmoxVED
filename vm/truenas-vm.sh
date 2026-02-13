@@ -310,6 +310,10 @@ function advanced_settings() {
     exit 1
   fi
 
+  if [ "$last_stable_index" -eq -1 ]; then
+    last_stable_index=$(( (${#ISOARRAY[@]}) - 1 ))
+  fi
+
   ISOARRAY[$last_stable_index]="ON"
 
   if SELECTED_ISO=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "SELECT ISO TO INSTALL" --notags --radiolist "\nSelect version (BETA/RC/Latest stable):" 20 58 12 "${ISOARRAY[@]}" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
