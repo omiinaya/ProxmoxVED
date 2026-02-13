@@ -299,14 +299,25 @@ function advanced_settings() {
   done
 
   ISOARRAY=()
-  while read -r ISOPATH; do
-    FILENAME=$(basename "$ISOPATH")
-    ISOARRAY+=("$ISOPATH" "$FILENAME" "OFF")
-  done < <(truenas_iso_lookup | sort -V)
-  if [ ${#ISOARRAY[@]} -eq 0 ]; then
+  # Fetch and sort the ISO paths into a bash array
+  mapfile -t ALL_ISOS < <(truenas_iso_lookup | sort -V)
+  ISO_COUNT=${#ALL_ISOS[@]}
+
+  if [ $ISO_COUNT -eq 0 ]; then
     echo "No ISOs found."
     exit 1
   fi
+
+  for i in "${!ALL_ISOS[@]}"; do
+    ISOPATH="${ALL_ISOS[$i]}"
+    FILENAME=$(basename "$ISOPATH")
+    # Pre-select only the last item in the list
+    if [ "$i" -eq "$((ISO_COUNT - 1))" ]; then
+      ISOARRAY+=("$ISOPATH" "$FILENAME" "ON")
+    else
+      ISOARRAY+=("$ISOPATH" "$FILENAME" "OFF")
+    fi
+  done
 
   if SELECTED_ISO=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "SELECT ISO TO INSTALL" --notags --radiolist "\nSelect version (BETA/RC/Latest stable):" 20 58 12 "${ISOARRAY[@]}" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
     echo -e "${ISO}${BOLD}${DGN}ISO Chosen: ${BGN}$(basename "$SELECTED_ISO")${CL}"
