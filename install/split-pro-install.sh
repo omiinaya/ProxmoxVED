@@ -62,7 +62,7 @@ $STD pnpm build
 $STD pnpm exec prisma migrate deploy
 msg_ok "Built Split Pro"
 
-msg_info "Creating Split Pro Service"
+msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/split-pro.service
 [Unit]
 Description=Split Pro
