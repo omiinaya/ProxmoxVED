@@ -9,7 +9,7 @@
     "updateable": true,
     "privileged": false,
     "interface_port": 3000,
-    "documentation": "https://github.com/oss-apps/split-pro",
+    "documentation": "https://github.com/oss-apps/split-pro/blob/main/docker/README.md",
     "website": "https://github.com/oss-apps/split-pro",
     "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/splitpro.webp",
     "config_path": "/opt/split-pro/.env",
