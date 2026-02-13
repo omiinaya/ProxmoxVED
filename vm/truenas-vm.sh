@@ -305,12 +305,12 @@ function advanced_settings() {
     ((current_item++))
   done < <(truenas_iso_lookup | sort -V)
 
-  ISOARRAY[$last_stable_index]="ON"
-
   if [ ${#ISOARRAY[@]} -eq 0 ]; then
     echo "No ISOs found."
     exit 1
   fi
+
+  ISOARRAY[$last_stable_index]="ON"
 
   if SELECTED_ISO=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "SELECT ISO TO INSTALL" --notags --radiolist "\nSelect version (BETA/RC/Latest stable):" 20 58 12 "${ISOARRAY[@]}" --cancel-button Exit-Script 3>&1 1>&2 2>&3); then
     echo -e "${ISO}${BOLD}${DGN}ISO Chosen: ${BGN}$(basename "$SELECTED_ISO")${CL}"
