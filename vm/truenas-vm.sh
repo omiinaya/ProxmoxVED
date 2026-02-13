@@ -299,7 +299,6 @@ function advanced_settings() {
   done
 
   ISOARRAY=()
-  # Fetch and sort the ISO paths into a bash array
   mapfile -t ALL_ISOS < <(truenas_iso_lookup | sort -V)
   ISO_COUNT=${#ALL_ISOS[@]}
 
@@ -308,11 +307,24 @@ function advanced_settings() {
     exit 1
   fi
 
+  # Identify the index of the last stable release
+  LAST_STABLE_INDEX=-1
+  for i in "${!ALL_ISOS[@]}"; do
+    if [[ ! "${ALL_ISOS[$i]}" =~ (BETA|RC) ]]; then
+      LAST_STABLE_INDEX=$i
+    fi
+  done
+
+  # Build the whiptail array
   for i in "${!ALL_ISOS[@]}"; do
     ISOPATH="${ALL_ISOS[$i]}"
     FILENAME=$(basename "$ISOPATH")
-    # Pre-select only the last item in the list
-    if [ "$i" -eq "$((ISO_COUNT - 1))" ]; then
+
+    # Select ON if it's the last stable found, OR fallback to last item if no stable exists
+    if [[ "$i" -eq "$LAST_STABLE_INDEX" ]]; then
+      ISOARRAY+=("$ISOPATH" "$FILENAME" "ON")
+    elif [[ "$LAST_STABLE_INDEX" -eq -1 && "$i" -eq "$((ISO_COUNT - 1))" ]]; then
+      # Fallback: if somehow no stable is found, select the very last item
       ISOARRAY+=("$ISOPATH" "$FILENAME" "ON")
     else
       ISOARRAY+=("$ISOPATH" "$FILENAME" "OFF")
