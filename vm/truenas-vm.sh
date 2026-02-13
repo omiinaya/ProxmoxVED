@@ -308,7 +308,7 @@ function advanced_settings() {
     if [[ ! "$FILENAME" =~ (RC|BETA) ]]; then
       last_stable_index=$(((current_item * 3) + 2))
     fi
-    ((current_item++))
+    ((++current_item))
   done < <(truenas_iso_lookup | sort -V)
 
   if [ ${#ISOARRAY[@]} -eq 0 ]; then
