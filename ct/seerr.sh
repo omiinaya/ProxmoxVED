@@ -30,7 +30,7 @@ function update_script() {
   fi
 
   if systemctl list-unit-files | grep -q "^jellyseerr.service"; then
-    msg_info "Updating jellyserr to seerr"
+    msg_info "Updating jellyseerr to seerr"
     systemctl stop jellyseerr.service || true
     systemctl disable jellyseerr.service || true
     [ -f /etc/systemd/system/jellyseerr.service ] && rm -f /etc/systemd/system/jellyseerr.service
@@ -60,11 +60,11 @@ EOF
 
   if check_for_gh_release "seerr" "seerr-team/seerr"; then
     msg_info "Stopping Service"
-    systemctl stop jellyseerr
+    systemctl stop seerr
     msg_ok "Stopped Service"
 
     msg_info "Creating Backup"
-    cp -R /opt/seerr/config /opt/seerr_backup
+    cp -a /opt/seerr/config /opt/seerr_backup
     msg_ok "Created Backup"
 
     CLEAN_INSTALL=1 fetch_and_deploy_gh_release "seerr" "seerr-team/seerr" "tarball"  
@@ -72,7 +72,7 @@ EOF
     msg_info "Updating PNPM Version"
     cd /opt/seerr 
     pnpm_current=$(pnpm --version 2>/dev/null)
-    pnpm_desired=$(grep -Po '"pnpm":\s*"\K[^"]+' /opt/jellyseerr/package.json)
+    pnpm_desired=$(grep -Po '"pnpm":\s*"\K[^"]+' /opt/seerr/package.json)
     if [ -z "$pnpm_current" ]; then
       msg_error "pnpm not found. Installing version $pnpm_desired..."
       NODE_VERSION="22" NODE_MODULE="pnpm@$pnpm_desired" setup_nodejs
@@ -84,20 +84,21 @@ EOF
     fi
     msg_info "Updated PNPM Version"
 
-    msg_info "Updating Jellyseerr"
+    msg_info "Updating Seerr"
     rm -rf dist .next node_modules
     export CYPRESS_INSTALL_BINARY=0
     $STD pnpm install --frozen-lockfile
     export NODE_OPTIONS="--max-old-space-size=3072"
     $STD pnpm build
+    msg_ok "Updated Seerr"
 
     msg_info "Restoring Backup"
-    cp -R /opt/seerr_backup /opt/seerr/config
-    rm -rf /opt/seerr_backup
+    rm -rf /opt/seerr/config
+    mv /opt/seerr_backup /opt/seerr/config
     msg_ok "Restored Backup"
 
     msg_info "Starting Service"
-    systemctl start jellyseerr
+    systemctl start seerr
     msg_ok "Started Service"
     msg_ok "Updated successfully!"
   fi
