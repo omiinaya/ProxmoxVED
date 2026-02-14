@@ -64,6 +64,7 @@ WantedBy=multi-user.target
 EOF
     systemctl daemon-reload
     systemctl enable -q --now seerr
+    sed -i 's|https://github.com/community-scripts/ProxmoxVE/raw/main/ct/jellyseerr.sh|https://github.com/community-scripts/ProxmoxVE/raw/main/ct/seerr.sh|g' /usr/local/bin/update
     msg_info "Migrated Jellyserr to Seerr"
   fi
   # END Jellyseerr Migration
