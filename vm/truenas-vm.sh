@@ -182,7 +182,7 @@ function check_root() {
   fi
 }
 
-pve_check() {
+function pve_check() {
   local PVE_VER
   PVE_VER="$(pveversion | awk -F'/' '{print $2}' | awk -F'-' '{print $1}')"
 
@@ -561,7 +561,7 @@ if [ "$IMPORT_DISKS" == "yes" ]; then
 
   while read -r LSOUTPUT; do
     DISKARRAY+=("$LSOUTPUT" "" "OFF")
-  done < <(ls /dev/disk/by-id | grep -E '^ata-|^nvme-' | grep -v 'part')
+  done < <(ls /dev/disk/by-id | grep -E '^ata-|^nvme-|^usb-' | grep -v 'part')
 
   SELECTIONS=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "SELECT DISKS TO IMPORT" --checklist "\nSelect disk IDs to import. (Use Spacebar to select)\n" --cancel-button "Exit Script" 20 58 10 "${DISKARRAY[@]}" 3>&1 1>&2 2>&3 | tr -d '"') || exit
 

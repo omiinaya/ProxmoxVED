@@ -1,6 +1,6 @@
 # Copyright (c) 2021-2026 community-scripts ORG
-# Author: michelroegl-brunner
-# License: MIT | https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/LICENSE
+# Author: michelroegl-brunner | MickLesk
+# License: MIT | https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/LICENSE
 
 # ==============================================================================
 # API.FUNC - TELEMETRY & DIAGNOSTICS API
@@ -153,7 +153,7 @@ explain_exit_code() {
   126) echo "Command invoked cannot execute (permission problem?)" ;;
   127) echo "Command not found" ;;
   128) echo "Invalid argument to exit" ;;
-  130) echo "Terminated by Ctrl+C (SIGINT)" ;;
+  130) echo "Aborted by user (SIGINT)" ;;
   134) echo "Process aborted (SIGABRT - possibly Node.js heap overflow)" ;;
   137) echo "Killed (SIGKILL / Out of memory?)" ;;
   139) echo "Segmentation fault (core dumped)" ;;
@@ -231,6 +231,60 @@ explain_exit_code() {
   # --- Default ---
   *) echo "Unknown error" ;;
   esac
+}
+
+# ------------------------------------------------------------------------------
+# json_escape()
+#
+# - Escapes a string for safe JSON embedding
+# - Handles backslashes, quotes, newlines, tabs, and carriage returns
+# ------------------------------------------------------------------------------
+json_escape() {
+  local s="$1"
+  s=${s//\\/\\\\}
+  s=${s//"/\\"/}
+  s=${s//$'\n'/\\n}
+  s=${s//$'\r'/}
+  s=${s//$'\t'/\\t}
+  echo "$s"
+}
+
+# ------------------------------------------------------------------------------
+# get_error_text()
+#
+# - Returns last 20 lines of the active log (INSTALL_LOG or BUILD_LOG)
+# - Falls back to combined log or BUILD_LOG if primary is not accessible
+# - Handles container paths that don't exist on the host
+# ------------------------------------------------------------------------------
+get_error_text() {
+  local logfile=""
+  if declare -f get_active_logfile >/dev/null 2>&1; then
+    logfile=$(get_active_logfile)
+  elif [[ -n "${INSTALL_LOG:-}" ]]; then
+    logfile="$INSTALL_LOG"
+  elif [[ -n "${BUILD_LOG:-}" ]]; then
+    logfile="$BUILD_LOG"
+  fi
+
+  # If logfile is inside container (e.g. /root/.install-*), try the host copy
+  if [[ -n "$logfile" && ! -s "$logfile" ]]; then
+    # Try combined log: /tmp/<app>-<CTID>-<SESSION_ID>.log
+    if [[ -n "${CTID:-}" && -n "${SESSION_ID:-}" ]]; then
+      local combined_log="/tmp/${NSAPP:-lxc}-${CTID}-${SESSION_ID}.log"
+      if [[ -s "$combined_log" ]]; then
+        logfile="$combined_log"
+      fi
+    fi
+  fi
+
+  # Also try BUILD_LOG as fallback if primary log is empty/missing
+  if [[ -z "$logfile" || ! -s "$logfile" ]] && [[ -n "${BUILD_LOG:-}" && -s "${BUILD_LOG}" ]]; then
+    logfile="$BUILD_LOG"
+  fi
+
+  if [[ -n "$logfile" && -s "$logfile" ]]; then
+    tail -n 20 "$logfile" 2>/dev/null | sed 's/\r$//'
+  fi
 }
 
 # ==============================================================================
@@ -353,6 +407,9 @@ detect_ram() {
 # - Never blocks or fails script execution
 # ------------------------------------------------------------------------------
 post_to_api() {
+  # Prevent duplicate submissions (post_to_api is called from multiple places)
+  [[ "${POST_TO_API_DONE:-}" == "true" ]] && return 0
+
   # Silent fail - telemetry should never break scripts
   command -v curl &>/dev/null || {
     [[ "${DEV_MODE:-}" == "true" ]] && echo "[DEBUG] curl not found, skipping" >&2
@@ -382,7 +439,8 @@ post_to_api() {
     detect_gpu
   fi
   local gpu_vendor="${GPU_VENDOR:-unknown}"
-  local gpu_model="${GPU_MODEL:-}"
+  local gpu_model
+  gpu_model=$(json_escape "${GPU_MODEL:-}")
   local gpu_passthrough="${GPU_PASSTHROUGH:-unknown}"
 
   # Detect CPU if not already set
@@ -390,7 +448,8 @@ post_to_api() {
     detect_cpu
   fi
   local cpu_vendor="${CPU_VENDOR:-unknown}"
-  local cpu_model="${CPU_MODEL:-}"
+  local cpu_model
+  cpu_model=$(json_escape "${CPU_MODEL:-}")
 
   # Detect RAM if not already set
   if [[ -z "${RAM_SPEED:-}" ]]; then
@@ -440,6 +499,8 @@ EOF
       -H "Content-Type: application/json" \
       -d "$JSON_PAYLOAD" &>/dev/null || true
   fi
+
+  POST_TO_API_DONE=true
 }
 
 # ------------------------------------------------------------------------------
@@ -451,6 +512,7 @@ EOF
 #   * ct_type=2 (VM instead of LXC)
 #   * type="vm"
 #   * Disk size without 'G' suffix
+# - Includes hardware detection: CPU, GPU, RAM speed
 # - Only executes if DIAGNOSTICS=yes and RANDOM_UUID is set
 # - Never blocks or fails script execution
 # ------------------------------------------------------------------------------
@@ -473,6 +535,29 @@ post_to_api_vm() {
     pve_version=$(pveversion 2>/dev/null | awk -F'[/ ]' '{print $2}') || true
   fi
 
+  # Detect GPU if not already set
+  if [[ -z "${GPU_VENDOR:-}" ]]; then
+    detect_gpu
+  fi
+  local gpu_vendor="${GPU_VENDOR:-unknown}"
+  local gpu_model
+  gpu_model=$(json_escape "${GPU_MODEL:-}")
+  local gpu_passthrough="${GPU_PASSTHROUGH:-unknown}"
+
+  # Detect CPU if not already set
+  if [[ -z "${CPU_VENDOR:-}" ]]; then
+    detect_cpu
+  fi
+  local cpu_vendor="${CPU_VENDOR:-unknown}"
+  local cpu_model
+  cpu_model=$(json_escape "${CPU_MODEL:-}")
+
+  # Detect RAM if not already set
+  if [[ -z "${RAM_SPEED:-}" ]]; then
+    detect_ram
+  fi
+  local ram_speed="${RAM_SPEED:-}"
+
   # Remove 'G' suffix from disk size
   local DISK_SIZE_API="${DISK_SIZE%G}"
 
@@ -492,6 +577,12 @@ post_to_api_vm() {
     "os_version": "${var_version:-}",
     "pve_version": "${pve_version}",
     "method": "${METHOD:-default}",
+    "cpu_vendor": "${cpu_vendor}",
+    "cpu_model": "${cpu_model}",
+    "gpu_vendor": "${gpu_vendor}",
+    "gpu_model": "${gpu_model}",
+    "gpu_passthrough": "${gpu_passthrough}",
+    "ram_speed": "${ram_speed}",
     "repo_source": "${REPO_SOURCE}"
 }
 EOF
@@ -522,9 +613,12 @@ post_update_to_api() {
   # Silent fail - telemetry should never break scripts
   command -v curl &>/dev/null || return 0
 
-  # Prevent duplicate submissions
+  # Support "force" mode (3rd arg) to bypass duplicate check for retries after cleanup
+  local force="${3:-}"
   POST_UPDATE_DONE=${POST_UPDATE_DONE:-false}
-  [[ "$POST_UPDATE_DONE" == "true" ]] && return 0
+  if [[ "$POST_UPDATE_DONE" == "true" && "$force" != "force" ]]; then
+    return 0
+  fi
 
   [[ "${DIAGNOSTICS:-no}" == "no" ]] && return 0
   [[ -z "${RANDOM_UUID:-}" ]] && return 0
@@ -535,12 +629,14 @@ post_update_to_api() {
 
   # Get GPU info (if detected)
   local gpu_vendor="${GPU_VENDOR:-unknown}"
-  local gpu_model="${GPU_MODEL:-}"
+  local gpu_model
+  gpu_model=$(json_escape "${GPU_MODEL:-}")
   local gpu_passthrough="${GPU_PASSTHROUGH:-unknown}"
 
   # Get CPU info (if detected)
   local cpu_vendor="${CPU_VENDOR:-unknown}"
-  local cpu_model="${CPU_MODEL:-}"
+  local cpu_model
+  cpu_model=$(json_escape "${CPU_MODEL:-}")
 
   # Get RAM info (if detected)
   local ram_speed="${RAM_SPEED:-}"
@@ -562,13 +658,21 @@ post_update_to_api() {
   esac
 
   # For failed/unknown status, resolve exit code and error description
+  local short_error=""
   if [[ "$pb_status" == "failed" ]] || [[ "$pb_status" == "unknown" ]]; then
     if [[ "$raw_exit_code" =~ ^[0-9]+$ ]]; then
       exit_code="$raw_exit_code"
     else
       exit_code=1
     fi
-    error=$(explain_exit_code "$exit_code")
+    local error_text=""
+    error_text=$(get_error_text)
+    if [[ -n "$error_text" ]]; then
+      error=$(json_escape "$error_text")
+    else
+      error=$(json_escape "$(explain_exit_code "$exit_code")")
+    fi
+    short_error=$(json_escape "$(explain_exit_code "$exit_code")")
     error_category=$(categorize_error "$exit_code")
     [[ -z "$error" ]] && error="Unknown error"
   fi
@@ -585,8 +689,9 @@ post_update_to_api() {
     pve_version=$(pveversion 2>/dev/null | awk -F'[/ ]' '{print $2}') || true
   fi
 
-  # Full payload including all fields - allows record creation if initial call failed
-  # The Go service will find the record by random_id and PATCH, or create if not found
+  local http_code=""
+
+  # ── Attempt 1: Full payload with complete error text ──
   local JSON_PAYLOAD
   JSON_PAYLOAD=$(
     cat <<EOF
@@ -618,11 +723,80 @@ post_update_to_api() {
 EOF
   )
 
-  # Fire-and-forget: never block, never fail
+  http_code=$(curl -sS -w "%{http_code}" -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
+    -H "Content-Type: application/json" \
+    -d "$JSON_PAYLOAD" -o /dev/null 2>/dev/null) || http_code="000"
+
+  if [[ "$http_code" =~ ^2[0-9]{2}$ ]]; then
+    POST_UPDATE_DONE=true
+    return 0
+  fi
+
+  # ── Attempt 2: Short error text (no full log) ──
+  sleep 1
+  local RETRY_PAYLOAD
+  RETRY_PAYLOAD=$(
+    cat <<EOF
+{
+    "random_id": "${RANDOM_UUID}",
+    "type": "${TELEMETRY_TYPE:-lxc}",
+    "nsapp": "${NSAPP:-unknown}",
+    "status": "${pb_status}",
+    "ct_type": ${CT_TYPE:-1},
+    "disk_size": ${DISK_SIZE:-0},
+    "core_count": ${CORE_COUNT:-0},
+    "ram_size": ${RAM_SIZE:-0},
+    "os_type": "${var_os:-}",
+    "os_version": "${var_version:-}",
+    "pve_version": "${pve_version}",
+    "method": "${METHOD:-default}",
+    "exit_code": ${exit_code},
+    "error": "${short_error}",
+    "error_category": "${error_category}",
+    "install_duration": ${duration},
+    "cpu_vendor": "${cpu_vendor}",
+    "cpu_model": "${cpu_model}",
+    "gpu_vendor": "${gpu_vendor}",
+    "gpu_model": "${gpu_model}",
+    "gpu_passthrough": "${gpu_passthrough}",
+    "ram_speed": "${ram_speed}",
+    "repo_source": "${REPO_SOURCE}"
+}
+EOF
+  )
+
+  http_code=$(curl -sS -w "%{http_code}" -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
+    -H "Content-Type: application/json" \
+    -d "$RETRY_PAYLOAD" -o /dev/null 2>/dev/null) || http_code="000"
+
+  if [[ "$http_code" =~ ^2[0-9]{2}$ ]]; then
+    POST_UPDATE_DONE=true
+    return 0
+  fi
+
+  # ── Attempt 3: Minimal payload (bare minimum to set status) ──
+  sleep 2
+  local MINIMAL_PAYLOAD
+  MINIMAL_PAYLOAD=$(
+    cat <<EOF
+{
+    "random_id": "${RANDOM_UUID}",
+    "type": "${TELEMETRY_TYPE:-lxc}",
+    "nsapp": "${NSAPP:-unknown}",
+    "status": "${pb_status}",
+    "exit_code": ${exit_code},
+    "error": "${short_error}",
+    "error_category": "${error_category}",
+    "install_duration": ${duration}
+}
+EOF
+  )
+
   curl -sS -w "%{http_code}" -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
     -H "Content-Type: application/json" \
-    -d "$JSON_PAYLOAD" -o /dev/null 2>&1 || true
+    -d "$MINIMAL_PAYLOAD" -o /dev/null 2>/dev/null || true
 
+  # Tried 3 times - mark as done regardless to prevent infinite loops
   POST_UPDATE_DONE=true
 }
 
@@ -657,6 +831,9 @@ categorize_error() {
 
   # Configuration errors
   203 | 204 | 205 | 206 | 207 | 208) echo "config" ;;
+
+  # Aborted by user
+  130) echo "aborted" ;;
 
   # Resource errors (OOM, etc)
   137 | 134) echo "resource" ;;
@@ -722,7 +899,13 @@ post_tool_to_api() {
 
   if [[ "$status" == "failed" ]]; then
     [[ ! "$exit_code" =~ ^[0-9]+$ ]] && exit_code=1
-    error=$(explain_exit_code "$exit_code")
+    local error_text=""
+    error_text=$(get_error_text)
+    if [[ -n "$error_text" ]]; then
+      error=$(json_escape "$error_text")
+    else
+      error=$(json_escape "$(explain_exit_code "$exit_code")")
+    fi
     error_category=$(categorize_error "$exit_code")
   fi
 
@@ -783,7 +966,13 @@ post_addon_to_api() {
 
   if [[ "$status" == "failed" ]]; then
     [[ ! "$exit_code" =~ ^[0-9]+$ ]] && exit_code=1
-    error=$(explain_exit_code "$exit_code")
+    local error_text=""
+    error_text=$(get_error_text)
+    if [[ -n "$error_text" ]]; then
+      error=$(json_escape "$error_text")
+    else
+      error=$(json_escape "$(explain_exit_code "$exit_code")")
+    fi
     error_category=$(categorize_error "$exit_code")
   fi
 
@@ -876,7 +1065,13 @@ post_update_to_api_extended() {
     else
       exit_code=1
     fi
-    error=$(explain_exit_code "$exit_code")
+    local error_text=""
+    error_text=$(get_error_text)
+    if [[ -n "$error_text" ]]; then
+      error=$(json_escape "$error_text")
+    else
+      error=$(json_escape "$(explain_exit_code "$exit_code")")
+    fi
     error_category=$(categorize_error "$exit_code")
     [[ -z "$error" ]] && error="Unknown error"
   fi
