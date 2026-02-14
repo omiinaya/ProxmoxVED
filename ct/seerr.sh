@@ -83,6 +83,7 @@ EOF
 
     msg_info "Migrating Overseerr to seerr"
     [ -d /opt/overseerr ] && mv /opt/overseerr /opt/seerr
+    mkdir -p /etc/seerr
     cat <<EOF >/etc/seerr/seerr.conf
 ## Seerr's default port is 5055, if you want to use both, change this.
 ## specify on which port to listen
