@@ -29,6 +29,7 @@ function update_script() {
     exit
   fi
 
+  # Start Migration from Jellyseerr
   if [[ -f /etc/systemd/system/jellyseerr.service ]]; then
     msg_info "Stopping Jellyseerr"
     $STD systemctl stop jellyseerr || true
@@ -43,6 +44,7 @@ function update_script() {
     msg_info "Migrating Jellyseerr to seerr"
     [ -d /opt/jellyseerr ] && mv /opt/jellyseerr /opt/seerr
     [ -d /etc/jellyseerr ] && mv /etc/jellyseerr /etc/seerr
+    [ -f /etc/seerr/jellyseerr.conf ] && mv /etc/seerr/jellyseerr.conf /etc/seerr/seerr.conf
     cat <<EOF >/etc/systemd/system/seerr.service
 [Unit]
 Description=Seerr Service
@@ -64,6 +66,7 @@ EOF
     systemctl enable -q --now seerr
     msg_info "Migrated Jellyserr to Seerr"
   fi
+  # END Jellyseerr Migration
 
   if check_for_gh_release "seerr" "seerr-team/seerr"; then
     msg_info "Stopping Service"
