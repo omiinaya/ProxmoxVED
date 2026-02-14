@@ -37,7 +37,7 @@ function update_script() {
     [ -f /etc/systemd/system/jellyseerr.service ] && rm -f /etc/systemd/system/jellyseerr.service
     msg_ok "Stopped Jellyseerr"
     
-    msg_info "Creating Backup"
+    msg_info "Creating Backup (Patience)"
     tar -czf /opt/jellyseerr_backup_$(date +%Y%m%d_%H%M%S).tar.gz -C /opt jellyseerr
     msg_ok "Created Backup"
 
