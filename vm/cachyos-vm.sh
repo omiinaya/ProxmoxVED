@@ -467,8 +467,11 @@ msg_ok "Virtual Machine ID is ${CL}${BL}$VMID${CL}."
 # ==============================================================================
 msg_info "Retrieving the URL for the CachyOS Desktop ISO"
 
-# Get latest release version from SourceForge
-CACHYOS_VERSION=$(curl -fsSL "https://sourceforge.net/projects/cachyos-arch/files/gui-installer/desktop/" 2>/dev/null | grep -oP '\d{6}' | head -1 || echo "260124")
+# Get latest release version from SourceForge (format: YYMMDD in folder links)
+CACHYOS_VERSION=$(curl -fsSL "https://sourceforge.net/projects/cachyos-arch/files/gui-installer/desktop/" 2>/dev/null | grep -oP 'desktop/\K[0-9]{6}(?=/)' | sort -rn | head -1)
+if [ -z "$CACHYOS_VERSION" ]; then
+  CACHYOS_VERSION="260124"
+fi
 
 # SourceForge download URL with mirror redirect
 URL="https://sourceforge.net/projects/cachyos-arch/files/gui-installer/desktop/${CACHYOS_VERSION}/cachyos-desktop-linux-${CACHYOS_VERSION}.iso/download"
