@@ -1,6 +1,6 @@
 {
-  "name": "Seer",
-  "slug": "seer",
+  "name": "Seerr",
+  "slug": "seerr",
   "categories": [
     13
   ],
@@ -12,16 +12,16 @@
   "documentation": "https://docs.seerr.dev/",
   "website": "https://seerr.dev/",
   "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/seerr.webp",
-  "config_path": "/etc/seer/seer.conf",
+  "config_path": "/etc/seerr/seerr.conf",
   "description": "Open-source media request and discovery manager for Jellyfin, Plex, and Emby. Unified version of Overseerr and Jellyseerr.",
   "install_methods": [
     {
       "type": "default",
-      "script": "ct/seer.sh",
+      "script": "ct/seerr.sh",
       "resources": {
         "cpu": 4,
         "ram": 4096,
-        "hdd": 8,
+        "hdd": 12,
         "os": "Debian",
         "version": "13"
       }
@@ -31,14 +31,5 @@
     "username": null,
     "password": null
   },
-  "notes": [
-    {
-      "text": "Seer migration is currently in beta.",
-      "type": "warning"
-    },
-    {
-      "text": "First release is essentially Jellyseerr rebranded with Overseerr migration support.",
-      "type": "info"
-    }
-  ]
+  "notes": []
 }
