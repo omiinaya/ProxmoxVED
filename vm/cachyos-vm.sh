@@ -463,37 +463,6 @@ msg_ok "Using ${CL}${BL}$STORAGE${CL} ${GN}for Storage Location."
 msg_ok "Virtual Machine ID is ${CL}${BL}$VMID${CL}."
 
 # ==============================================================================
-# ISO STORAGE SELECTION
-# ==============================================================================
-msg_info "Validating ISO Storage"
-ISO_STORAGE_MENU=()
-while read -r line; do
-  TAG=$(echo $line | awk '{print $1}')
-  TYPE=$(echo $line | awk '{printf "%-10s", $2}')
-  FREE=$(echo $line | numfmt --field 4-6 --from-unit=K --to=iec --format %.2f | awk '{printf( "%9sB", $6)}')
-  ITEM="  Type: $TYPE Free: $FREE "
-  ISO_STORAGE_MENU+=("$TAG" "$ITEM" "OFF")
-done < <(pvesm status -content iso | awk 'NR>1')
-ISO_VALID=$(pvesm status -content iso | awk 'NR>1')
-if [ -z "$ISO_VALID" ]; then
-  msg_error "Unable to detect a valid ISO storage location."
-  exit 1
-elif [ $((${#ISO_STORAGE_MENU[@]} / 3)) -eq 1 ]; then
-  ISO_STORAGE=${ISO_STORAGE_MENU[0]}
-else
-  while [ -z "${ISO_STORAGE:+x}" ]; do
-    ISO_STORAGE=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "ISO Storage" --radiolist \
-      "Select storage for CachyOS ISO download:\n" \
-      16 60 6 \
-      "${ISO_STORAGE_MENU[@]}" 3>&1 1>&2 2>&3)
-  done
-fi
-msg_ok "Using ${CL}${BL}$ISO_STORAGE${CL} ${GN}for ISO Storage."
-
-# Get ISO storage path
-ISO_PATH=$(pvesm path ${ISO_STORAGE}:iso/ 2>/dev/null | sed 's|/$||') || ISO_PATH="/var/lib/vz/template/iso"
-
-# ==============================================================================
 # ISO DOWNLOAD
 # ==============================================================================
 msg_info "Retrieving the URL for the CachyOS Desktop ISO"
@@ -504,9 +473,10 @@ CACHYOS_VERSION=$(curl -fsSL "https://sourceforge.net/projects/cachyos-arch/file
 # SourceForge download URL with mirror redirect
 URL="https://sourceforge.net/projects/cachyos-arch/files/gui-installer/desktop/${CACHYOS_VERSION}/cachyos-desktop-linux-${CACHYOS_VERSION}.iso/download"
 FILENAME="cachyos-desktop-linux-${CACHYOS_VERSION}.iso"
-CACHE_FILE="${ISO_PATH}/${FILENAME}"
+CACHE_DIR="/var/lib/vz/template/iso"
+CACHE_FILE="${CACHE_DIR}/${FILENAME}"
 
-mkdir -p "$ISO_PATH"
+mkdir -p "$CACHE_DIR"
 msg_ok "${CL}${BL}CachyOS Desktop ISO (Release: ${CACHYOS_VERSION})${CL}"
 
 if [[ -s "$CACHE_FILE" ]]; then
@@ -571,7 +541,7 @@ pvesm alloc $STORAGE $VMID $DISK1 ${DISK_SIZE} 1>&/dev/null
 qm set $VMID \
   -efidisk0 ${DISK0_REF}${FORMAT} \
   -scsi0 ${DISK1_REF},${DISK_CACHE}${THIN}size=${DISK_SIZE} \
-  -ide2 ${ISO_STORAGE}:iso/${FILENAME},media=cdrom \
+  -ide2 local:iso/${FILENAME},media=cdrom \
   -boot order=ide2 \
   -serial0 socket \
   -vga qxl \
