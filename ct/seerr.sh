@@ -24,7 +24,7 @@ function update_script() {
   check_container_storage
   check_container_resources
 
-  if [[ ! -d /opt/seerr && ! -d /opt/jellyseerr ]]; then
+  if [[ ! -d /opt/seerr && ! -d /opt/jellyseerr && ! -d /opt/overseerr ]]; then
     msg_error "No ${APP} Installation Found!"
     exit
   fi
@@ -68,6 +68,55 @@ EOF
     msg_info "Migrated Jellyserr to Seerr"
   fi
   # END Jellyseerr Migration
+
+  # Start Migration from Overseerr
+  if [[ -f /etc/systemd/system/overseerr.service ]]; then
+    msg_info "Stopping Overseerr"
+    $STD systemctl stop overseerr || true
+    $STD systemctl disable overseerr || true
+    [ -f /etc/systemd/system/overseerr.service ] && rm -f /etc/systemd/system/overseerr.service
+    msg_ok "Stopped Overseerr"
+    
+    msg_info "Creating Backup (Patience)"
+    tar -czf /opt/overseerr_backup_$(date +%Y%m%d_%H%M%S).tar.gz -C /opt overseerr
+    msg_ok "Created Backup"
+
+    msg_info "Migrating Overseerr to seerr"
+    [ -d /opt/overseerr ] && mv /opt/overseerr /opt/seerr
+    cat <<EOF >/etc/seerr/seerr.conf
+## Seerr's default port is 5055, if you want to use both, change this.
+## specify on which port to listen
+PORT=5055
+
+## specify on which interface to listen, by default seerr listens on all interfaces
+#HOST=127.0.0.1
+
+## Uncomment if you want to force Node.js to resolve IPv4 before IPv6 (advanced users only)
+# FORCE_IPV4_FIRST=true
+EOF
+    cat <<EOF >/etc/systemd/system/seerr.service
+[Unit]
+Description=Seerr Service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+EnvironmentFile=/etc/seerr/seerr.conf
+Environment=NODE_ENV=production
+Type=exec
+Restart=on-failure
+WorkingDirectory=/opt/seerr
+ExecStart=/usr/bin/node dist/index.js
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl daemon-reload
+    systemctl enable -q --now seerr
+    sed -i 's|https://github.com/community-scripts/ProxmoxVE/raw/main/ct/overseerr.sh|https://github.com/community-scripts/ProxmoxVE/raw/main/ct/seerr.sh|g' /usr/local/bin/update
+    msg_info "Migrated Overseerr to Seerr"
+  fi
+  # END Overseerr Migration
 
   if check_for_gh_release "seerr" "seerr-team/seerr"; then
     msg_info "Stopping Service"
