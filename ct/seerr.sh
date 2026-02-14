@@ -37,7 +37,7 @@ function update_script() {
     msg_ok "Stopped Jellyseerr"
     
     msg_info "Creating Backup"
-    tar -czf /opt/jellyseerr_backup_$(date +%Y%m%d_%H%M%S).tar.gz -C /opt/jellyseerr
+    tar -czf /opt/jellyseerr_backup_$(date +%Y%m%d_%H%M%S).tar.gz -C /opt jellyseerr
     msg_ok "Created Backup"
 
     msg_info "Migrating Jellyseerr to seerr"
