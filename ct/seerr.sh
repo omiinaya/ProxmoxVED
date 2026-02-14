@@ -80,21 +80,12 @@ EOF
     CLEAN_INSTALL=1 fetch_and_deploy_gh_release "seerr" "seerr-team/seerr" "tarball"  
 
     msg_info "Updating PNPM Version"
-    cd /opt/seerr 
-    pnpm_current=$(pnpm --version 2>/dev/null)
     pnpm_desired=$(grep -Po '"pnpm":\s*"\K[^"]+' /opt/seerr/package.json)
-    if [ -z "$pnpm_current" ]; then
-      msg_error "pnpm not found. Installing version $pnpm_desired..."
-      NODE_VERSION="22" NODE_MODULE="pnpm@$pnpm_desired" setup_nodejs
-    elif ! node -e "const semver = require('semver'); process.exit(semver.satisfies('$pnpm_current', '$pnpm_desired') ? 0 : 1)"; then
-      msg_error "Updating pnpm from version $pnpm_current to $pnpm_desired..."
-      NODE_VERSION="22" NODE_MODULE="pnpm@$pnpm_desired" setup_nodejs
-    else
-    msg_ok "pnpm is already installed and satisfies version $pnpm_desired."
-    fi
+    NODE_VERSION="22" NODE_MODULE="pnpm@$pnpm_desired" setup_nodejs
     msg_info "Updated PNPM Version"
 
     msg_info "Updating Seerr"
+    cd /opt/seerr
     rm -rf dist .next node_modules
     export CYPRESS_INSTALL_BINARY=0
     $STD pnpm install --frozen-lockfile
