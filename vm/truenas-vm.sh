@@ -568,7 +568,7 @@ if [ "$IMPORT_DISKS" == "yes" ]; then
   for SELECTION in $SELECTIONS; do
     ((++SCSI_NR))
 
-    ID_SERIAL=$(echo "$SELECTION" | rev | cut -d'_' -f1 | rev)
+    ID_SERIAL=$(udevadm info --query=property --value --property=ID_SERIAL_SHORT "/dev/disk/by-id/$SELECTION")
     ID_SERIAL=${ID_SERIAL:0:20}
 
     qm set $VMID --scsi$SCSI_NR /dev/disk/by-id/$SELECTION,serial=$ID_SERIAL
