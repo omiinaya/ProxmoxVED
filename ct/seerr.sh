@@ -29,11 +29,18 @@ function update_script() {
     exit
   fi
 
-  if systemctl list-unit-files | grep -q "^jellyseerr.service"; then
-    msg_info "Updating jellyseerr to seerr"
-    systemctl stop jellyseerr.service || true
-    systemctl disable jellyseerr.service || true
+  if [[ -f /etc/systemd/system/jellyseerr.service ]]; then
+    msg_info "Stopping Jellyseerr"
+    systemctl stop jellyseerr || true
+    systemctl disable jellyseerr || true
     [ -f /etc/systemd/system/jellyseerr.service ] && rm -f /etc/systemd/system/jellyseerr.service
+    msg_ok "Stopped Jellyseerr"
+    
+    msg_info "Creating Backup"
+    tar -czf /opt/jellyseerr_backup_$(date +%Y%m%d_%H%M%S).tar.gz -C /opt jellyseerr
+    msg_ok "Created Backup"
+
+    msg_info "Migrating Jellyseerr to seerr"
     [ -d /opt/jellyseerr ] && mv /opt/jellyseerr /opt/seerr
     [ -d /etc/jellyseerr ] && mv /etc/jellyseerr /etc/seerr
     cat <<EOF >/etc/systemd/system/seerr.service
@@ -55,7 +62,7 @@ WantedBy=multi-user.target
 EOF
     systemctl daemon-reload
     systemctl enable -q --now seerr
-    msg_info "Updated jellyserr to seerr"
+    msg_info "Migrated Jellyserr to Seerr"
   fi
 
   if check_for_gh_release "seerr" "seerr-team/seerr"; then
