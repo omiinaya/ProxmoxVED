@@ -9,7 +9,7 @@ APP="Jellyseerr"
 var_tags="${var_tags:-media}"
 var_cpu="${var_cpu:-4}"
 var_ram="${var_ram:-4096}"
-var_disk="${var_disk:-8}"
+var_disk="${var_disk:-12}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-12}"
 var_unprivileged="${var_unprivileged:-1}"
@@ -31,13 +31,13 @@ function update_script() {
 
   if [[ -f /etc/systemd/system/jellyseerr.service ]]; then
     msg_info "Stopping Jellyseerr"
-    systemctl stop jellyseerr || true
-    systemctl disable jellyseerr || true
+    $STD systemctl stop jellyseerr || true
+    $STD systemctl disable jellyseerr || true
     [ -f /etc/systemd/system/jellyseerr.service ] && rm -f /etc/systemd/system/jellyseerr.service
     msg_ok "Stopped Jellyseerr"
     
     msg_info "Creating Backup"
-    tar -czf /opt/jellyseerr_backup_$(date +%Y%m%d_%H%M%S).tar.gz -C /opt jellyseerr
+    tar -czf /opt/jellyseerr_backup_$(date +%Y%m%d_%H%M%S).tar.gz -C /opt/jellyseerr
     msg_ok "Created Backup"
 
     msg_info "Migrating Jellyseerr to seerr"
