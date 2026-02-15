@@ -27,6 +27,7 @@ fetch_and_deploy_gh_release "Sure" "we-promise/sure" "tarball" "latest" "/opt/su
 PG_VERSION="$(sed -n '/postgres:/s/[^[:digit:]]*//p' /opt/sure/compose.example.yml)" setup_postgresql
 PG_DB_NAME=sure_production PG_DB_USER=sure_user setup_postgresql_db
 RUBY_VERSION="$(cat /opt/sure/.ruby-version)" RUBY_INSTALL_RAILS=false setup_ruby
+$STD rbenv --init && source ~/.bashrc
 
 msg_info "Building Sure"
 cd /opt/sure
@@ -45,9 +46,9 @@ KEY="$(openssl rand -hex 64)"
 mkdir -p /etc/sure
 mv /opt/sure/.env.example /etc/sure/.env
 sed -i -e "/^SECRET_KEY_BASE=/s/secret-value/${KEY}/" \
-  -e 's/_KEY_BASE=.*$/&\n\nRAILS_FORCE_SSL=false \\
-  \\
-  # Change to true when using a reverse proxy \\
+  -e 's/_KEY_BASE=.*$/&\n\nRAILS_FORCE_SSL=false \
+  \
+  # Change to true when using a reverse proxy \
   RAILS_ASSUME_SSL=false/' \
   -e "/POSTGRES_PASSWORD=/s/postgres/${PG_DB_PASS}/" \
   -e "/POSTGRES_USER=/s/postgres/${PG_DB_USER}\\
