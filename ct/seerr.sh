@@ -36,7 +36,7 @@ function update_script() {
     $STD systemctl disable jellyseerr || true
     [ -f /etc/systemd/system/jellyseerr.service ] && rm -f /etc/systemd/system/jellyseerr.service
     msg_ok "Stopped Jellyseerr"
-    
+
     msg_info "Creating Backup (Patience)"
     tar -czf /opt/jellyseerr_backup_$(date +%Y%m%d_%H%M%S).tar.gz -C /opt jellyseerr
     msg_ok "Created Backup"
@@ -65,7 +65,7 @@ EOF
     systemctl daemon-reload
     systemctl enable -q --now seerr
     sed -i 's|https://github.com/community-scripts/ProxmoxVE/raw/main/ct/jellyseerr.sh|https://github.com/community-scripts/ProxmoxVE/raw/main/ct/seerr.sh|g' /usr/bin/update
-    msg_info "Migrated Jellyserr to Seerr"
+    msg_ok "Migrated Jellyserr to Seerr"
   fi
   # END Jellyseerr Migration
 
@@ -76,7 +76,7 @@ EOF
     $STD systemctl disable overseerr || true
     [ -f /etc/systemd/system/overseerr.service ] && rm -f /etc/systemd/system/overseerr.service
     msg_ok "Stopped Overseerr"
-    
+
     msg_info "Creating Backup (Patience)"
     tar -czf /opt/overseerr_backup_$(date +%Y%m%d_%H%M%S).tar.gz -C /opt overseerr
     msg_ok "Created Backup"
@@ -115,7 +115,7 @@ EOF
     systemctl daemon-reload
     systemctl enable -q --now seerr
     sed -i 's|https://github.com/community-scripts/ProxmoxVE/raw/main/ct/overseerr.sh|https://github.com/community-scripts/ProxmoxVE/raw/main/ct/seerr.sh|g' /usr/bin/update
-    msg_info "Migrated Overseerr to Seerr"
+    msg_ok "Migrated Overseerr to Seerr"
   fi
   # END Overseerr Migration
 
@@ -128,12 +128,12 @@ EOF
     cp -a /opt/seerr/config /opt/seerr_backup
     msg_ok "Created Backup"
 
-    CLEAN_INSTALL=1 fetch_and_deploy_gh_release "seerr" "seerr-team/seerr" "tarball"  
+    CLEAN_INSTALL=1 fetch_and_deploy_gh_release "seerr" "seerr-team/seerr" "tarball"
 
     msg_info "Updating PNPM Version"
     pnpm_desired=$(grep -Po '"pnpm":\s*"\K[^"]+' /opt/seerr/package.json)
     NODE_VERSION="22" NODE_MODULE="pnpm@$pnpm_desired" setup_nodejs
-    msg_info "Updated PNPM Version"
+    msg_ok "Updated PNPM Version"
 
     msg_info "Updating Seerr"
     cd /opt/seerr
