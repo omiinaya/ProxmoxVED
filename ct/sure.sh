@@ -38,6 +38,7 @@ function update_script() {
     RUBY_VERSION="$(cat /opt/sure/.ruby-version)" RUBY_INSTALL_RAILS=false setup_ruby
 
     msg_info "Updating Sure"
+    source ~/.profile
     cd /opt/sure
     export RAILS_ENV=production
     export BUNDLE_DEPLOYMENT=1
