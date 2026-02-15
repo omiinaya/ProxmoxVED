@@ -27,7 +27,7 @@ fetch_and_deploy_gh_release "Sure" "we-promise/sure" "tarball" "latest" "/opt/su
 PG_VERSION="$(sed -n '/postgres:/s/[^[:digit:]]*//p' /opt/sure/compose.example.yml)" setup_postgresql
 PG_DB_NAME=sure_production PG_DB_USER=sure_user setup_postgresql_db
 RUBY_VERSION="$(cat /opt/sure/.ruby-version)" RUBY_INSTALL_RAILS=false setup_ruby
-$STD rbenv init && source ~/.bashrc
+source ~/.profile
 
 msg_info "Building Sure"
 cd /opt/sure
