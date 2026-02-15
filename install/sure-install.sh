@@ -25,7 +25,7 @@ msg_ok "Installed Dependencies"
 fetch_and_deploy_gh_release "Sure" "we-promise/sure" "tarball" "latest" "/opt/sure"
 
 PG_VERSION="$(sed -n '/postgres:/s/[^[:digit:]]*//p' /opt/sure/compose.example.yml)" setup_postgresql
-PG_DB_NAME=sure_db PG_DB_USER=sure_user setup_postgresql_db
+PG_DB_NAME=sure_production PG_DB_USER=sure_user setup_postgresql_db
 RUBY_VERSION="$(cat /opt/sure/.ruby-version)" RUBY_INSTALL_RAILS=true setup_ruby
 
 # msg_info "Building Sure"
@@ -37,17 +37,18 @@ RUBY_VERSION="$(cat /opt/sure/.ruby-version)" RUBY_INSTALL_RAILS=true setup_ruby
 # $STD bundle exec bootsnap precompile --gemfile -j 0
 # $STD bundle exec bootsnap precompile -j 0 app/ lib/
 # export SECRET_KEY_BASE_DUMMY=1 && $STD ./bin/rails assets:precompile
-# $STD ./bin/rails db:prepare
 # msg_ok "Built Sure"
 #
 # msg_info "Configuring Sure"
 # KEY="$(openssl rand -hex 64)"
 # mkdir -p /etc/sure
 # mv /opt/sure/.env.example /etc/sure/.env
-# sed -i -e "/SECRET_KEY_BASE=/s/&.*/&${KEY}/" \
-#   -e "/POSTGRES_PASSWORD=/s/&.*/&${PG_DB_PASS}/" \
-#   -e "/POSTGRES_USER=/s/&.*/&${PG_DB_USER}/" \
+# sed -i -e "/^SECRET_KEY_BASE=/s/secret-value/${KEY}/" \
+#   -e "/POSTGRES_PASSWORD=/s/postgres/${PG_DB_PASS}/" \
+#   -e "/POSTGRES_USER=/s/postgres/${PG_DB_USER}\\
+# POSTGRES_DB=${PG_DB_NAME}/" \
 #   -e "s|^APP_DOMAIN=|&${LOCAL_IP}|" /etc/sure/.env
+# $STD ./bin/rails db:prepare
 # msg_ok "Configured Sure"
 
 msg_info "Creating Service"
@@ -69,7 +70,7 @@ StandardError=journal
 [Install]
 WantedBy=multi-user.target
 EOF
-$STD systemctl enable -q --now sure
+# $STD systemctl enable -q --now sure
 msg_ok "Created Service"
 
 motd_ssh
