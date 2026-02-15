@@ -29,16 +29,24 @@ function update_script() {
     exit
   fi
 
-  NODE_VERSION="24" setup_nodejs
-
   if check_for_gh_release "Sure" "we-promise/sure"; then
     msg_info "Stopping Sure"
     $STD systemctl stop sure
     msg_ok "Stopped Sure"
 
     CLEAN_INSTALL=1 fetch_and_deploy_gh_release "Sure" "we-promise/sure" "tarball" "latest" "/opt/sure"
+    RUBY_VERSION="$(cat /opt/sure/.ruby-version)" RUBY_INSTALL_RAILS=false setup_ruby
 
     msg_info "Updating Sure"
+    cd /opt/sure
+    export RAILS_ENV=production
+    export BUNDLE_DEPLOYMENT=1
+    export BUNDLE_WITHOUT=development
+    $STD bundle install
+    $STD bundle exec bootsnap precompile --gemfile -j 0
+    $STD bundle exec bootsnap precompile -j 0 app/ lib/
+    export SECRET_KEY_BASE_DUMMY=1 && $STD ./bin/rails assets:precompile
+    unset SECRET_KEY_BASE_DUMMY
     msg_ok "Updated Sure"
 
     msg_info "Starting Sure"
