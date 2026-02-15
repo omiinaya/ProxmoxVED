@@ -27,7 +27,6 @@ fetch_and_deploy_gh_release "Sure" "we-promise/sure" "tarball" "latest" "/opt/su
 PG_VERSION="$(sed -n '/postgres:/s/[^[:digit:]]*//p' /opt/sure/compose.example.yml)" setup_postgresql
 PG_DB_NAME=sure_production PG_DB_USER=sure_user setup_postgresql_db
 RUBY_VERSION="$(cat /opt/sure/.ruby-version)" RUBY_INSTALL_RAILS=false setup_ruby
-source ~/.profile
 
 msg_info "Building Sure"
 cd /opt/sure
@@ -66,6 +65,8 @@ After=network.target
 Type=simple
 WorkingDirectory=/opt/sure
 Environment=RAILS_ENV=production
+Environment=BUNDLE_DEPLOYMENT=1
+Environment=BUNDLE_WITHOUT=development
 Environment=PATH=/root/.rbenv/shims:/root/.rbenv/bin:/usr/bin:\$PATH
 EnvironmentFile=/etc/sure/.env
 ExecStartPre=/opt/sure/bin/rails db:prepare
