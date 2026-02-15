@@ -27,16 +27,16 @@ fetch_and_deploy_gh_release "Sure" "we-promise/sure" "tarball" "latest" "/opt/su
 PG_VERSION="$(sed -n '/postgres:/s/[^[:digit:]]*//p' /opt/sure/compose.example.yml)" setup_postgresql
 PG_DB_NAME=sure_production PG_DB_USER=sure_user setup_postgresql_db
 RUBY_VERSION="$(cat /opt/sure/.ruby-version)" RUBY_INSTALL_RAILS=false setup_ruby
-$STD rbenv --init && source ~/.bashrc
+$STD rbenv init && source ~/.bashrc
 
 msg_info "Building Sure"
 cd /opt/sure
 export RAILS_ENV=production
 export BUNDLE_DEPLOYMENT=1
 export BUNDLE_WITHOUT=development
-$STD bundle install
-$STD bundle exec bootsnap precompile --gemfile -j 0
-$STD bundle exec bootsnap precompile -j 0 app/ lib/
+$STD ./bin/bundle install
+$STD ./bin/bundle exec bootsnap precompile --gemfile -j 0
+$STD ./bin/bundle exec bootsnap precompile -j 0 app/ lib/
 export SECRET_KEY_BASE_DUMMY=1 && $STD ./bin/rails assets:precompile
 unset SECRET_KEY_BASE_DUMMY
 msg_ok "Built Sure"
@@ -47,9 +47,9 @@ mkdir -p /etc/sure
 mv /opt/sure/.env.example /etc/sure/.env
 sed -i -e "/^SECRET_KEY_BASE=/s/secret-value/${KEY}/" \
   -e 's/_KEY_BASE=.*$/&\n\nRAILS_FORCE_SSL=false \
-  \
-  # Change to true when using a reverse proxy \
-  RAILS_ASSUME_SSL=false/' \
+\
+# Change to true when using a reverse proxy \
+RAILS_ASSUME_SSL=false/' \
   -e "/POSTGRES_PASSWORD=/s/postgres/${PG_DB_PASS}/" \
   -e "/POSTGRES_USER=/s/postgres/${PG_DB_USER}\\
 POSTGRES_DB=${PG_DB_NAME}/" \

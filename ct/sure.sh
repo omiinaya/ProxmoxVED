@@ -42,9 +42,9 @@ function update_script() {
     export RAILS_ENV=production
     export BUNDLE_DEPLOYMENT=1
     export BUNDLE_WITHOUT=development
-    $STD bundle install
-    $STD bundle exec bootsnap precompile --gemfile -j 0
-    $STD bundle exec bootsnap precompile -j 0 app/ lib/
+    $STD ./bin/bundle install
+    $STD ./bin/bundle exec bootsnap precompile --gemfile -j 0
+    $STD ./bin/bundle exec bootsnap precompile -j 0 app/ lib/
     export SECRET_KEY_BASE_DUMMY=1 && $STD ./bin/rails assets:precompile
     unset SECRET_KEY_BASE_DUMMY
     msg_ok "Updated Sure"
