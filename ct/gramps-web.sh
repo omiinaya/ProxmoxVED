@@ -55,6 +55,10 @@ function update_script() {
     systemctl stop gramps-web
     msg_ok "Stopped Service"
 
+    msg_info "Ensuring Build Dependencies"
+    $STD apt install -y libcairo2-dev pkg-config
+    msg_ok "Ensured Build Dependencies"
+
     CLEAN_INSTALL=1 fetch_and_deploy_gh_release "gramps-web-api" "gramps-project/gramps-web-api" "tarball" "latest" "/opt/gramps-web-api"
     CLEAN_INSTALL=1 fetch_and_deploy_gh_release "gramps-web" "gramps-project/gramps-web" "tarball" "latest" "/opt/gramps-web/frontend"
 

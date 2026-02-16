@@ -31,6 +31,7 @@ $STD apt install -y \
   gir1.2-pango-1.0 \
   git \
   graphviz \
+  libcairo2-dev \
   libicu-dev \
   libopencv-dev \
   pkg-config \
