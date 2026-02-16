@@ -38,8 +38,8 @@ DISCOURSE_DB_PASS=$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | head -c13)
 PG_HBA="/etc/postgresql/16/main/pg_hba.conf"
 sed -i 's/^local\s\+all\s\+all\s\+peer$/local   all             all                                     md5/' "$PG_HBA"
 $STD systemctl restart postgresql
-# Create user with CREATEDB permission - Rails will create the database
-$STD sudo -u postgres psql -c "CREATE ROLE discourse WITH LOGIN PASSWORD '$DISCOURSE_DB_PASS' CREATEDB;"
+# Create user + database explicitly for reliable bootstrap
+PG_DB_NAME="discourse" PG_DB_USER="discourse" PG_DB_PASS="$DISCOURSE_DB_PASS" setup_postgresql_db
 msg_ok "Configured PostgreSQL for Discourse"
 
 msg_info "Configuring Discourse"
@@ -90,7 +90,9 @@ cd /opt/discourse
 export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
 eval "$(rbenv init - bash)" 2>/dev/null || true
 export RAILS_ENV=production
-$STD bundle exec rails db:create
+set -a
+source /opt/discourse/.env
+set +a
 $STD bundle exec rails db:migrate
 msg_ok "Set Up Database"
 
@@ -99,6 +101,9 @@ cd /opt/discourse
 export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
 eval "$(rbenv init - bash)" 2>/dev/null || true
 export RAILS_ENV=production
+set -a
+source /opt/discourse/.env
+set +a
 $STD bundle exec rails assets:precompile
 msg_ok "Built Discourse Assets"
 
@@ -107,6 +112,9 @@ cd /opt/discourse
 export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
 eval "$(rbenv init - bash)" 2>/dev/null || true
 export RAILS_ENV=production
+set -a
+source /opt/discourse/.env
+set +a
 $STD bundle exec rails runner "User.create!(email: 'admin@local', username: 'admin', password: '${DISCOURSE_DB_PASS}', admin: true)" || true
 msg_ok "Created Discourse Admin User"
 
