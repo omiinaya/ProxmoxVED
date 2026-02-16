@@ -30,7 +30,7 @@ msg_ok "Installed Dependencies"
 
 PG_VERSION="16" setup_postgresql
 NODE_VERSION="22" setup_nodejs
-RUBY_VERSION="3.3.6" setup_ruby
+RUBY_VERSION="3.4.4" setup_ruby
 
 msg_info "Configuring PostgreSQL for Discourse"
 DISCOURSE_DB_PASS=$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | head -c13)
@@ -121,7 +121,8 @@ Type=simple
 User=root
 WorkingDirectory=/opt/discourse
 Environment=RAILS_ENV=production
-ExecStart=/usr/local/bin/bundle exec puma -w 2
+Environment=PATH=/root/.rbenv/shims:/root/.rbenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/root/.rbenv/shims/bundle exec puma -w 2
 Restart=on-failure
 RestartSec=5
 
