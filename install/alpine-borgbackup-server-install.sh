@@ -19,6 +19,16 @@ $STD rc-update add sshd
 $STD rc-service sshd start
 msg_ok "Installed BorgBackup"
 
+msg_info "Creating backup user"
+$STD adduser -D -s /bin/bash -h /home/backup backup
+$STD passwd -d backup
+msg_ok "Created backup user"
+
+msg_info "Configure SSH, disabling password authentication and enabling public key authentication"
+$STD sed -i -e 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+$STD rc-service sshd restart
+msg_ok "Configured SSH"
+
 motd_ssh
 customize
 cleanup_lxc

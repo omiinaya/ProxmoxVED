@@ -21,17 +21,61 @@ catch_errors       # Enable error handling with automatic exit on failure
 
 function update_script() {
   header_info
-
+  
   if [[ ! -f /usr/bin/borg ]]; then
     msg_error "No ${APP} Installation Found!"
     exit
   fi
 
-  msg_info "Updating $APP LXC"
-  $STD apk -U upgrade
-  msg_ok "Updated $APP LXC"
+  CHOICE=$(msg_menu "BorgBackup Server Update Options" \
+    "1" "Update BorgBackup Server" \
+    "2" "Reset SSH Access")
 
-  msg_ok "Updated successfully!"
+  case $CHOICE in
+  1)    
+    msg_info "Updating $APP LXC"
+    $STD apk -U upgrade
+    msg_ok "Updated $APP LXC successfully!"
+    ;;
+  2)
+    if [[ "${PHS_SILENT:-0}" == "1" ]]; then
+      msg_warn "Reset SSH Public key requires interactive mode, skipping."
+      exit
+    fi
+    
+    msg_info "Setting up SSH Public Key for backup user"
+    
+    # Get SSH public key from user
+    msg_info "Please paste your SSH public key (e.g., ssh-rsa AAAAB3... user@host):"
+    read -r SSH_PUBLIC_KEY
+    
+    if [[ -z "$SSH_PUBLIC_KEY" ]]; then
+      msg_error "No SSH public key provided!"
+      exit 1
+    fi
+    
+    # Validate that it looks like an SSH public key
+    if [[ ! "$SSH_PUBLIC_KEY" =~ ^(ssh-rsa|ssh-dss|ssh-ed25519|ecdsa-sha2-) ]]; then
+      msg_error "Invalid SSH public key format!"
+      exit 1
+    fi
+    
+    # Set up SSH directory and authorized_keys file
+    msg_info "Setting up SSH access"
+    mkdir -p /home/backup/.ssh
+    echo "$SSH_PUBLIC_KEY" > /home/backup/.ssh/authorized_keys
+    
+    # Set correct permissions
+    chown -R backup:backup /home/backup/.ssh
+    chmod 700 /home/backup/.ssh
+    chmod 600 /home/backup/.ssh/authorized_keys
+    
+    msg_ok "SSH access configured for backup user"
+    msg_info "SSH access details:"
+    msg_info "Connection: ssh backup@${IP}"
+    ;;
+  esac
+  
   exit 0
 }
 
