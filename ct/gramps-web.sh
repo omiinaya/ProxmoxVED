@@ -55,8 +55,22 @@ function update_script() {
     systemctl stop gramps-web
     msg_ok "Stopped Service"
 
+    if apt-cache show libgirepository1.0-dev >/dev/null 2>&1; then
+      GI_DEV_PACKAGE="libgirepository1.0-dev"
+    elif apt-cache show libgirepository-2.0-dev >/dev/null 2>&1; then
+      GI_DEV_PACKAGE="libgirepository-2.0-dev"
+    else
+      msg_error "No supported girepository development package found!"
+      exit
+    fi
+
     msg_info "Ensuring Build Dependencies"
-    $STD apt install -y libcairo2-dev pkg-config
+    $STD apt install -y \
+      gobject-introspection \
+      libcairo2-dev \
+      libglib2.0-dev \
+      pkg-config \
+      "$GI_DEV_PACKAGE"
     msg_ok "Ensured Build Dependencies"
 
     CLEAN_INSTALL=1 fetch_and_deploy_gh_release "gramps-web-api" "gramps-project/gramps-web-api" "tarball" "latest" "/opt/gramps-web-api"

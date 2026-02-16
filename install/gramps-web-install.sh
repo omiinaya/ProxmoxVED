@@ -13,10 +13,13 @@ setting_up_container
 network_check
 update_os
 
-if apt-cache show libgirepository-2.0-dev >/dev/null 2>&1; then
+if apt-cache show libgirepository1.0-dev >/dev/null 2>&1; then
+  GI_DEV_PACKAGE="libgirepository1.0-dev"
+elif apt-cache show libgirepository-2.0-dev >/dev/null 2>&1; then
   GI_DEV_PACKAGE="libgirepository-2.0-dev"
 else
-  GI_DEV_PACKAGE="libgirepository1.0-dev"
+  msg_error "No supported girepository development package found!"
+  exit
 fi
 
 msg_info "Installing Dependencies"
@@ -25,6 +28,7 @@ $STD apt install -y \
   build-essential \
   ffmpeg \
   gettext \
+  gobject-introspection \
   gir1.2-gexiv2-0.10 \
   gir1.2-gtk-3.0 \
   gir1.2-osmgpsmap-1.0 \
@@ -32,6 +36,7 @@ $STD apt install -y \
   git \
   graphviz \
   libcairo2-dev \
+  libglib2.0-dev \
   libicu-dev \
   libopencv-dev \
   pkg-config \
