@@ -47,16 +47,13 @@ msg_ok "Built Databasus"
 msg_info "Configuring Databasus"
 JWT_SECRET=$(openssl rand -hex 32)
 ENCRYPTION_KEY=$(openssl rand -hex 32)
-
 # Create PostgreSQL version symlinks for compatibility
 for v in 12 13 14 15 16 18; do
   ln -sf /usr/lib/postgresql/17 /usr/lib/postgresql/$v
 done
-
 # Install goose for migrations
 $STD go install github.com/pressly/goose/v3/cmd/goose@latest
 ln -sf /root/go/bin/goose /usr/local/bin/goose
-
 cat <<EOF >/opt/databasus/.env
 # Environment
 ENV_MODE=production
@@ -166,6 +163,7 @@ ln -sf /etc/nginx/sites-available/databasus /etc/nginx/sites-enabled/databasus
 rm -f /etc/nginx/sites-enabled/default
 $STD nginx -t
 $STD systemctl enable -q --now nginx
+$STD systemctl reload nginx
 msg_ok "Configured Nginx"
 
 motd_ssh

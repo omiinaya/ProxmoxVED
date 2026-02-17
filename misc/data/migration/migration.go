@@ -95,13 +95,13 @@ func main() {
 		pbCollection = os.Getenv("PB_TARGET_COLLECTION")
 	}
 	if pbCollection == "" {
-		pbCollection = "_dev_telemetry_data"
+		pbCollection = "telemetry"
 	}
 
 	// Auth collection
 	authCollection := os.Getenv("PB_AUTH_COLLECTION")
 	if authCollection == "" {
-		authCollection = "_dev_telemetry_service"
+		authCollection = "telemetry_service_user"
 	}
 
 	// Credentials - prefer admin auth for timestamp preservation

@@ -108,7 +108,7 @@ func (c *Cleaner) findStuckInstallations(ctx context.Context) ([]StuckRecord, er
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
 		fmt.Sprintf("%s/api/collections/%s/records?filter=%s&perPage=100",
-			c.pb.baseURL, c.pb.devColl, filter),
+			c.pb.baseURL, c.pb.targetColl, filter),
 		nil,
 	)
 	if err != nil {

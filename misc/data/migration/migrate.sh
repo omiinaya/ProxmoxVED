@@ -13,7 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Default values
 POCKETBASE_URL="${1:-http://localhost:8090}"
-POCKETBASE_COLLECTION="${2:-_dev_telemetry_data}"
+POCKETBASE_COLLECTION="${2:-telemetry}"
 
 echo "============================================="
 echo "   ProxmoxVED Data Migration Tool"
