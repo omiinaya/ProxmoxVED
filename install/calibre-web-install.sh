@@ -18,6 +18,9 @@ $STD apt install -y \
   build-essential \
   python3 \
   python3-dev \
+  libldap2-dev \
+  libsasl2-dev \
+  libssl-dev \
   imagemagick \
   libpango-1.0-0 \
   libharfbuzz0b \
