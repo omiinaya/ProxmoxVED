@@ -560,7 +560,7 @@ if [ "$IMPORT_DISKS" == "yes" ]; then
   SCSI_NR=0
 
   while read -r LSOUTPUT; do
-    TRUNCATED="${LSOUTPUT:0:50}"
+    TRUNCATED="${LSOUTPUT:0:45}"
     if [ ${#LSOUTPUT} -gt 45 ]; then
       TRUNCATED="${TRUNCATED}..."
     fi
