@@ -43,6 +43,7 @@ function update_script() {
   msg_ok "Backed up Data"
 
   msg_info "Updating Discourse"
+  PG_VERSION="16" PG_MODULES="pgvector" setup_postgresql
   cd /opt/discourse
   git pull origin main
   $STD bundle install --deployment --without test development
