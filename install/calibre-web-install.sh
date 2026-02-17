@@ -33,8 +33,11 @@ setup_uv
 msg_info "Installing Python Dependencies"
 cd /opt/calibre-web
 $STD uv venv
-$STD uv pip install --python /opt/calibre-web/.venv/bin/python --no-cache-dir calibreweb
-$STD uv sync --no-dev --no-build-isolation
+$STD uv pip install --python /opt/calibre-web/.venv/bin/python --no-cache-dir --upgrade pip setuptools wheel
+$STD uv pip install --python /opt/calibre-web/.venv/bin/python --no-cache-dir -r requirements.txt
+if [[ -f optional-requirements.txt ]]; then
+  $STD uv pip install --python /opt/calibre-web/.venv/bin/python --no-cache-dir -r optional-requirements.txt
+fi
 msg_ok "Installed Python Dependencies"
 
 msg_info "Creating Service"
