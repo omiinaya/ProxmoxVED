@@ -85,18 +85,22 @@ function update_script() {
     msg_ok "Updated Gramps Web API"
 
     msg_info "Updating Gramps Web Frontend"
-    cd /opt/gramps-web/frontend
+    pushd /opt/gramps-web/frontend >/dev/null
     export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
     corepack enable
     $STD npm install
     $STD npm run build
+    popd >/dev/null
     msg_ok "Updated Gramps Web Frontend"
 
     msg_info "Applying Database Migration"
+    pushd /opt/gramps-web-api >/dev/null
     GRAMPS_API_CONFIG=/opt/gramps-web/config/config.cfg \
+      ALEMBIC_CONFIG=/opt/gramps-web-api/alembic.ini \
       GRAMPSHOME=/opt/gramps-web/data/gramps \
       GRAMPS_DATABASE_PATH=/opt/gramps-web/data/gramps/grampsdb \
       $STD /opt/gramps-web/venv/bin/python3 -m gramps_webapi user migrate
+    popd >/dev/null
     msg_ok "Applied Database Migration"
 
     msg_info "Starting Service"
