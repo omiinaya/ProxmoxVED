@@ -21,7 +21,7 @@ $STD apt install -y \
   libvips42
 msg_ok "Installed Dependencies"
 
-NODE_VERSION="20" setup_nodejs
+NODE_VERSION="24" setup_nodejs
 
 msg_info "Installing Strapi (Patience)"
 mkdir -p /opt/strapi
