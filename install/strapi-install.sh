@@ -15,7 +15,6 @@ update_os
 
 msg_info "Installing Dependencies"
 $STD apt install -y \
-  ca-certificates \
   build-essential \
   python3 \
   python3-setuptools \
@@ -26,12 +25,12 @@ NODE_VERSION="20" setup_nodejs
 
 msg_info "Installing Strapi (Patience)"
 mkdir -p /opt/strapi
-cd /opt/strapi || exit
+cd /opt/strapi
 $STD npx --yes create-strapi-app@latest . --quickstart --no-run --skip-cloud
 msg_ok "Installed Strapi"
 
 msg_info "Building Strapi"
-cd /opt/strapi || exit
+cd /opt/strapi
 export NODE_OPTIONS="--max-old-space-size=3072"
 $STD npm run build
 msg_ok "Built Strapi"
@@ -55,6 +54,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/strapi
+EnvironmentFile=/opt/strapi/.env
 ExecStart=/usr/bin/npm run start
 Restart=on-failure
 Environment=NODE_ENV=production
