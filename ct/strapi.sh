@@ -30,7 +30,7 @@ function update_script() {
 
   NODE_VERSION="24" setup_nodejs
 
-  msg_info "Updating ${APP} LXC"
+  msg_info "Updating strapi"
   cd /opt/strapi
   $STD npm run build
   systemctl restart strapi
