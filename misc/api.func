@@ -178,6 +178,7 @@ explain_exit_code() {
   126) echo "Command invoked cannot execute (permission problem?)" ;;
   127) echo "Command not found" ;;
   128) echo "Invalid argument to exit" ;;
+  129) echo "Killed by SIGHUP (terminal closed / hangup)" ;;
   130) echo "Aborted by user (SIGINT)" ;;
   134) echo "Process aborted (SIGABRT - possibly Node.js heap overflow)" ;;
   137) echo "Killed (SIGKILL / Out of memory?)" ;;
@@ -912,7 +913,7 @@ categorize_error() {
   134 | 137) echo "resource" ;;
 
   # Signal/Process errors (SIGTERM, SIGPIPE, SIGSEGV)
-  139 | 141 | 143) echo "signal" ;;
+  129 | 139 | 141 | 143) echo "signal" ;;
 
   # Shell errors (general error, syntax error)
   1 | 2) echo "shell" ;;
