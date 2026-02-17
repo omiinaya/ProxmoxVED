@@ -24,6 +24,7 @@ $STD apt install -y \
   git \
   imagemagick \
   gsfonts \
+  brotli \
   nginx \
   redis-server
 msg_ok "Installed Dependencies"
