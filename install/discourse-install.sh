@@ -105,16 +105,8 @@ set +a
 $STD bundle exec rails assets:precompile
 msg_ok "Built Discourse Assets"
 
-msg_info "Creating Discourse Admin User"
-cd /opt/discourse
-export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
-eval "$(rbenv init - bash)" 2>/dev/null || true
-export RAILS_ENV=production
-set -a
-source /opt/discourse/.env
-set +a
-$STD bundle exec rails runner "User.create!(email: 'admin@local', username: 'admin', password: '${DISCOURSE_DB_PASS}', admin: true)" || true
-msg_ok "Created Discourse Admin User"
+msg_info "Preparing Admin Onboarding"
+msg_ok "Automatic admin bootstrap skipped (use first signup in UI with admin@local)"
 
 msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/discourse.service
