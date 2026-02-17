@@ -45,7 +45,6 @@ ADMIN_JWT_SECRET=$(openssl rand -base64 32)
 TRANSFER_TOKEN_SALT=$(openssl rand -base64 32)
 JWT_SECRET=$(openssl rand -base64 32)
 EOF
-
 cat <<EOF >/etc/systemd/system/strapi.service
 [Unit]
 Description=Strapi CMS
