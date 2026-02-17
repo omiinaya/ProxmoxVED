@@ -43,10 +43,12 @@ function update_script() {
   msg_ok "Backed up Data"
 
   msg_info "Updating Discourse"
+  PG_VERSION="16" PG_MODULES="pgvector" setup_postgresql
   cd /opt/discourse
   git pull origin main
   $STD bundle install --deployment --without test development
   $STD yarn install
+  $STD runuser -u postgres -- psql -d discourse -c "CREATE EXTENSION IF NOT EXISTS vector;"
   $STD bundle exec rails assets:precompile
   $STD bundle exec rails db:migrate
   msg_ok "Updated Discourse"
@@ -70,6 +72,5 @@ msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Access it using the following URL:${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}http://${IP}${CL}"
-echo -e "${INFO}${YW} Default Credentials:${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}Username: admin${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}Password: Check /opt/discourse/.env${CL}"
+echo -e "${INFO}${YW} Admin Setup:${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}Create the first account in the web UI (use admin@local to match developer emails)${CL}"

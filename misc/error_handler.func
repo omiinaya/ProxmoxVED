@@ -49,6 +49,7 @@ if ! declare -f explain_exit_code &>/dev/null; then
     126) echo "Command invoked cannot execute (permission problem?)" ;;
     127) echo "Command not found" ;;
     128) echo "Invalid argument to exit" ;;
+    129) echo "Killed by SIGHUP (terminal closed / hangup)" ;;
     130) echo "Terminated by Ctrl+C (SIGINT)" ;;
     134) echo "Process aborted (SIGABRT - possibly Node.js heap overflow)" ;;
     137) echo "Killed (SIGKILL / Out of memory?)" ;;

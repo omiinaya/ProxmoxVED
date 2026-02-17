@@ -91,7 +91,7 @@ detect_repo_source() {
   community-scripts/ProxmoxVED) REPO_SOURCE="ProxmoxVED" ;;
   "")
     # No URL detected — use hardcoded fallback
-    # CI sed transforms this on promotion: ProxmoxVED → ProxmoxVE
+    # This value must match the repo: ProxmoxVE for production, ProxmoxVED for dev
     REPO_SOURCE="ProxmoxVED"
     ;;
   *)
@@ -135,24 +135,50 @@ explain_exit_code() {
   # --- Generic / Shell ---
   1) echo "General error / Operation not permitted" ;;
   2) echo "Misuse of shell builtins (e.g. syntax error)" ;;
+  10) echo "Docker / privileged mode required (unsupported environment)" ;;
 
   # --- curl / wget errors (commonly seen in downloads) ---
+  4) echo "curl: Feature not supported or protocol error" ;;
+  5) echo "curl: Could not resolve proxy" ;;
   6) echo "curl: DNS resolution failed (could not resolve host)" ;;
   7) echo "curl: Failed to connect (network unreachable / host down)" ;;
+  8) echo "curl: FTP server reply error" ;;
   22) echo "curl: HTTP error returned (404, 429, 500+)" ;;
+  23) echo "curl: Write error (disk full or permissions)" ;;
+  25) echo "curl: Upload failed" ;;
   28) echo "curl: Operation timeout (network slow or server not responding)" ;;
+  30) echo "curl: FTP port command failed" ;;
   35) echo "curl: SSL/TLS handshake failed (certificate error)" ;;
+  56) echo "curl: Receive error (connection reset by peer)" ;;
+  75) echo "Temporary failure (retry later)" ;;
+  78) echo "curl: Remote file not found (404 on FTP/file)" ;;
 
   # --- Package manager / APT / DPKG ---
   100) echo "APT: Package manager error (broken packages / dependency problems)" ;;
   101) echo "APT: Configuration error (bad sources.list, malformed config)" ;;
   102) echo "APT: Lock held by another process (dpkg/apt still running)" ;;
 
+  # --- BSD sysexits.h (64-78) ---
+  64) echo "Usage error (wrong arguments)" ;;
+  65) echo "Data format error (bad input data)" ;;
+  66) echo "Input file not found (cannot open input)" ;;
+  67) echo "User not found (addressee unknown)" ;;
+  68) echo "Host not found (hostname unknown)" ;;
+  69) echo "Service unavailable" ;;
+  70) echo "Internal software error" ;;
+  71) echo "System error (OS-level failure)" ;;
+  72) echo "Critical OS file missing" ;;
+  73) echo "Cannot create output file" ;;
+  74) echo "I/O error" ;;
+  76) echo "Remote protocol error" ;;
+  77) echo "Permission denied" ;;
+
   # --- Common shell/system errors ---
   124) echo "Command timed out (timeout command)" ;;
   126) echo "Command invoked cannot execute (permission problem?)" ;;
   127) echo "Command not found" ;;
   128) echo "Invalid argument to exit" ;;
+  129) echo "Killed by SIGHUP (terminal closed / hangup)" ;;
   130) echo "Aborted by user (SIGINT)" ;;
   134) echo "Process aborted (SIGABRT - possibly Node.js heap overflow)" ;;
   137) echo "Killed (SIGKILL / Out of memory?)" ;;
@@ -237,16 +263,21 @@ explain_exit_code() {
 # json_escape()
 #
 # - Escapes a string for safe JSON embedding
+# - Strips ANSI escape sequences and non-printable control characters
 # - Handles backslashes, quotes, newlines, tabs, and carriage returns
 # ------------------------------------------------------------------------------
 json_escape() {
   local s="$1"
+  # Strip ANSI escape sequences (color codes etc.)
+  s=$(printf '%s' "$s" | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g')
   s=${s//\\/\\\\}
   s=${s//"/\\"/}
   s=${s//$'\n'/\\n}
   s=${s//$'\r'/}
   s=${s//$'\t'/\\t}
-  echo "$s"
+  # Remove any remaining control characters (0x00-0x1F except those already handled)
+  s=$(printf '%s' "$s" | tr -d '\000-\010\013\014\016-\037')
+  printf '%s' "$s"
 }
 
 # ------------------------------------------------------------------------------
@@ -283,7 +314,33 @@ get_error_text() {
   fi
 
   if [[ -n "$logfile" && -s "$logfile" ]]; then
-    tail -n 20 "$logfile" 2>/dev/null | sed 's/\r$//'
+    tail -n 20 "$logfile" 2>/dev/null | sed 's/\r$//' | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g'
+  fi
+}
+
+# ------------------------------------------------------------------------------
+# build_error_string()
+#
+# - Builds a structured error string for telemetry reporting
+# - Format: "exit_code=<N> | <explanation>\n---\n<last 20 log lines>"
+# - If no log lines available, returns just the explanation
+# - Arguments:
+#   * $1: exit_code (numeric)
+#   * $2: log_text (optional, output from get_error_text)
+# - Returns structured error string via stdout
+# ------------------------------------------------------------------------------
+build_error_string() {
+  local exit_code="${1:-1}"
+  local log_text="${2:-}"
+  local explanation
+  explanation=$(explain_exit_code "$exit_code")
+
+  if [[ -n "$log_text" ]]; then
+    # Structured format: header + separator + log lines
+    printf 'exit_code=%s | %s\n---\n%s' "$exit_code" "$explanation" "$log_text"
+  else
+    # No log available - just the explanation with exit code
+    printf 'exit_code=%s | %s' "$exit_code" "$explanation"
   fi
 }
 
@@ -369,18 +426,19 @@ detect_cpu() {
 # - Detects RAM speed using dmidecode
 # - Sets RAM_SPEED global (e.g., "4800" for DDR5-4800)
 # - Requires root access for dmidecode
-# - Returns empty if not available
+# - Returns empty if not available or if speed is "Unknown" (nested VMs)
 # ------------------------------------------------------------------------------
 detect_ram() {
   RAM_SPEED=""
 
   if command -v dmidecode &>/dev/null; then
     # Get configured memory speed (actual running speed)
-    RAM_SPEED=$(dmidecode -t memory 2>/dev/null | grep -m1 "Configured Memory Speed:" | grep -oE "[0-9]+" | head -1)
+    # Use || true to handle "Unknown" values in nested VMs (no numeric match)
+    RAM_SPEED=$(dmidecode -t memory 2>/dev/null | grep -m1 "Configured Memory Speed:" | grep -oE "[0-9]+" | head -1) || true
 
     # Fallback to Speed: if Configured not available
     if [[ -z "$RAM_SPEED" ]]; then
-      RAM_SPEED=$(dmidecode -t memory 2>/dev/null | grep -m1 "Speed:" | grep -oE "[0-9]+" | head -1)
+      RAM_SPEED=$(dmidecode -t memory 2>/dev/null | grep -m1 "Speed:" | grep -oE "[0-9]+" | head -1) || true
     fi
   fi
 
@@ -592,6 +650,8 @@ EOF
   curl -fsS -m "${TELEMETRY_TIMEOUT}" -X POST "${TELEMETRY_URL}" \
     -H "Content-Type: application/json" \
     -d "$JSON_PAYLOAD" &>/dev/null || true
+
+  POST_TO_API_DONE=true
 }
 
 # ------------------------------------------------------------------------------
@@ -665,13 +725,12 @@ post_update_to_api() {
     else
       exit_code=1
     fi
+    # Get log lines and build structured error string
     local error_text=""
     error_text=$(get_error_text)
-    if [[ -n "$error_text" ]]; then
-      error=$(json_escape "$error_text")
-    else
-      error=$(json_escape "$(explain_exit_code "$exit_code")")
-    fi
+    local full_error
+    full_error=$(build_error_string "$exit_code" "$error_text")
+    error=$(json_escape "$full_error")
     short_error=$(json_escape "$(explain_exit_code "$exit_code")")
     error_category=$(categorize_error "$exit_code")
     [[ -z "$error" ]] && error="Unknown error"
@@ -814,31 +873,52 @@ EOF
 categorize_error() {
   local code="$1"
   case "$code" in
-  # Network errors
-  6 | 7 | 22 | 28 | 35) echo "network" ;;
+  # Network errors (curl/wget)
+  6 | 7 | 22 | 35) echo "network" ;;
 
-  # Storage errors
-  214 | 217 | 219) echo "storage" ;;
+  # Timeout errors
+  28 | 124 | 211) echo "timeout" ;;
 
-  # Dependency/Package errors
-  100 | 101 | 102 | 127 | 160 | 161 | 162) echo "dependency" ;;
+  # Storage errors (Proxmox storage)
+  214 | 217 | 219 | 224) echo "storage" ;;
+
+  # Dependency/Package errors (APT, DPKG, pip, commands)
+  100 | 101 | 102 | 127 | 160 | 161 | 162 | 255) echo "dependency" ;;
 
   # Permission errors
   126 | 152) echo "permission" ;;
 
-  # Timeout errors
-  124 | 28 | 211) echo "timeout" ;;
+  # Configuration errors (Proxmox config, invalid args)
+  128 | 203 | 204 | 205 | 206 | 207 | 208) echo "config" ;;
 
-  # Configuration errors
-  203 | 204 | 205 | 206 | 207 | 208) echo "config" ;;
+  # Proxmox container/template errors
+  200 | 209 | 210 | 212 | 213 | 215 | 216 | 218 | 220 | 221 | 222 | 223 | 225 | 231) echo "proxmox" ;;
+
+  # Service/Systemd errors
+  150 | 151 | 153 | 154) echo "service" ;;
+
+  # Database errors (PostgreSQL, MySQL, MongoDB)
+  170 | 171 | 172 | 173 | 180 | 181 | 182 | 183 | 190 | 191 | 192 | 193) echo "database" ;;
+
+  # Node.js / JavaScript runtime errors
+  243 | 245 | 246 | 247 | 248 | 249) echo "runtime" ;;
+
+  # Python environment errors
+  # (already covered: 160-162 under dependency)
 
   # Aborted by user
   130) echo "aborted" ;;
 
-  # Resource errors (OOM, etc)
-  137 | 134) echo "resource" ;;
+  # Resource errors (OOM, SIGKILL, SIGABRT)
+  134 | 137) echo "resource" ;;
 
-  # Default
+  # Signal/Process errors (SIGTERM, SIGPIPE, SIGSEGV)
+  129 | 139 | 141 | 143) echo "signal" ;;
+
+  # Shell errors (general error, syntax error)
+  1 | 2) echo "shell" ;;
+
+  # Default - truly unknown
   *) echo "unknown" ;;
   esac
 }
@@ -901,11 +981,9 @@ post_tool_to_api() {
     [[ ! "$exit_code" =~ ^[0-9]+$ ]] && exit_code=1
     local error_text=""
     error_text=$(get_error_text)
-    if [[ -n "$error_text" ]]; then
-      error=$(json_escape "$error_text")
-    else
-      error=$(json_escape "$(explain_exit_code "$exit_code")")
-    fi
+    local full_error
+    full_error=$(build_error_string "$exit_code" "$error_text")
+    error=$(json_escape "$full_error")
     error_category=$(categorize_error "$exit_code")
   fi
 
@@ -968,11 +1046,9 @@ post_addon_to_api() {
     [[ ! "$exit_code" =~ ^[0-9]+$ ]] && exit_code=1
     local error_text=""
     error_text=$(get_error_text)
-    if [[ -n "$error_text" ]]; then
-      error=$(json_escape "$error_text")
-    else
-      error=$(json_escape "$(explain_exit_code "$exit_code")")
-    fi
+    local full_error
+    full_error=$(build_error_string "$exit_code" "$error_text")
+    error=$(json_escape "$full_error")
     error_category=$(categorize_error "$exit_code")
   fi
 
@@ -1067,11 +1143,9 @@ post_update_to_api_extended() {
     fi
     local error_text=""
     error_text=$(get_error_text)
-    if [[ -n "$error_text" ]]; then
-      error=$(json_escape "$error_text")
-    else
-      error=$(json_escape "$(explain_exit_code "$exit_code")")
-    fi
+    local full_error
+    full_error=$(build_error_string "$exit_code" "$error_text")
+    error=$(json_escape "$full_error")
     error_category=$(categorize_error "$exit_code")
     [[ -z "$error" ]] && error="Unknown error"
   fi

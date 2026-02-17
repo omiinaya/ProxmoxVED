@@ -1641,4 +1641,17 @@ function get_lxc_ip() {
 # SIGNAL TRAPS
 # ==============================================================================
 
+# ------------------------------------------------------------------------------
+# on_hup_keepalive()
+#
+# - SIGHUP (terminal hangup) trap handler
+# - Keeps long-running scripts alive if terminal/SSH session disconnects
+# - Stops spinner safely and writes warning to active log
+# ------------------------------------------------------------------------------
+on_hup_keepalive() {
+  stop_spinner
+  log_msg "[WARN] Received SIGHUP (terminal hangup). Continuing execution in background."
+}
+
+trap 'on_hup_keepalive' HUP
 trap 'stop_spinner' EXIT INT TERM

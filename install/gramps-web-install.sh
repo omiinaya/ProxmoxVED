@@ -94,7 +94,9 @@ corepack enable
 $STD npm install
 $STD npm run build
 
+cd /opt/gramps-web-api
 GRAMPS_API_CONFIG=/opt/gramps-web/config/config.cfg \
+  ALEMBIC_CONFIG=/opt/gramps-web-api/alembic.ini \
   GRAMPSHOME=/opt/gramps-web/data/gramps \
   GRAMPS_DATABASE_PATH=/opt/gramps-web/data/gramps/grampsdb \
   $STD /opt/gramps-web/venv/bin/python3 -m gramps_webapi user migrate
