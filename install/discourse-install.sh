@@ -34,20 +34,16 @@ RUBY_VERSION="3.4.4" setup_ruby
 
 msg_info "Configuring PostgreSQL for Discourse"
 DISCOURSE_DB_PASS=$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | head -c13)
-# Configure pg_hba.conf for md5 authentication
 PG_HBA="/etc/postgresql/16/main/pg_hba.conf"
 sed -i 's/^local\s\+all\s\+all\s\+peer$/local   all             all                                     md5/' "$PG_HBA"
 $STD systemctl restart postgresql
-# Create user + database explicitly for reliable bootstrap
 PG_DB_NAME="discourse" PG_DB_USER="discourse" PG_DB_PASS="$DISCOURSE_DB_PASS" setup_postgresql_db
 msg_ok "Configured PostgreSQL for Discourse"
 
 msg_info "Configuring Discourse"
 DISCOURSE_SECRET_KEY=$(openssl rand -hex 64)
-
-git clone --depth 1 https://github.com/discourse/discourse.git /opt/discourse
+$STD git clone --depth 1 https://github.com/discourse/discourse.git /opt/discourse
 cd /opt/discourse
-
 cat <<EOF >/opt/discourse/.env
 RAILS_ENV=production
 RAILS_LOG_TO_STDOUT=true
@@ -93,6 +89,7 @@ export RAILS_ENV=production
 set -a
 source /opt/discourse/.env
 set +a
+$STD runuser -u postgres -- psql -d discourse -c "CREATE EXTENSION IF NOT EXISTS vector;"
 $STD bundle exec rails db:migrate
 msg_ok "Set Up Database"
 

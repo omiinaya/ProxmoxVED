@@ -48,6 +48,7 @@ function update_script() {
   git pull origin main
   $STD bundle install --deployment --without test development
   $STD yarn install
+  $STD runuser -u postgres -- psql -d discourse -c "CREATE EXTENSION IF NOT EXISTS vector;"
   $STD bundle exec rails assets:precompile
   $STD bundle exec rails db:migrate
   msg_ok "Updated Discourse"
