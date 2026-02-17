@@ -32,7 +32,12 @@ setup_uv
 
 msg_info "Installing Python Dependencies"
 cd /opt/calibre-web
-$STD uv sync --no-dev
+if ! $STD uv sync --no-dev; then
+  msg_info "Retrying Python dependency install without build isolation"
+  $STD uv venv
+  $STD uv pip install --python /opt/calibre-web/.venv/bin/python --no-cache-dir calibreweb
+  $STD uv sync --no-dev --no-build-isolation
+fi
 msg_ok "Installed Python Dependencies"
 
 msg_info "Creating Service"

@@ -43,7 +43,12 @@ function update_script() {
 
     msg_info "Installing Dependencies"
     cd /opt/calibre-web
-    $STD uv sync --no-dev
+    if ! $STD uv sync --no-dev; then
+      msg_info "Retrying dependency install without build isolation"
+      $STD uv venv
+      $STD uv pip install --python /opt/calibre-web/.venv/bin/python --no-cache-dir calibreweb
+      $STD uv sync --no-dev --no-build-isolation
+    fi
     msg_ok "Installed Dependencies"
 
     msg_info "Restoring Data"
