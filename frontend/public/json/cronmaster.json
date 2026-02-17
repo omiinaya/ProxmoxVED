@@ -11,7 +11,7 @@
     "interface_port": 3000,
     "documentation": "https://github.com/fccview/cronmaster",
     "website": "https://github.com/fccview/cronmaster",
-    "logo": "https://raw.githubusercontent.com/fccview/cronmaster/main/public/logo.png",
+    "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/cr-nmaster.webp",
     "config_path": "/opt/cronmaster/.env",
     "description": "Self-hosted cron job scheduler with web UI, live logs, auth and prebuilt binaries provided upstream.",
     "install_methods": [
