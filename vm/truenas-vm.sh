@@ -561,7 +561,7 @@ if [ "$IMPORT_DISKS" == "yes" ]; then
 
   while read -r LSOUTPUT; do
     TRUNCATED="${LSOUTPUT:0:50}"
-    if [ ${#LSOUTPUT} -gt 50 ]; then
+    if [ ${#LSOUTPUT} -gt 45 ]; then
       TRUNCATED="${TRUNCATED}..."
     fi
     DISKARRAY+=("$LSOUTPUT" "$TRUNCATED" "OFF")
