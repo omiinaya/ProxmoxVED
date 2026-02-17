@@ -15,7 +15,9 @@ update_os
 
 msg_info "Installing Dependencies"
 $STD apt install -y \
+  build-essential \
   python3 \
+  python3-dev \
   imagemagick \
   libpango-1.0-0 \
   libharfbuzz0b \
