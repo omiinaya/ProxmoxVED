@@ -30,11 +30,25 @@ function update_script() {
 
   NODE_VERSION="24" setup_nodejs
 
-  msg_info "Updating strapi"
+  msg_info "Stopping ${APP}"
+  systemctl stop strapi
+  msg_ok "Stopped ${APP}"
+
+  msg_info "Updating ${APP}"
   cd /opt/strapi
+  $STD npm install
+  msg_ok "Updated ${APP}"
+
+  msg_info "Building ${APP}"
+  export NODE_OPTIONS="--max-old-space-size=3072"
   $STD npm run build
-  systemctl restart strapi
-  msg_ok "Updated successfully!"
+  msg_ok "Built ${APP}"
+
+  msg_info "Starting ${APP}"
+  systemctl start strapi
+  msg_ok "Started ${APP}"
+
+  msg_ok "Update completed successfully!"
   exit
 }
 
