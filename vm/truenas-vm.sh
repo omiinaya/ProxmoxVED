@@ -567,7 +567,7 @@ if [ "$IMPORT_DISKS" == "yes" ]; then
     DISKARRAY+=("$LSOUTPUT" "$TRUNCATED" "OFF")
   done < <(ls /dev/disk/by-id | grep -E '^ata-|^nvme-|^usb-' | grep -v 'part')
 
-  SELECTIONS=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "SELECT DISKS TO IMPORT" --checklist "\nSelect disk IDs to import. (Use Spacebar to select)\n" --cancel-button "Exit Script" 20 58 10 "${DISKARRAY[@]}" 3>&1 1>&2 2>&3 | tr -d '"') || exit
+  SELECTIONS=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "SELECT DISKS TO IMPORT" --checklist "\nSelect disk IDs to import. (Use Spacebar to select)\n" --notags --cancel-button "Exit Script" 20 58 10 "${DISKARRAY[@]}" 3>&1 1>&2 2>&3 | tr -d '"') || exit
 
   for SELECTION in $SELECTIONS; do
     ((++SCSI_NR))
