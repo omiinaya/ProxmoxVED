@@ -66,7 +66,7 @@ function update_script() {
     cp -r /opt/appname/data /opt/appname_data_backup
     msg_ok "Backed up Data"
 
-    CLEAN_INSTALL=1 fetch_and_deploy_gh_release "appname" "owner/repo"
+    CLEAN_INSTALL=1 fetch_and_deploy_gh_release "appname" "owner/repo" "tarball"
 
     # Build steps...
 
@@ -125,7 +125,7 @@ PG_VERSION="16" setup_postgresql
 setup_uv
 # etc.
 
-fetch_and_deploy_gh_release "appname" "owner/repo"
+fetch_and_deploy_gh_release "appname" "owner/repo" "tarball"
 
 msg_info "Setting up Application"
 cd /opt/appname
@@ -165,13 +165,14 @@ cleanup_lxc
 
 | Function | Description | Example |
 |----------|-------------|----------|
-| `fetch_and_deploy_gh_release` | Fetches and installs GitHub Release | `fetch_and_deploy_gh_release "app" "owner/repo"` |
+| `fetch_and_deploy_gh_release` | Fetches and installs GitHub Release | `fetch_and_deploy_gh_release "app" "owner/repo" "tarball"` |
 | `check_for_gh_release` | Checks for new version | `if check_for_gh_release "app" "owner/repo"; then` |
+| `get_latest_github_release` | Returns latest release version string | `VERSION=$(get_latest_github_release "owner/repo")` |
 
 **Modes for `fetch_and_deploy_gh_release`:**
 ```bash
-# Tarball/Source (Standard)
-fetch_and_deploy_gh_release "appname" "owner/repo"
+# Tarball/Source (Standard) - always specify "tarball" explicitly
+fetch_and_deploy_gh_release "appname" "owner/repo" "tarball"
 
 # Binary (.deb)
 fetch_and_deploy_gh_release "appname" "owner/repo" "binary"
@@ -185,8 +186,10 @@ fetch_and_deploy_gh_release "appname" "owner/repo" "singlefile" "latest" "/opt/a
 
 **Clean Install Flag:**
 ```bash
-CLEAN_INSTALL=1 fetch_and_deploy_gh_release "appname" "owner/repo"
+CLEAN_INSTALL=1 fetch_and_deploy_gh_release "appname" "owner/repo" "tarball"
 ```
+
+**Version file:** After `fetch_and_deploy_gh_release`, the deployed version is stored in `~/.appname`. You can read it with `cat ~/.appname` — useful when you need the version later (e.g. for build-time environment variables).
 
 ### Runtime/Language Setup
 
@@ -477,7 +480,54 @@ $STD sudo -u postgres psql -d mydb -c "CREATE EXTENSION IF NOT EXISTS postgis;"
 PG_DB_NAME="mydb" PG_DB_USER="myuser" PG_DB_EXTENSIONS="postgis" setup_postgresql_db
 ```
 
-### 17. Writing Files Without Heredocs
+### 18. Hardcoded Versions for External Tools
+```bash
+# ❌ WRONG - hardcoded versions that will become outdated
+RESTIC_VERSION="0.18.1"
+RCLONE_VERSION="1.73.0"
+curl -L -o restic.bz2 "https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_linux_amd64.bz2"
+
+# ✅ CORRECT - use fetch_and_deploy_gh_release (always fetches latest)
+fetch_and_deploy_gh_release "restic" "restic/restic" "singlefile" "latest" "/usr/local/bin" "restic_*_linux_amd64.bz2"
+
+# If you need the version number later, read from the version file:
+RES_VERSION=$(cat ~/.restic)
+# Or use get_latest_github_release:
+VERSION=$(get_latest_github_release "restic/restic")
+```
+
+### 19. Backing Up to /tmp in Update Scripts
+```bash
+# ❌ WRONG - /tmp can be cleared by the system
+msg_info "Backing up Configuration"
+cp /opt/appname/.env /tmp/appname.env.bak
+msg_ok "Backed up Configuration"
+# ... update ...
+cp /tmp/appname.env.bak /opt/appname/.env
+
+# ✅ CORRECT - back up directly into /opt
+msg_info "Backing up Configuration"
+cp /opt/appname/.env /opt/appname.env.bak
+msg_ok "Backed up Configuration"
+# ... update ...
+cp /opt/appname.env.bak /opt/appname/.env
+rm -f /opt/appname.env.bak
+```
+
+### 20. Using "(Patience)" in msg_info by Default
+```bash
+# ❌ WRONG - "(Patience)" should not be a default label
+msg_info "Building Application (Patience)"
+$STD npm run build
+msg_ok "Built Application"
+
+# ✅ CORRECT - use a plain label; only add (Patience) if the build truly takes 10+ minutes
+msg_info "Building Application"
+$STD npm run build
+msg_ok "Built Application"
+```
+
+### 21. Writing Files Without Heredocs
 ```bash
 # ❌ WRONG - echo / printf / tee
 echo "# Config" > /opt/app/config.yml
@@ -538,7 +588,7 @@ function update_script() {
     msg_ok "Backed up Data"
 
     # 5. Perform clean install
-    CLEAN_INSTALL=1 fetch_and_deploy_gh_release "appname" "owner/repo"
+    CLEAN_INSTALL=1 fetch_and_deploy_gh_release "appname" "owner/repo" "tarball"
 
     # 6. Rebuild (if needed)
     cd /opt/appname
@@ -598,18 +648,20 @@ cleanup_lxc
 ## 🔍 Checklist Before PR Creation
 
 - [ ] No Docker installation used
-- [ ] `fetch_and_deploy_gh_release` used for GitHub releases
+- [ ] `fetch_and_deploy_gh_release` used for GitHub releases (with explicit mode like `"tarball"`)
 - [ ] `check_for_gh_release` used for update checks
 - [ ] `setup_*` functions used for runtimes (nodejs, postgresql, etc.)
 - [ ] **`tools.func` functions NOT wrapped in msg_info/msg_ok blocks**
 - [ ] No redundant variables
+- [ ] No hardcoded versions for external tools (use `fetch_and_deploy_gh_release` or `get_latest_github_release`)
 - [ ] `$STD` before all apt/npm/build commands
 - [ ] `msg_info`/`msg_ok`/`msg_error` for logging (only for custom code)
 - [ ] Correct script structure followed
 - [ ] Update function present and functional
-- [ ] Data backup implemented in update function
+- [ ] Data backup implemented in update function (backups go to `/opt`, NOT `/tmp`)
 - [ ] `motd_ssh`, `customize`, `cleanup_lxc` at the end
 - [ ] No custom download/version-check logic
+- [ ] No default `(Patience)` text in msg_info labels
 - [ ] JSON metadata file created in `frontend/public/json/<appname>.json`
 
 ---
