@@ -4,7 +4,12 @@
 # Author: summoningpixels
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/getarcaneapp/arcane
-
+if ! command -v curl &>/dev/null; then
+  printf "\r\e[2K%b" '\033[93m Setup Source \033[m' >&2
+  apt-get update >/dev/null 2>&1
+  apt-get install -y curl >/dev/null 2>&1
+fi
+source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/core.func)
 source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/core.func)
 source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/tools.func)
 source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/error_handler.func)
@@ -51,7 +56,7 @@ function uninstall() {
   if [[ -f "$COMPOSE_FILE" ]]; then
     msg_info "Stopping and removing Docker containers"
     cd "$INSTALL_PATH"
-    $STD docker compose down --volumes --remove-orphans || true
+    $STD docker compose down --volumes --remove-orphans
     msg_ok "Stopped and removed Docker containers"
   fi
 
