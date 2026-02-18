@@ -14,6 +14,7 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
+echo "davfs2 davfs2/suid_file boolean false" | debconf-set-selections
 $STD apt-get install -y \
   bzip2 \
   fuse3 \
@@ -49,8 +50,6 @@ export VITE_RCLONE_VERSION=$(cat ~/.rclone)
 export VITE_SHOUTRRR_VERSION=$(cat ~/.shoutrrr)
 $STD bun install
 $STD bun run build
-mkdir -p /opt/zerobyte/assets
-cp -r /opt/zerobyte/app/drizzle /opt/zerobyte/assets/migrations
 msg_ok "Built Zerobyte"
 
 msg_info "Configuring Zerobyte"
@@ -64,6 +63,7 @@ ZEROBYTE_DATABASE_URL=/var/lib/zerobyte/data/zerobyte.db
 RESTIC_CACHE_DIR=/var/lib/zerobyte/restic/cache
 ZEROBYTE_REPOSITORIES_DIR=/var/lib/zerobyte/repositories
 ZEROBYTE_VOLUMES_DIR=/var/lib/zerobyte/volumes
+MIGRATIONS_PATH=/opt/zerobyte/app/drizzle
 NODE_ENV=production
 EOF
 msg_ok "Configured Zerobyte"

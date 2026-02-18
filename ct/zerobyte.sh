@@ -7,8 +7,8 @@ source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxV
 
 APP="Zerobyte"
 var_tags="${var_tags:-backup;encryption;restic}"
-var_cpu="${var_cpu:-2}"
-var_ram="${var_ram:-4096}"
+var_cpu="${var_cpu:-4}"
+var_ram="${var_ram:-6192}"
 var_disk="${var_disk:-10}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-13}"
@@ -44,8 +44,6 @@ function update_script() {
     cd /opt/zerobyte
     $STD bun install
     $STD bun run build
-    mkdir -p /opt/zerobyte/assets
-    cp -r /opt/zerobyte/app/drizzle /opt/zerobyte/assets/migrations
     msg_ok "Built Zerobyte"
 
     msg_info "Restoring Configuration"
