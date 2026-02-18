@@ -43,6 +43,9 @@ msg_ok "Installed Bun"
 
 fetch_and_deploy_gh_release "zerobyte" "nicotsx/zerobyte" "tarball"
 
+# Workaround for high RAM during bun run build
+NODE_VERSION="24" setup_nodejs
+
 msg_info "Building Zerobyte"
 cd /opt/zerobyte
 export VITE_RESTIC_VERSION=$(cat ~/.restic)
@@ -50,7 +53,7 @@ export VITE_RCLONE_VERSION=$(cat ~/.rclone)
 export VITE_SHOUTRRR_VERSION=$(cat ~/.shoutrrr)
 export NODE_OPTIONS="--max-old-space-size=3072"
 $STD bun install
-$STD bun run build
+$STD node ./node_modules/vite/bin/vite.js build
 msg_ok "Built Zerobyte"
 
 msg_info "Configuring Zerobyte"

@@ -40,11 +40,14 @@ function update_script() {
 
     CLEAN_INSTALL=1 fetch_and_deploy_gh_release "zerobyte" "nicotsx/zerobyte" "tarball"
 
+    # Workaround for high RAM during bun run build
+    NODE_VERSION="24" setup_nodejs
+
     msg_info "Building Zerobyte"
     export NODE_OPTIONS="--max-old-space-size=3072"
     cd /opt/zerobyte
     $STD bun install
-    $STD bun run build
+    $STD node ./node_modules/vite/bin/vite.js build
     msg_ok "Built Zerobyte"
 
     msg_info "Restoring Configuration"
