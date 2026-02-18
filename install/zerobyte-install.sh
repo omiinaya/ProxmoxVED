@@ -49,7 +49,7 @@ export VITE_RESTIC_VERSION=$(cat ~/.restic)
 export VITE_RCLONE_VERSION=$(cat ~/.rclone)
 export VITE_SHOUTRRR_VERSION=$(cat ~/.shoutrrr)
 $STD bun install
-$STD bun run build
+$STD bun --smol run build
 msg_ok "Built Zerobyte"
 
 msg_info "Configuring Zerobyte"

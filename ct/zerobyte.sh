@@ -43,7 +43,7 @@ function update_script() {
     msg_info "Building Zerobyte"
     cd /opt/zerobyte
     $STD bun install
-    $STD bun run build
+    $STD bun --smol run build
     msg_ok "Built Zerobyte"
 
     msg_info "Restoring Configuration"
