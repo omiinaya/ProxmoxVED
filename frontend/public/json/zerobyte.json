@@ -20,7 +20,7 @@
             "script": "ct/zerobyte.sh",
             "resources": {
                 "cpu": 2,
-                "ram": 4096,
+                "ram": 2048,
                 "hdd": 10,
                 "os": "Debian",
                 "version": "13"
