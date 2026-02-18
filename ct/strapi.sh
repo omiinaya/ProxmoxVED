@@ -6,7 +6,7 @@ source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxV
 # Source: https://strapi.io/
 
 APP="Strapi"
-var_tags="${var_tags:-cms;headless-cms}"
+var_tags="${var_tags:-cms}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-4096}"
 var_disk="${var_disk:-8}"
@@ -24,29 +24,29 @@ function update_script() {
   check_container_storage
   check_container_resources
   if [[ ! -f /etc/systemd/system/strapi.service ]]; then
-    msg_error "No ${APP} Installation Found!"
+    msg_error "No Strapi Installation Found!"
     exit
   fi
 
   NODE_VERSION="24" setup_nodejs
 
-  msg_info "Stopping ${APP}"
+  msg_info "Stopping Strapi"
   systemctl stop strapi
-  msg_ok "Stopped ${APP}"
+  msg_ok "Stopped Strapi"
 
-  msg_info "Updating ${APP}"
+  msg_info "Updating Strapi"
   cd /opt/strapi
   $STD npm install
-  msg_ok "Updated ${APP}"
+  msg_ok "Updated Strapi"
 
-  msg_info "Building ${APP}"
+  msg_info "Building Strapi"
   export NODE_OPTIONS="--max-old-space-size=3072"
   $STD npm run build
-  msg_ok "Built ${APP}"
+  msg_ok "Built Strapi"
 
-  msg_info "Starting ${APP}"
+  msg_info "Starting Strapi"
   systemctl start strapi
-  msg_ok "Started ${APP}"
+  msg_ok "Started Strapi"
 
   msg_ok "Update completed successfully!"
   exit
