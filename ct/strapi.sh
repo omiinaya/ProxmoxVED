@@ -24,7 +24,7 @@ function update_script() {
   check_container_storage
   check_container_resources
   if [[ ! -f /etc/systemd/system/strapi.service ]]; then
-    msg_error "No Strapi Installation Found!"
+    msg_error "No ${APP} Installation Found!"
     exit
   fi
 
