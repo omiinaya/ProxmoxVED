@@ -25,7 +25,7 @@ function update_script() {
   check_container_resources
 
   if [[ ! -d /opt/igotify ]]; then
-    msg_error "No ${APP} Installation Found!"
+    msg_error "No iGotify Installation Found!"
     exit
   fi
 
