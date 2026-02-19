@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/build.func)
 # Copyright (c) 2021-2026 community-scripts ORG
-# Author: Tom Frenzel
+# Author: Tom Frenzel (tomfrenzel)
 # License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://github.com/CodeWithCJ/SparkyFitness
 
@@ -29,38 +29,29 @@ function update_script() {
     exit
   fi
 
-  APP_SLUG="sparkyfitness"
-  APP_DIR="/opt/${APP_SLUG}"
-  WEB_DIR="/var/www/${APP_SLUG}"
-
   NODE_VERSION="20" setup_nodejs
 
   if check_for_gh_release "sparkyfitness" "CodeWithCJ/SparkyFitness"; then
     msg_info "Stopping Services"
-    systemctl stop sparkyfitness-server
+    systemctl stop sparkyfitness-server nginx
     msg_ok "Stopped Services"
 
     CLEAN_INSTALL=1 fetch_and_deploy_gh_release "sparkyfitness" "CodeWithCJ/SparkyFitness" "tarball"
 
     msg_info "Updating Sparky Fitness Backend"
-	cd "${APP_DIR}/SparkyFitnessServer"
+    cd "/opt/sparkyfitness/SparkyFitnessServer"
     $STD npm install
     msg_ok "Updated Sparky Fitness Backend"
 
-    msg_info "Updating Sparky Fitness Frontend"
-    cd "${APP_DIR}/SparkyFitnessFrontend"
+    msg_info "Updating Sparky Fitness Frontend (Patience)"
+    cd "/opt/sparkyfitness/SparkyFitnessFrontend"
     $STD npm install
     $STD npm run build
-    rm -rf "${WEB_DIR:?}"/*
-    cp -a "${APP_DIR}/SparkyFitnessFrontend/dist/." "${WEB_DIR}/"
+    cp -a "/opt/sparkyfitness/SparkyFitnessFrontend/dist/." "/var/www/sparkyfitness/"
     msg_ok "Updated Sparky Fitness Frontend"
 
-    chown -R sparkyfitness:sparkyfitness "${APP_DIR}"
-
     msg_info "Starting Services"
-    $STD systemctl daemon-reload
-    $STD systemctl restart sparkyfitness-server
-    $STD systemctl restart nginx
+    $STD systemctl start sparkyfitness-server nginx
     msg_ok "Started Services"
     msg_ok "Updated successfully!"
   fi
@@ -75,4 +66,4 @@ description
 msg_ok "Completed successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Access it using the following URL:${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}http://${IP}:3004${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}http://${IP}${CL}"
