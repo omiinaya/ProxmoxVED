@@ -26,7 +26,7 @@ msg_ok "Installed Dependencies"
 
 fetch_and_deploy_gh_release "igotify" "androidseb25/iGotify-Notification-Assistent" "prebuild" "latest" "/opt/igotify" "iGotify-Notification-Service-amd64-v*.zip"
 
-msg_info "Setting up iGotify"
+msg_info "Creating Service"
 cat <<EOF >/opt/igotify/.env
 ASPNETCORE_URLS=http://0.0.0.0:80
 ASPNETCORE_ENVIRONMENT=Production
@@ -35,9 +35,6 @@ GOTIFY_URLS=
 GOTIFY_CLIENT_TOKENS=
 SECNTFY_TOKENS=
 EOF
-msg_ok "Set up iGotify"
-
-msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/igotify.service
 [Unit]
 Description=iGotify Notification Service
