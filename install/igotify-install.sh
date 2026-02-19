@@ -20,7 +20,7 @@ setup_deb822_repo \
   "https://packages.microsoft.com/debian/13/prod/" \
   "trixie" \
   "main"
-$STD apt-get install -y \
+$STD apt install -y \
   aspnetcore-runtime-10.0
 msg_ok "Installed Dependencies"
 
