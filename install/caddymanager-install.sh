@@ -14,14 +14,12 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt install -y \
-  git \
-  build-essential \
-  caddy
+$STD apt install -y caddy
 msg_ok "Installed Dependencies"
 
 NODE_VERSION=22 setup_nodejs
 fetch_and_deploy_gh_release "caddymanager" "caddymanager/caddymanager" "tarball"
+systemctl stop caddy
 systemctl disable -q caddy
 
 msg_info "Configuring CaddyManager"
@@ -30,6 +28,7 @@ cd /opt/caddymanager/backend
 $STD npm install
 cd /opt/caddymanager/frontend
 $STD npm install
+$STD npm run build
 
 cat <<EOF >/opt/caddymanager/caddymanager.env
 PORT=3000
@@ -68,7 +67,8 @@ EOF
 cat <<EOF >/etc/systemd/system/caddymanager-frontend.service
 [Unit]
 Description=Caddymanager Frontend Service
-After=network.target
+After=network.target caddymanager-backend.service
+Requires=caddymanager-backend.service
 
 [Service]
 WorkingDirectory=/opt/caddymanager/frontend
@@ -79,6 +79,9 @@ EnvironmentFile=/opt/caddymanager/caddymanager.env
 [Install]
 WantedBy=multi-user.target
 EOF
+systemctl enable -q --now caddymanager-backend
+systemctl enable -q --now caddymanager-frontend
+msg_ok "Created services"
 
 motd_ssh
 customize
