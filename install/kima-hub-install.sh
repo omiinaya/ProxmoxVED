@@ -40,18 +40,18 @@ fetch_and_deploy_gh_release "kima-hub" "Chevron7Locked/kima-hub" "tarball"
 msg_info "Installing Python Dependencies"
 export PIP_BREAK_SYSTEM_PACKAGES=1
 $STD pip3 install --no-cache-dir \
-  'tensorflow>=2.13.0,<2.16.0' \
+  tensorflow \
   essentia-tensorflow \
   redis \
   psycopg2-binary \
-  'laion-clap>=1.1.4' \
-  'torch>=2.0.0' \
-  'torchaudio>=2.0.0' \
-  'librosa>=0.10.0' \
-  'transformers>=4.30.0' \
-  'pgvector>=0.2.0' \
-  'python-dotenv>=1.0.0' \
-  'requests>=2.31.0'
+  laion-clap \
+  torch \
+  torchaudio \
+  librosa \
+  transformers \
+  pgvector \
+  python-dotenv \
+  requests
 msg_ok "Installed Python Dependencies"
 
 msg_info "Downloading Essentia ML Models"
