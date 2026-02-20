@@ -27,7 +27,7 @@ $STD apt-get install -y \
 msg_ok "Installed Dependencies"
 
 PG_VERSION="16" PG_MODULES="pgvector" setup_postgresql
-PG_DB_NAME="kima" PG_DB_USER="kima" setup_postgresql_db
+PG_DB_NAME="kima" PG_DB_USER="kima" PG_DB_GRANT_SUPERUSER="true" setup_postgresql_db
 
 NODE_VERSION="20" setup_nodejs
 
