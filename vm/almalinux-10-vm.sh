@@ -484,8 +484,8 @@ msg_ok "Virtual Machine ID is ${CL}${BL}$VMID${CL}."
 # ==============================================================================
 if ! command -v virt-customize &>/dev/null; then
   msg_info "Installing libguestfs-tools"
-  apt-get update >/dev/null 2>&1
-  apt-get install -y libguestfs-tools >/dev/null 2>&1
+  apt-get -qq update >/dev/null 2>&1
+  apt-get -qq install -y libguestfs-tools >/dev/null 2>&1
   msg_ok "Installed libguestfs-tools"
 fi
 
@@ -615,13 +615,8 @@ DESCRIPTION=$(
 EOF
 )
 qm set "$VMID" -description "$DESCRIPTION" >/dev/null
-if [ -n "$DISK_SIZE" ]; then
-  msg_info "Resizing disk to $DISK_SIZE GB"
-  qm resize "$VMID" scsi0 "${DISK_SIZE}" >/dev/null
-else
-  msg_info "Using default disk size of $DEFAULT_DISK_SIZE GB"
-  qm resize "$VMID" scsi0 "${DEFAULT_DISK_SIZE}" >/dev/null
-fi
+msg_info "Resizing disk to ${DISK_SIZE}"
+qm resize "$VMID" scsi0 "${DISK_SIZE}" >/dev/null
 
 msg_ok "Created an AlmaLinux 10 VM ${CL}${BL}(${HN})"
 if [ "$START_VM" == "yes" ]; then
