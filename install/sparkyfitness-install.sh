@@ -39,8 +39,6 @@ sed \
   -e "s|^SPARKY_FITNESS_FRONTEND_URL=.*|SPARKY_FITNESS_FRONTEND_URL=http://${LOCAL_IP}:80|" \
   -e "s|^SPARKY_FITNESS_API_ENCRYPTION_KEY=.*|SPARKY_FITNESS_API_ENCRYPTION_KEY=$(openssl rand -hex 32)|" \
   -e "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=$(openssl rand -hex 32)|" \
-  -e "s|^# SERVER_BACKUP_PATH=.*|SERVER_BACKUP_PATH=/var/lib/sparkyfitness/backup|" \
-  -e "s|^# SERVER_UPLOADS_PATH=.*|SERVER_UPLOADS_PATH=/var/lib/sparkyfitness/uploads|" \
   "/etc/sparkyfitness/.env"
 msg_ok "Configured Sparky Fitness"
 
