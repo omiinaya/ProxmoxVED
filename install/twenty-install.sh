@@ -30,8 +30,8 @@ cd /opt/twenty
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 $STD corepack enable
 $STD corepack prepare yarn@4.9.2 --activate
-export NODE_OPTIONS="--max-old-space-size=3072"
-$STD yarn install
+export NODE_OPTIONS="--max-old-space-size=4096"
+$STD yarn install --immutable || $STD yarn install
 $STD npx nx run twenty-server:build
 $STD npx nx build twenty-front
 cp -r /opt/twenty/packages/twenty-front/build /opt/twenty/packages/twenty-server/dist/front
@@ -44,7 +44,6 @@ mkdir -p /opt/twenty/packages/twenty-server/.local-storage
 cat <<EOF >/opt/twenty/.env
 NODE_PORT=3000
 PG_DATABASE_URL=postgresql://${PG_DB_USER}:${PG_DB_PASS}@localhost:5432/${PG_DB_NAME}
-PG_POOL_MAX_CONNECTIONS=5
 REDIS_URL=redis://localhost:6379
 SERVER_URL=http://${LOCAL_IP}:3000
 APP_SECRET=${APP_SECRET}
@@ -73,7 +72,6 @@ User=root
 WorkingDirectory=/opt/twenty/packages/twenty-server
 EnvironmentFile=/opt/twenty/.env
 ExecStart=/usr/bin/node dist/main
-Environment=NODE_OPTIONS=--max-old-space-size=512
 Restart=on-failure
 RestartSec=5
 
@@ -95,7 +93,6 @@ EnvironmentFile=/opt/twenty/.env
 Environment=DISABLE_DB_MIGRATIONS=true
 Environment=DISABLE_CRON_JOBS_REGISTRATION=true
 ExecStart=/usr/bin/node dist/queue-worker/queue-worker
-Environment=NODE_OPTIONS=--max-old-space-size=384
 Restart=on-failure
 RestartSec=5
 
