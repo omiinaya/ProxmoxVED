@@ -19,6 +19,7 @@ echo "postfix postfix/main_mailer_type string Internet Site" | debconf-set-selec
 $STD apt install -y \
   build-essential \
   libre2-dev \
+  pkg-config \
   libpq-dev \
   cmake \
   pkg-config \
