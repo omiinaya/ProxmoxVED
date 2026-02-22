@@ -8,8 +8,8 @@ source <(curl -fsSL "$COMMUNITY_SCRIPTS_URL/misc/build.func")
 
 APP="Twenty"
 var_tags="${var_tags:-crm;business;contacts}"
-var_cpu="${var_cpu:-4}"
-var_ram="${var_ram:-8192}"
+var_cpu="${var_cpu:-2}"
+var_ram="${var_ram:-4096}"
 var_disk="${var_disk:-20}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-13}"
@@ -51,11 +51,12 @@ function update_script() {
     export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
     $STD corepack enable
     $STD corepack prepare yarn@4.9.2 --activate
-    export NODE_OPTIONS="--max-old-space-size=4096"
+    export NODE_OPTIONS="--max-old-space-size=3072"
     $STD yarn install --immutable || $STD yarn install
     $STD npx nx run twenty-server:build
     $STD npx nx build twenty-front
     cp -r /opt/twenty/packages/twenty-front/build /opt/twenty/packages/twenty-server/dist/front
+    unset NODE_OPTIONS
     msg_ok "Built Application"
 
     msg_info "Running Database Migrations"
