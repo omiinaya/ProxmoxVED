@@ -50,10 +50,13 @@ $STD /opt/yamtrack/.venv/bin/python manage.py collectstatic --noinput
 msg_ok "Configured Yamtrack"
 
 msg_info "Configuring Nginx"
+rm -f /etc/nginx/sites-enabled/default /etc/nginx/sites-available/default
 cp /opt/yamtrack/nginx.conf /etc/nginx/nginx.conf
 sed -i 's|user abc;|user www-data;|' /etc/nginx/nginx.conf
 sed -i 's|/yamtrack/staticfiles/|/opt/yamtrack/src/staticfiles/|' /etc/nginx/nginx.conf
-$STD nginx -t
+sed -i 's|error_log /dev/stderr|error_log /var/log/nginx/error.log|' /etc/nginx/nginx.conf
+sed -i 's|access_log /dev/stdout|access_log /var/log/nginx/access.log|' /etc/nginx/nginx.conf
+nginx -t
 $STD systemctl enable --now nginx
 msg_ok "Configured Nginx"
 
