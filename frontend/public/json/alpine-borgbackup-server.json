@@ -33,12 +33,12 @@
   },
   "notes": [
     {
-      "type": "info",
-      "content": "After installation, use the 'update' option in the script to configure SSH access and/or password authentication."
+      "text": "After installation, use the 'update' option in the script to configure SSH access and/or password authentication.",
+      "type": "info"
     },
     {
-      "type": "info",
-      "content": "Refer to the official BorgBackup documentation for setup and usage instructions."
+      "text": "Refer to the official BorgBackup documentation for setup and usage instructions.",
+      "type": "info"
     }
   ]
 }
