@@ -12,7 +12,7 @@
     "documentation": "https://github.com/Dictionarry-Hub/profilarr#readme",
     "website": "https://github.com/Dictionarry-Hub/profilarr",
     "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/profilarr.webp",
-    "config_path": "/opt/profilarr.env",
+    "config_path": "/config",
     "description": "Profilarr is a configuration management platform for Radarr and Sonarr that simplifies importing, syncing, and managing quality profiles, custom formats, and release profiles.",
     "install_methods": [
         {

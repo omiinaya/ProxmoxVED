@@ -36,11 +36,8 @@ function update_script() {
     msg_ok "Stopped Service"
 
     msg_info "Backing up Data"
-    if [[ -d /opt/profilarr/data ]]; then
-      cp -r /opt/profilarr/data /opt/profilarr_data_backup
-    fi
-    if [[ -f /opt/profilarr/.env ]]; then
-      cp /opt/profilarr/.env /opt/profilarr_data_backup/.env 2>/dev/null || true
+    if [[ -d /config ]]; then
+      cp -r /config /opt/profilarr_config_backup
     fi
     msg_ok "Backed up Data"
 
@@ -59,17 +56,15 @@ function update_script() {
       cd /opt/profilarr/frontend
       $STD npm install
       $STD npm run build
+      cp -r dist /opt/profilarr/backend/app/static
     fi
     msg_ok "Built Frontend"
 
     msg_info "Restoring Data"
-    if [[ -d /opt/profilarr_data_backup ]]; then
-      mkdir -p /opt/profilarr/data
-      cp -r /opt/profilarr_data_backup/. /opt/profilarr/data
-      if [[ -f /opt/profilarr_data_backup/.env ]]; then
-        cp /opt/profilarr_data_backup/.env /opt/profilarr/.env
-      fi
-      rm -rf /opt/profilarr_data_backup
+    if [[ -d /opt/profilarr_config_backup ]]; then
+      mkdir -p /config
+      cp -r /opt/profilarr_config_backup/. /config/
+      rm -rf /opt/profilarr_config_backup
     fi
     msg_ok "Restored Data"
 

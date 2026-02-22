@@ -18,7 +18,8 @@ $STD apt install -y \
   build-essential \
   python3-dev \
   libffi-dev \
-  libssl-dev
+  libssl-dev \
+  git
 msg_ok "Installed Dependencies"
 
 #UV_VERSION="0.7.19"
@@ -27,7 +28,7 @@ NODE_VERSION="22" setup_nodejs
 
 msg_info "Creating directories"
 mkdir -p /opt/profilarr \
-  /opt/profilarr/data
+  /config
 msg_ok "Created directories"
 
 fetch_and_deploy_gh_release "profilarr" "Dictionarry-Hub/profilarr"
@@ -44,15 +45,10 @@ msg_info "Building Frontend"
 cd /opt/profilarr/frontend
 $STD npm install
 $STD npm run build
+cp -r dist /opt/profilarr/backend/app/static
 msg_ok "Built Frontend"
 
 msg_info "Creating Service"
-cat <<EOF >/opt/profilarr.env
-PROFILARR_HOST=0.0.0.0
-PROFILARR_PORT=6868
-PROFILARR_DATA_DIR=/opt/profilarr/data
-PYTHONUNBUFFERED=1
-EOF
 cat <<EOF >/etc/systemd/system/profilarr.service
 [Unit]
 Description=Profilarr - Configuration Management Platform for Radarr/Sonarr
@@ -62,9 +58,9 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/profilarr/backend
-EnvironmentFile=/opt/profilarr.env
 Environment="PATH=/opt/profilarr/backend/.venv/bin:/usr/local/bin:/usr/bin:/bin"
-ExecStart=/opt/profilarr/backend/.venv/bin/python -m app.main
+Environment="PYTHONPATH=/opt/profilarr/backend"
+ExecStart=/opt/profilarr/backend/.venv/bin/gunicorn --bind 0.0.0.0:6868 --timeout 600 app.main:create_app()
 Restart=on-failure
 RestartSec=5
 
