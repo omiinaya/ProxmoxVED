@@ -14,16 +14,11 @@ setting_up_container
 network_check
 update_os
 
-# Installing Dependencies with the 3 core dependencies (curl;sudo;mc)
 msg_info "Installing Dependencies"
 $STD apt install -y \
-  curl \
-  sudo \
-  mc \
   build-essential \
   pkg-config \
   libffi-dev \
-  git \
   libxslt-dev \
   zlib1g-dev \
   libpq-dev \
@@ -34,8 +29,6 @@ $STD apt install -y \
   libltdl-dev \
   libpq5 \
   libmaxminddb0 \
-  ca-certificates \
-  krb5-multidev \
   libkrb5-3 \
   libkdb5-10 \
   libkadm5clnt-mit12 \
@@ -43,10 +36,7 @@ $STD apt install -y \
   libltdl7 \
   libxslt1.1 \
   python3-dev \
-  wget \
-  gnupg \
   libxml2-dev \
-  libltdl7 \
   libxml2 \
   libxslt1-dev \
   automake \
@@ -92,7 +82,7 @@ msg_ok "Go proxy installed"
 
 fetch_and_deploy_gh_release "geoipupdate" "maxmind/geoipupdate" "binary"
 
-cat <<EOF >/usr/local/etc/GeoIP.conf
+cat <<EOF>/usr/local/etc/GeoIP.conf
 AccountID ChangeME
 LicenseKey ChangeME
 EditionIDs GeoLite2-ASN GeoLite2-City GeoLite2-Country
@@ -101,7 +91,7 @@ RetryFor 5m
 Parallelism 1
 EOF
 
-cat <<EOF >/tmp/crontab
+cat <<EOF>/tmp/crontab
 #39 19 * * 6,4 /usr/bin/geoipupdate -f /usr/local/etc/GeoIP.conf
 EOF
 crontab /tmp/crontab
@@ -145,7 +135,7 @@ cp /opt/authentik/tests/GeoLite2-ASN-Test.mmdb /opt/authentik-data/geoip/GeoLite
 cp /opt/authentik/tests/GeoLite2-City-Test.mmdb /opt/authentik-data/geoip/GeoLite2-City.mmdb
 $STD useradd -U -s /usr/sbin/nologin -r -M -d /opt/authentik authentik
 chown -R authentik:authentik /opt/authentik /opt/authentik-data
-cat <<EOF >/etc/default/authentik
+cat <<EOF>/etc/default/authentik
 TMPDIR=/dev/shm/
 UV_LINK_MODE=copy
 UV_PYTHON_DOWNLOADS=0
@@ -160,7 +150,7 @@ EOF
 msg_ok "authentik config created"
 
 msg_info "Creating services"
-cat <<EOF >/etc/systemd/system/authentik-server.service
+cat <<EOF>/etc/systemd/system/authentik-server.service
 [Unit]
 Description=authentik Go Server (API Gateway)
 After=network.target
@@ -180,7 +170,7 @@ EnvironmentFile=/etc/default/authentik
 WantedBy=multi-user.target
 EOF
 
-cat <<EOF >/etc/systemd/system/authentik-worker.service
+cat <<EOF>/etc/systemd/system/authentik-worker.service
 [Unit]
 Description=authentik Worker
 After=network.target postgresql.service
