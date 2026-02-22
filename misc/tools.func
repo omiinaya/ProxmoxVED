@@ -5540,8 +5540,8 @@ function setup_postgresql_db() {
   fi
 
   msg_info "Setting up PostgreSQL Database"
-  $STD sudo -u postgres psql -c "CREATE ROLE $PG_DB_USER WITH LOGIN PASSWORD '$PG_DB_PASS';"
-  $STD sudo -u postgres psql -c "CREATE DATABASE $PG_DB_NAME WITH OWNER $PG_DB_USER ENCODING 'UTF8' TEMPLATE template0;"
+  $STD sudo -u postgres psql -c "CREATE ROLE \"$PG_DB_USER\" WITH LOGIN PASSWORD '$PG_DB_PASS';"
+  $STD sudo -u postgres psql -c "CREATE DATABASE \"$PG_DB_NAME\" WITH OWNER \"$PG_DB_USER\" ENCODING 'UTF8' TEMPLATE template0;"
 
   # Install extensions (comma-separated)
   if [[ -n "${PG_DB_EXTENSIONS:-}" ]]; then
@@ -5554,26 +5554,26 @@ function setup_postgresql_db() {
 
   # ALTER ROLE settings for Django/Rails compatibility (unless skipped)
   if [[ "${PG_DB_SKIP_ALTER_ROLE:-}" != "true" ]]; then
-    $STD sudo -u postgres psql -c "ALTER ROLE $PG_DB_USER SET client_encoding TO 'utf8';"
-    $STD sudo -u postgres psql -c "ALTER ROLE $PG_DB_USER SET default_transaction_isolation TO 'read committed';"
-    $STD sudo -u postgres psql -c "ALTER ROLE $PG_DB_USER SET timezone TO 'UTC';"
+    $STD sudo -u postgres psql -c "ALTER ROLE \"$PG_DB_USER\" SET client_encoding TO 'utf8';"
+    $STD sudo -u postgres psql -c "ALTER ROLE \"$PG_DB_USER\" SET default_transaction_isolation TO 'read committed';"
+    $STD sudo -u postgres psql -c "ALTER ROLE \"$PG_DB_USER\" SET timezone TO 'UTC';"
   fi
 
   # Schema permissions (if requested)
   if [[ "${PG_DB_SCHEMA_PERMS:-}" == "true" ]]; then
-    $STD sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $PG_DB_NAME TO $PG_DB_USER;"
-    $STD sudo -u postgres psql -c "ALTER USER $PG_DB_USER CREATEDB;"
-    $STD sudo -u postgres psql -d "$PG_DB_NAME" -c "GRANT ALL ON SCHEMA public TO $PG_DB_USER;"
-    $STD sudo -u postgres psql -d "$PG_DB_NAME" -c "GRANT CREATE ON SCHEMA public TO $PG_DB_USER;"
-    $STD sudo -u postgres psql -d "$PG_DB_NAME" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $PG_DB_USER;"
-    $STD sudo -u postgres psql -d "$PG_DB_NAME" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $PG_DB_USER;"
+    $STD sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE \"$PG_DB_NAME\" TO \"$PG_DB_USER\";"
+    $STD sudo -u postgres psql -c "ALTER USER \"$PG_DB_USER\" CREATEDB;"
+    $STD sudo -u postgres psql -d "$PG_DB_NAME" -c "GRANT ALL ON SCHEMA public TO \"$PG_DB_USER\";"
+    $STD sudo -u postgres psql -d "$PG_DB_NAME" -c "GRANT CREATE ON SCHEMA public TO \"$PG_DB_USER\";"
+    $STD sudo -u postgres psql -d "$PG_DB_NAME" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO \"$PG_DB_USER\";"
+    $STD sudo -u postgres psql -d "$PG_DB_NAME" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO \"$PG_DB_USER\";"
   fi
 
   # Superuser grant (if requested - WARNING!)
   if [[ "${PG_DB_GRANT_SUPERUSER:-}" == "true" ]]; then
     msg_warn "Granting SUPERUSER privilege (security risk!)"
-    $STD sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $PG_DB_NAME to $PG_DB_USER;"
-    $STD sudo -u postgres psql -c "ALTER USER $PG_DB_USER WITH SUPERUSER;"
+    $STD sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE \"$PG_DB_NAME\" TO \"$PG_DB_USER\";"
+    $STD sudo -u postgres psql -c "ALTER USER \"$PG_DB_USER\" WITH SUPERUSER;"
   fi
 
   # Save credentials

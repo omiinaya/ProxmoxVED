@@ -20,7 +20,7 @@ $STD apt install -y \
 msg_ok "Installed Dependencies"
 
 PG_VERSION="16" setup_postgresql
-PG_DB_NAME="default" PG_DB_USER="twenty" setup_postgresql_db
+PG_DB_NAME="twenty_db" PG_DB_USER="twenty" setup_postgresql_db
 NODE_VERSION="24" setup_nodejs
 
 fetch_and_deploy_gh_release "twenty" "twentyhq/twenty" "tarball"
