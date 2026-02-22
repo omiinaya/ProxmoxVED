@@ -112,7 +112,7 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y \
+$STD apt install -y \
   dependency1 \
   dependency2
 msg_ok "Installed Dependencies"
@@ -545,6 +545,47 @@ port: 3000
 EOF
 ```
 
+### 22. Using `apt-get` Instead of `apt`
+```bash
+# ❌ WRONG - apt-get is not the project convention
+$STD apt-get install -y nginx
+$STD apt-get update
+
+# ✅ CORRECT - always use apt (consistent with tools.func)
+$STD apt install -y nginx
+$STD apt update
+```
+
+### 23. Listing Core/Pre-installed Packages as Dependencies
+```bash
+# ❌ WRONG - curl is already installed by _bootstrap() in install.func
+# sudo is already available in LXC, mc is not a dependency
+msg_info "Installing Dependencies"
+$STD apt install -y \
+  curl \
+  sudo \
+  mc \
+  fuse3
+msg_ok "Installed Dependencies"
+
+# ✅ CORRECT - only list packages that are actually needed by the application
+msg_info "Installing Dependencies"
+$STD apt install -y fuse3
+msg_ok "Installed Dependencies"
+```
+
+**Packages that must NOT be listed as dependencies (already available):**
+- `curl` — installed by `_bootstrap()` in `install.func`
+- `sudo` — base LXC package (and scripts run as root anyway)
+- `wget` — base Debian LXC package
+- `gnupg` / `gpg` — base Debian package
+- `ca-certificates` — base Debian package
+- `apt-transport-https` — obsolete on Debian 12+
+- `jq` — auto-installed by `ensure_dependencies` in `tools.func` when needed
+- `mc` — not a dependency, personal preference tool
+
+**When to omit the dependency block entirely:** If the app only needs packages provided by `setup_*` helpers (e.g., Node.js, PostgreSQL, Go) or is a prebuilt binary with no native deps, skip the "Installing Dependencies" block completely.
+
 ---
 
 ## 📝 Important Rules
@@ -655,6 +696,8 @@ cleanup_lxc
 - [ ] No redundant variables
 - [ ] No hardcoded versions for external tools (use `fetch_and_deploy_gh_release` or `get_latest_github_release`)
 - [ ] `$STD` before all apt/npm/build commands
+- [ ] `apt` used (NOT `apt-get`) — consistent with `tools.func`
+- [ ] No core packages listed as dependencies (`curl`, `sudo`, `wget`, `jq`, `mc` are pre-installed)
 - [ ] `msg_info`/`msg_ok`/`msg_error` for logging (only for custom code)
 - [ ] Correct script structure followed
 - [ ] Update function present and functional
