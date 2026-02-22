@@ -35,7 +35,9 @@ fetch_and_deploy_gh_release "profilarr" "Dictionarry-Hub/profilarr"
 msg_info "Installing Python Dependencies"
 cd /opt/profilarr/backend
 $STD uv venv /opt/profilarr/backend/.venv
-$STD uv pip install --python /opt/profilarr/backend/.venv/bin/python -r requirements.txt
+sed 's/==/>=/g' requirements.txt >requirements-relaxed.txt
+$STD uv pip install --python /opt/profilarr/backend/.venv/bin/python -r requirements-relaxed.txt
+rm -f requirements-relaxed.txt
 msg_ok "Installed Python Dependencies"
 
 msg_info "Building Frontend"
