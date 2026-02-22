@@ -10,7 +10,7 @@
 # packages, custom kernels, and various desktop environment options.
 # ==============================================================================
 
-source /dev/stdin <<<$(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/api.func)
+source /dev/stdin <<<$(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main}/misc/api.func")
 
 function header_info {
   clear

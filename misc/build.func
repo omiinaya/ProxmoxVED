@@ -82,16 +82,20 @@ variables() {
   fi
 }
 
-source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/api.func)
+# Configurable base URL for development — override with COMMUNITY_SCRIPTS_URL
+# See docs/DEV_MODE.md for details
+COMMUNITY_SCRIPTS_URL="${COMMUNITY_SCRIPTS_URL:-https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main}"
+
+source <(curl -fsSL "$COMMUNITY_SCRIPTS_URL/misc/api.func")
 
 if command -v curl >/dev/null 2>&1; then
-  source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/core.func)
-  source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/error_handler.func)
+  source <(curl -fsSL "$COMMUNITY_SCRIPTS_URL/misc/core.func")
+  source <(curl -fsSL "$COMMUNITY_SCRIPTS_URL/misc/error_handler.func")
   load_functions
   catch_errors
 elif command -v wget >/dev/null 2>&1; then
-  source <(wget -qO- https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/core.func)
-  source <(wget -qO- https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/error_handler.func)
+  source <(wget -qO- "$COMMUNITY_SCRIPTS_URL/misc/core.func")
+  source <(wget -qO- "$COMMUNITY_SCRIPTS_URL/misc/error_handler.func")
   load_functions
   catch_errors
 fi
@@ -3396,7 +3400,7 @@ configure_ssh_settings() {
 # - Otherwise: shows update/setting menu and runs update_script with cleanup
 # ------------------------------------------------------------------------------
 start() {
-  source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/tools.func)
+  source <(curl -fsSL "$COMMUNITY_SCRIPTS_URL/misc/tools.func")
   if command -v pveversion >/dev/null 2>&1; then
     install_script || return 0
     return 0
@@ -3526,9 +3530,9 @@ build_container() {
   TEMP_DIR=$(mktemp -d)
   pushd "$TEMP_DIR" >/dev/null
   if [ "$var_os" == "alpine" ]; then
-    export FUNCTIONS_FILE_PATH="$(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/alpine-install.func)"
+    export FUNCTIONS_FILE_PATH="$(curl -fsSL "$COMMUNITY_SCRIPTS_URL/misc/alpine-install.func")"
   else
-    export FUNCTIONS_FILE_PATH="$(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/install.func)"
+    export FUNCTIONS_FILE_PATH="$(curl -fsSL "$COMMUNITY_SCRIPTS_URL/misc/install.func")"
   fi
 
   # Core exports for install.func
@@ -3558,6 +3562,7 @@ build_container() {
   # DEV_MODE exports (optional, for debugging)
   export BUILD_LOG="$BUILD_LOG"
   export INSTALL_LOG="/root/.install-${SESSION_ID}.log"
+  export COMMUNITY_SCRIPTS_URL="$COMMUNITY_SCRIPTS_URL"
   export dev_mode="${dev_mode:-}"
   export DEV_MODE_MOTD="${DEV_MODE_MOTD:-false}"
   export DEV_MODE_KEEP="${DEV_MODE_KEEP:-false}"
@@ -4030,7 +4035,7 @@ EOF'
   set +Eeuo pipefail # Disable ALL error handling temporarily
   trap - ERR         # Remove ERR trap completely
 
-  lxc-attach -n "$CTID" -- bash -c "$(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/install/${var_install}.sh)"
+  lxc-attach -n "$CTID" -- bash -c "$(curl -fsSL "$COMMUNITY_SCRIPTS_URL/install/${var_install}.sh")"
   local lxc_exit=$?
 
   set -Eeuo pipefail       # Re-enable error handling
@@ -4175,7 +4180,7 @@ EOF'
         if [[ "${DEV_MODE_MOTD:-false}" == "true" ]]; then
           echo -e "${TAB}${HOLD}${DGN}Setting up MOTD and SSH for debugging...${CL}"
           if pct exec "$CTID" -- bash -c "
-              source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/install.func)
+              source <(curl -fsSL "$COMMUNITY_SCRIPTS_URL/misc/install.func")
               declare -f motd_ssh >/dev/null 2>&1 && motd_ssh || true
             " >/dev/null 2>&1; then
             local ct_ip=$(pct exec "$CTID" ip a s dev eth0 2>/dev/null | awk '/inet / {print $2}' | cut -d/ -f1)

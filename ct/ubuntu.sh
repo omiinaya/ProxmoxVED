@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/build.func)
+source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main}/misc/build.func")
 # source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/github.func)
 # Copyright (c) 2021-2026 tteck
 # Author: tteck (tteckster)
