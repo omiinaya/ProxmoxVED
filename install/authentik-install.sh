@@ -193,3 +193,7 @@ systemctl enable -q --now authentik-server.service authentik-worker.service
 msg_ok "Services created"
 
 echo "${AUTHENTIK_VERSION}" > /opt/authentik_version.txt
+
+motd_ssh
+customize
+cleanup_lxc
