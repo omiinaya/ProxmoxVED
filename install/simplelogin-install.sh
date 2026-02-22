@@ -40,12 +40,9 @@ fetch_and_deploy_gh_release "simplelogin" "simple-login/app"
 
 msg_info "Installing SimpleLogin (Patience)"
 cd /opt/simplelogin
-cat <<EOF >>pyproject.toml
-
-[tool.uv.extra-build-dependencies]
-cbor2 = ["setuptools"]
-EOF
-$STD uv sync --locked --no-dev
+$STD uv venv
+$STD uv pip install setuptools
+$STD uv sync --locked --no-dev --no-build-isolation
 
 if [[ -f /opt/simplelogin/static/package.json ]]; then
   cd /opt/simplelogin/static
