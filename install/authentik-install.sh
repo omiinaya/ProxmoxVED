@@ -123,7 +123,6 @@ msg_ok "Installed python server"
 
 mkdir -p /opt/authentik-data/{certs,media,geoip,templates}
 cp /opt/authentik/authentik/sources/kerberos/krb5.conf /etc/krb5.conf
-cp -r /usr/share/GeoIP/ /opt/authentik/geoip/
 
 PG_VERSION="16" setup_postgresql
 
