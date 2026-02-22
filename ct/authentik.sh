@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-source <(curl -s https://raw.githubusercontent.com/thieneret/ProxmoxVED/feat/authentik/misc/build.func)
+source <(curl -s https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/build.func)
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: Thieneret
-# License: MIT | https://github.com/thieneret/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://github.com/goauthentik/authentik
 
 APP="authentik"
-var_tags="auth"
-var_cpu="4"
-var_ram="4096"
-var_disk="10"
-var_os="debian"
-var_version="13"
-var_unprivileged="1"
+var_tags="${var_tags:-auth}"
+var_cpu="${var_cpu:-4}"
+var_ram="${var_ram:-4096}"
+var_disk="${var_disk:-10}"
+var_os="${var_os:-debian}"
+var_version="${var_version:-13}"
+var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
 variables
@@ -28,7 +28,7 @@ function update_script() {
     NODE_VERSION="24"
 
     if [[ ! -d /opt/authentik ]]; then
-        msg_error "No ${APP} Installation Found!"
+        msg_error "No authentik Installation Found!"
         exit
     fi
 
