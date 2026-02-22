@@ -30,7 +30,7 @@ function update_script() {
   fi
 
   NODE_VERSION="25" setup_nodejs
-  PG_VERSION="15" setup_postgresql
+  PG_VERSION="18" setup_postgresql
 
   if check_for_gh_release "sparkyfitness" "CodeWithCJ/SparkyFitness"; then
     msg_info "Stopping Services"
