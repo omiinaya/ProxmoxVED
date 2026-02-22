@@ -33,8 +33,7 @@ setup_deb822_repo \
   "https://packages.redis.io/deb" \
   "jammy" \
   "main"
-$STD apt-get install -y \
-  redis-stack-server
+$STD apt install -y redis-stack-server
 systemctl enable -q --now redis-stack-server
 msg_ok "Installed Redis Stack"
 
