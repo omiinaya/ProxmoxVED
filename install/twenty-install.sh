@@ -31,7 +31,7 @@ export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 $STD corepack enable
 $STD corepack prepare yarn@4.9.2 --activate
 $STD yarn install --immutable || $STD yarn install
-export NODE_OPTIONS="--max-old-space-size=4096"
+export NODE_OPTIONS="--max-old-space-size=3072"
 $STD npx nx run twenty-server:build
 $STD npx nx build twenty-front
 cp -r /opt/twenty/packages/twenty-front/build /opt/twenty/packages/twenty-server/dist/front
@@ -55,7 +55,15 @@ msg_ok "Configured Application"
 msg_info "Running Database Migrations"
 cd /opt/twenty/packages/twenty-server
 set -a && source /opt/twenty/.env && set +a
-$STD npx ts-node ./scripts/setup-db.ts
+$STD su - postgres -c "psql -d ${PG_DB_NAME} -c '
+  CREATE SCHEMA IF NOT EXISTS public;
+  CREATE SCHEMA IF NOT EXISTS core;
+  CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";
+  CREATE EXTENSION IF NOT EXISTS unaccent;
+  CREATE OR REPLACE FUNCTION public.unaccent_immutable(input text)
+    RETURNS text LANGUAGE sql IMMUTABLE
+    AS \$\$SELECT public.unaccent($$public.unaccent$$::regdictionary, input)\$\$;
+'"
 $STD npx -y typeorm migration:run -d dist/database/typeorm/core/core.datasource
 msg_ok "Ran Database Migrations"
 
