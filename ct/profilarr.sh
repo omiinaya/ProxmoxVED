@@ -47,9 +47,9 @@ function update_script() {
     CLEAN_INSTALL=1 fetch_and_deploy_gh_release "profilarr" "Dictionarry-Hub/profilarr"
 
     msg_info "Installing Python Dependencies"
-    cd /opt/profilarr
-    export UV_CONCURRENT_DOWNLOADS=1
-    $STD uv sync --no-dev --frozen
+    cd /opt/profilarr/backend
+    $STD uv venv /opt/profilarr/backend/.venv
+    $STD uv pip install --python /opt/profilarr/backend/.venv/bin/python -r requirements.txt
     msg_ok "Installed Python Dependencies"
 
     msg_info "Building Frontend"
@@ -87,4 +87,3 @@ msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Access it using the following URL:${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}http://${IP}:6868${CL}"
-
