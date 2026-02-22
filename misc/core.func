@@ -511,7 +511,7 @@ silent() {
   if [[ $rc -ne 0 ]]; then
     # Source explain_exit_code if needed
     if ! declare -f explain_exit_code >/dev/null 2>&1; then
-      source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL:-https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main}/misc/error_handler.func")
+      source <(curl -fsSL "$COMMUNITY_SCRIPTS_URL/misc/error_handler.func")
     fi
 
     local explanation
