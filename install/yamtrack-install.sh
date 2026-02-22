@@ -56,8 +56,9 @@ sed -i 's|user abc;|user www-data;|' /etc/nginx/nginx.conf
 sed -i 's|/yamtrack/staticfiles/|/opt/yamtrack/src/staticfiles/|' /etc/nginx/nginx.conf
 sed -i 's|error_log /dev/stderr|error_log /var/log/nginx/error.log|' /etc/nginx/nginx.conf
 sed -i 's|access_log /dev/stdout|access_log /var/log/nginx/access.log|' /etc/nginx/nginx.conf
-nginx -t
-$STD systemctl enable --now nginx
+$STD nginx -t
+systemctl enable -q nginx
+$STD systemctl restart nginx
 msg_ok "Configured Nginx"
 
 msg_info "Creating Services"
