@@ -19,8 +19,8 @@
             "type": "default",
             "script": "ct/twenty.sh",
             "resources": {
-                "cpu": 2,
-                "ram": 4096,
+                "cpu": 4,
+                "ram": 8192,
                 "hdd": 20,
                 "os": "Debian",
                 "version": "13"
