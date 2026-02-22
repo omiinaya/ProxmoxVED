@@ -48,7 +48,7 @@ function update_script() {
   systemctl start strapi
   msg_ok "Started Strapi"
 
-  msg_ok "Update completed successfully!"
+  msg_ok "Updatec successfully!"
   exit
 }
 
