@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)
+source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/build.func)
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: pespinel
-# License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://strapi.io/
 
 APP="Strapi"
@@ -47,8 +47,7 @@ function update_script() {
   msg_info "Starting Strapi"
   systemctl start strapi
   msg_ok "Started Strapi"
-
-  msg_ok "Updatec successfully!"
+  msg_ok "Updated successfully!"
   exit
 }
 
