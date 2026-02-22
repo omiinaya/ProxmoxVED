@@ -53,23 +53,6 @@ NODE_ENV=production
 EOF
 msg_ok "Configured Application"
 
-msg_info "Tuning Services"
-# Redis: cap memory at 64MB with LRU eviction
-cat <<EOF >>/etc/redis/redis.conf
-maxmemory 64mb
-maxmemory-policy noeviction
-EOF
-systemctl restart redis-server
-
-# PostgreSQL: optimize for low-memory LXC
-PG_CONF="/etc/postgresql/16/main/postgresql.conf"
-sed -i "s/^shared_buffers.*/shared_buffers = 128MB/" "$PG_CONF"
-sed -i "s/^#work_mem.*/work_mem = 4MB/" "$PG_CONF"
-sed -i "s/^#effective_cache_size.*/effective_cache_size = 256MB/" "$PG_CONF"
-sed -i "s/^#maintenance_work_mem.*/maintenance_work_mem = 64MB/" "$PG_CONF"
-systemctl restart postgresql
-msg_ok "Tuned Services"
-
 msg_info "Running Database Migrations"
 cd /opt/twenty/packages/twenty-server
 set -a && source /opt/twenty/.env && set +a

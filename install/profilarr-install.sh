@@ -14,14 +14,15 @@ network_check
 update_os
 
 msg_info "Installing Dependencies"
-$STD apt-get install -y \
+$STD apt install -y \
   build-essential \
   python3-dev \
   libffi-dev \
   libssl-dev
 msg_ok "Installed Dependencies"
 
-UV_VERSION="0.7.19" PYTHON_VERSION="3.12" setup_uv
+#UV_VERSION="0.7.19" 
+PYTHON_VERSION="3.12" setup_uv
 NODE_VERSION="22" setup_nodejs
 
 msg_info "Creating directories"
