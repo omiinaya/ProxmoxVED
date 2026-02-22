@@ -11,7 +11,7 @@
     "interface_port": 3000,
     "documentation": "https://docs.twenty.com/",
     "website": "https://twenty.com/",
-    "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/twenty.webp",
+    "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/twenty-crm.webp",
     "config_path": "/opt/twenty/.env",
     "description": "Twenty is a modern open-source CRM platform that helps you manage customer relationships, track deals, and organize contacts with a clean and powerful interface.",
     "install_methods": [
