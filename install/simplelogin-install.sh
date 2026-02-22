@@ -41,7 +41,7 @@ fetch_and_deploy_gh_release "simplelogin" "simple-login/app"
 msg_info "Installing SimpleLogin (Patience)"
 cd /opt/simplelogin
 $STD uv venv
-$STD uv pip install setuptools
+$STD uv pip install setuptools hatchling
 $STD uv sync --locked --no-dev --no-build-isolation
 
 if [[ -f /opt/simplelogin/static/package.json ]]; then
