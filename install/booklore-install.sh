@@ -22,7 +22,7 @@ fetch_and_deploy_gh_release "booklore" "booklore-app/BookLore" "tarball"
 
 msg_info "Building Frontend"
 cd /opt/booklore/booklore-ui
-$STD npm install --omit=dev --legacy-peer-deps
+$STD npm ci
 $STD npm run build --configuration=production
 msg_ok "Built Frontend"
 
